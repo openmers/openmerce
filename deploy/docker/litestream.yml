@@ -1,0 +1,6 @@
+# Hedef depo ve anahtarlar ortam değişkenlerinden okunur (LITESTREAM_ACCESS_KEY_ID / LITESTREAM_SECRET_ACCESS_KEY).
+dbs:
+  - path: ${OPENMERS_DB}
+    replicas:
+      - url: ${LITESTREAM_REPLICA_URL}
+        retention: 168h   # 7 gün geri alınabilir

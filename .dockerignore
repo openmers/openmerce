@@ -1,0 +1,8 @@
+node_modules
+.git
+docs
+graphify-out
+**/dist
+.wrangler
+*.sqlite
+.env*

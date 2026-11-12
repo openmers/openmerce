@@ -1,0 +1,5 @@
+# HTTPS ve ters vekil. alan adını değiştir.
+magaza.example.com {
+  encode zstd gzip
+  reverse_proxy openmers:3000
+}

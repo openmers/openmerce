@@ -1,0 +1,48 @@
+# Admin paneli
+
+**SvelteKit** (Svelte 5, SPA kipi), shadcn-svelte, nanostores. SEO gerekmez; tek sayfa uygulaması gibi davranır ve yalnızca Admin API ile konuşur. Vitrin Astro'dur ([01-storefront.md](01-storefront.md)); admin Astro kullanmaz.
+
+**SvelteKit kipi:** kök `+layout.ts` içinde `export const ssr = false`, `adapter-static` ve `fallback` (tek HTML kabuğu). Sunucu tarafı kod yoktur: `+page.server.ts`, `+server.ts`, form action ve sunucu `load` kullanılmaz; her `load` istemcide çalışır ve oRPC istemcisiyle Admin API'yi çağırır. Neden SvelteKit: dosya tabanlı yönlendirme, iç içe `+layout`, istemci `load` ile sayfa verisi, `$app/navigation`; Astro adası bunların hiçbirini vermiyordu ve tek sayfa uygulamasında ada mantığı gereksizdi. Neden sunucu yok: ikinci bir sunucu yüzeyi (çerez, CORS, gizli anahtar) eklememek; tüm yetki ve veri Admin API'dedir.
+
+Bu belge **klasik kipi** (Shopify tarzı pano) anlatır. Aynı uygulamanın ikinci kipi, sohbet + önizleme + kod çalışma alanı olan **builder**dır: [05-agentic-builder.md](05-agentic-builder.md). İki kip aynı API'yi, izinleri ve denetim kaydını paylaşır; üst çubuktan geçilir.
+
+## 1. Yapı
+
+```
+apps/admin/src/
+  routes/        SvelteKit dosya yönlendirmesi; sayfa başına ince `+page.svelte` ve `+page.ts` (istemci load); genişletme rotaları için yakalayıcı `[...ext]`
+  features/      orders/ products/ customers/ companies/ quotes/ settings/ apps/ ...
+  lib/           api istemcisi · izin yardımcıları · tablo ve form çekirdeği
+  extensions/    built-in app bileşen kayıt defteri · uygulama iframe konağı
+```
+
+## 2. Kurallar
+
+- **Tablolar:** shadcn-svelte Data Table, denetimli model ([07-ui-kutuphanesi.md](07-ui-kutuphanesi.md) bölüm 2.1); sunucu taraflı imleçli sayfalama, sıralama ve filtre. Tüm listeyi istemciye çekmek yok.
+- **Formlar:** Superforms (SPA kipi); Zod şeması `packages/contract`'tan, aynı şema sunucuda doğrular ([06-admin-genisletme.md](06-admin-genisletme.md) bölüm 2.2).
+- **Operasyon formları şemadan üretilir:** promosyon koşulu, kargo hesaplayıcı, ödeme işleyici argümanları için elle form yazılmaz.
+- **Özel alanlar** ilgili formun altında şemadan üretilen bölümde görünür.
+- **İzin:** menü ve düğmeler `permissions` kümesine göre gizlenir; asıl denetim API'dedir.
+- **Kanal seçici** üst çubuktadır; listeler etkin kanala süzülür.
+- **Eşzamanlı düzenleme:** kayıt `version` taşır; çakışmada kullanıcıya fark gösterilir.
+
+## 3. Genişletme
+
+| Kaynak | Nasıl | Yalıtım |
+|---|---|---|
+| Built-in app | Svelte bileşeni; `nav`, `panel`, `settings`, `dashboard widget` yuvalarına kaydolur ve admin derlemesine girer | Yok (güvenilen kod) |
+| Uygulama | iframe + `@openmers/app-bridge` | Tam; DOM ve oturuma erişemez |
+
+Çekirdek formların içine alan enjekte etmenin yolu özel alandır; yuva değil. Genişletme anahtarlarının tamamı (sayfa bloğu, eylem çubuğu, widget, uyarı, tema, dil), bildirim (Sonner), animasyon (Motion) ve yerleşim düzenleyici: [06-admin-genisletme.md](06-admin-genisletme.md).
+
+## 4. Operasyon ekranları (çekirdek)
+
+- **Outbox / işler:** bekleyen, başarısız, `dead` satırlar; yeniden kuyruğa alma.
+- **Uygulamalar:** kurulu uygulamalar, izinler, son teslimatlar ve hatalar.
+- **Stok istisnaları, belirsiz iadeler, uzlaştırma farkları.**
+- **Yedek durumu** (self-host).
+- **Denetim kaydı.**
+
+## 5. Performans
+
+Admin normalize tablolardan okur ve önbelleklenmez; doğruluk hızdan önce gelir. Yine de: her liste sorgusu indeksli ve imleçli, pano sayıları günlük özet tablosundan, ağır dışa aktarmalar işle.

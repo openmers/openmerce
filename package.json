@@ -1,0 +1,6 @@
+{
+  "name": "openmers",
+  "private": true,
+  "license": "MIT",
+  "packageManager": "pnpm@10"
+}

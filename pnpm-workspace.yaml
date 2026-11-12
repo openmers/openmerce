@@ -1,0 +1,7 @@
+packages:
+  - "apps/*"
+  - "packages/*"
+  - "packages/modules/*"
+  - "packages/plugins/*"
+  - "packages/themes/*"
+  - "integration-tests/*"

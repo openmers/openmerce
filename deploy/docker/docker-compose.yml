@@ -1,0 +1,19 @@
+services:
+  openmers:
+    image: ghcr.io/openmers/openmers:latest
+    restart: unless-stopped
+    env_file: .env          # SECRETS_KEK, LITESTREAM_REPLICA_URL, LITESTREAM_* anahtarları
+    volumes:
+      - openmers-data:/data
+    expose: ["3000"]
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    ports: ["80:80", "443:443"]
+    volumes:
+      - ../Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+    depends_on: [openmers]
+volumes:
+  openmers-data:
+  caddy-data:

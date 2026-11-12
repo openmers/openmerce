@@ -1,0 +1,14 @@
+# Docker'sız kurulum: Litestream gözetiminde Node süreci.
+[Unit]
+Description=OpenMers
+After=network-online.target
+
+[Service]
+User=openmers
+WorkingDirectory=/opt/openmers
+EnvironmentFile=/etc/openmers.env
+ExecStart=/usr/local/bin/litestream replicate -config /opt/openmers/litestream.yml -exec "node dist/server.js"
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

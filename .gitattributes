@@ -1,0 +1,6 @@
+* text=auto eol=lf
+*.md linguist-detectable=false
+*.json linguist-detectable=false
+*.yaml linguist-detectable=false
+*.yml linguist-detectable=false
+*.png binary

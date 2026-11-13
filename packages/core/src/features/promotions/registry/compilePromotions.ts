@@ -7,9 +7,9 @@ export type PromotionRow = typeof promotions.$inferSelect
 export type PromotionChannelLink = { promotionId: number; channelId: number }
 
 export type CompiledPromotions = {
-  /** Kanal → etkin promosyonlar, öncelik sırasında (yüksek önce, eşitlikte küçük `id`). */
+  /** Channel → enabled promotions, in priority order (higher first, ties by smaller `id`). */
   byChannel: Map<number, CompiledPromotion[]>
-  /** Derlenemeyen (bilinmeyen kod, geçersiz argüman) promosyonlar; uygulanmaz. */
+  /** Promotions that failed to compile (unknown code, invalid argument); not applied. */
   invalid: { id: number; reason: string }[]
 }
 
@@ -29,9 +29,9 @@ function compileRules<D extends ConditionDef<never> | ActionDef<never>>(
 }
 
 /**
- * Etkin promosyonları kanal başına derler (08-promosyon §2): argümanlar bir kez doğrulanır,
- * koşul/eylem işlevleri kapanışa bağlanır. Kanal bağlantısı `promotion_channels`; bağlantısız
- * promosyon hiçbir kanalda çalışmaz. `enabled = false` olanlar alınmaz.
+ * Compiles enabled promotions per channel (08-promosyon §2): arguments are validated once,
+ * condition/action functions are bound into closures. Channel links are `promotion_channels`; an unlinked
+ * promotion runs on no channel. Those with `enabled = false` are skipped.
  */
 export function compilePromotions(
   rows: readonly PromotionRow[],

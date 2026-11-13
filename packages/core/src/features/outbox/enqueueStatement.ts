@@ -4,7 +4,7 @@ import { type AtomicStatement, type Db, guardedInsertStatement } from "../../pla
 import { newPublicId } from "../ids/publicId"
 import { type OutboxJobInput, priorityFor } from "./types"
 
-/** Outbox satırının değerleri; `enqueueStatement` ve koşullu yazım aynı eşlemeyi kullanır. */
+/** Values of the outbox row; `enqueueStatement` and the conditional write use the same mapping. */
 export function outboxValues(job: OutboxJobInput, now: number): typeof outbox.$inferInsert {
   return {
     publicId: job.publicId ?? newPublicId("evt_"),
@@ -24,11 +24,11 @@ export function outboxValues(job: OutboxJobInput, now: number): typeof outbox.$i
 }
 
 /**
- * Başka bir `atomic()`'e eklenecek `INSERT outbox` ifadesi; kendi başına yazmaz.
- * `dedupeKey` doluysa `ON CONFLICT DO NOTHING` kullanılır: bekleyen aynı iş yenisi eklenmez
- * (kısmi benzersiz indeks `outbox_dedupe_uq`).
+ * An `INSERT outbox` statement to be added to another `atomic()`; it does not write on its own.
+ * If `dedupeKey` is set, `ON CONFLICT DO NOTHING` is used: a pending identical job is not added again
+ * (partial unique index `outbox_dedupe_uq`).
  *
- * `when` verilirse yazım koşulludur (bkz. `auditStatement`): koşul tutmazsa iş satırı yazılmaz.
+ * If `when` is given the write is conditional (see `auditStatement`): if the condition fails, no job row is written.
  */
 export function enqueueStatement(
   db: Db,

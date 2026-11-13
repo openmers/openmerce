@@ -2,18 +2,18 @@ import { isPublicIdPrefix, type PublicIdPrefix } from "@openmers/db"
 import { encodeCrockford, isCrockfordBody, PUBLIC_ID_BODY_LENGTH } from "./crockford"
 
 /**
- * Rastgelelik enjekte edilebilir: varsayılan Web Crypto'dur (`crypto.getRandomValues`), testte
- * çakışma zorlamak için sahte üreteç verilir (yol haritası 6.6). `length` bayt döner.
+ * Randomness can be injected: the default is Web Crypto (`crypto.getRandomValues`); tests pass a fake
+ * generator to force collisions (roadmap 6.6). Returns `length` bytes.
  */
 export type RandomBytes = (length: number) => Uint8Array
 
 export const webCryptoRandomBytes: RandomBytes = (length) =>
   crypto.getRandomValues(new Uint8Array(length))
 
-/** Önek biçimi: 2-6 küçük harf/rakam + `_` (ör. `chn_`, `prod_`, `cmb_`). */
+/** Prefix format: 2-6 lowercase letters/digits + `_` (e.g. `chn_`, `prod_`, `cmb_`). */
 const PREFIX_SHAPE = /^[a-z][a-z0-9]{1,5}_$/
 
-/** `chn` / `chn_` → `chn_`; geçersizse hata. */
+/** `chn` / `chn_` → `chn_`; throws if invalid. */
 export function normalizePrefix(prefix: string): PublicIdPrefix {
   const withUnderscore = prefix.endsWith("_") ? prefix : `${prefix}_`
   if (!PREFIX_SHAPE.test(withUnderscore)) throw new RangeError(`geçersiz önek: ${prefix}`)
@@ -21,7 +21,7 @@ export function normalizePrefix(prefix: string): PublicIdPrefix {
   return withUnderscore
 }
 
-/** `prefix` + 10 karakter Crockford base32 (50 rastgele bit). Önek haritada olmalı. */
+/** `prefix` + 10 characters of Crockford base32 (50 random bits). The prefix must be in the map. */
 export function newPublicId(prefix: string, random: RandomBytes = webCryptoRandomBytes): string {
   const normalized = normalizePrefix(prefix)
   const bytes = random(PUBLIC_ID_BODY_LENGTH)
@@ -31,8 +31,8 @@ export function newPublicId(prefix: string, random: RandomBytes = webCryptoRando
 export type ParsedPublicId = { prefix: PublicIdPrefix; body: string }
 
 /**
- * Sınırda girdi doğrulaması: önek haritada mı, gövde 10 karakter Crockford (büyük harf) mı.
- * Küçük harfli gövde reddedilir: kimlikler kanonik biçimde karşılaştırılır.
+ * Input validation at the boundary: is the prefix in the map, is the body 10 Crockford characters (uppercase).
+ * A lowercase body is rejected: ids are compared in canonical form.
  */
 export function parsePublicId(value: string): ParsedPublicId | null {
   const underscore = value.indexOf("_")
@@ -45,8 +45,8 @@ export function parsePublicId(value: string): ParsedPublicId | null {
 }
 
 /**
- * `value` geçerli bir `public_id` mi? `prefix` verilirse önek de eşleşmeli (yanlış önek reddi);
- * `prefix` `chn` ya da `chn_` yazılabilir.
+ * Is `value` a valid `public_id`? If `prefix` is given the prefix must match too (wrong prefix rejected);
+ * `prefix` can be written as `chn` or `chn_`.
  */
 export function isPublicId(value: unknown, prefix?: string): boolean {
   if (typeof value !== "string") return false

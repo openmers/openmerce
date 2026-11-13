@@ -16,7 +16,7 @@ export type StoredResponse = {
   response: unknown
 }
 
-/** Süresi dolmuş satır yok sayılır; süpürme ayrıca siler. */
+/** Expired rows are ignored; the sweep deletes them separately. */
 export async function getResponse(
   p: Pick<Platform, "db">,
   input: GetResponseInput,

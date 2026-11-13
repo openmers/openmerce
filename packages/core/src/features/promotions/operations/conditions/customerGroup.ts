@@ -1,7 +1,7 @@
 import { z } from "zod"
 import type { ConditionDef } from "../../types"
 
-/** Müşteri verilen gruplardan en az birinde (oturumun `groupIds`'i). */
+/** The customer is in at least one of the given groups (the session's `groupIds`). */
 export const customerGroup: ConditionDef<{ groupIds: number[] }> = {
   code: "customerGroup",
   args: z.object({ groupIds: z.array(z.number().int().positive()).min(1) }),

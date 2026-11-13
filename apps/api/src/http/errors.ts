@@ -6,8 +6,8 @@ import type { AppEnv } from "./env"
 export type ApiErrorBody = { ok: false; code: ErrorCode; requestId: string }
 
 /**
- * Hata gövdesi: yalnız genel kod + `requestId` (`06-guvenlik-ve-yetki`: iç ileti, sır ve iç kimlik
- * istemciye gitmez). Eşleme çağıranın işidir; metin uydurulmaz.
+ * Error body: only a generic code + `requestId` (`06-guvenlik-ve-yetki`: internal messages, secrets and
+ * internal ids never reach the client). Mapping is the caller's job; no text is made up.
  */
 export function apiErrorBody(code: ErrorCode, requestId: string): ApiErrorBody {
   return { ok: false, code, requestId }

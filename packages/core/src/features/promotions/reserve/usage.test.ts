@@ -66,13 +66,13 @@ function seed(db: Database.Database) {
   }
 }
 
-describeOnTargets("promosyon kullanım ifadeleri", (getDb) => {
+describeOnTargets("promotion usage statements", (getDb) => {
   const used = (id: number) =>
     getDb().prepare("SELECT used FROM promotions WHERE id = ?").pluck().get(id)
   const usageRows = () =>
     getDb().prepare("SELECT count(*) FROM promotion_usage").pluck().get() as number
 
-  it("son kupona iki rezervasyon: tek kazanan", async () => {
+  it("two reservations for the last coupon: exactly one winner", async () => {
     const p = sqlitePlatform(getDb())
     const s = seed(getDb())
     const promo = s.promotion(1)
@@ -88,7 +88,7 @@ describeOnTargets("promosyon kullanım ifadeleri", (getDb) => {
     expect(usageRows()).toBe(1)
   })
 
-  it("etkisiz promosyon sayaç tüketmez; aktif olmayan rezervasyon yazmaz", async () => {
+  it("an ineffective promotion does not consume the counter; an inactive reservation writes nothing", async () => {
     const p = sqlitePlatform(getDb())
     const s = seed(getDb())
     const promo = s.promotion(1)
@@ -106,7 +106,7 @@ describeOnTargets("promosyon kullanım ifadeleri", (getDb) => {
     expect(used(promo)).toBe(0)
   })
 
-  it("ya hep ya hiç: biri tükenmişse hiçbiri sayılmaz", async () => {
+  it("all or nothing: if one is exhausted, none are counted", async () => {
     const p = sqlitePlatform(getDb())
     const s = seed(getDb())
     const open = s.promotion(null)
@@ -125,7 +125,7 @@ describeOnTargets("promosyon kullanım ifadeleri", (getDb) => {
     expect(used(open)).toBe(0)
   })
 
-  it("ters ifade sayacı geri alır; ikinci bırakma etkisiz", async () => {
+  it("the inverse statement rolls back the counter; a second release has no effect", async () => {
     const p = sqlitePlatform(getDb())
     const s = seed(getDb())
     const promo = s.promotion(1)
@@ -137,7 +137,7 @@ describeOnTargets("promosyon kullanım ifadeleri", (getDb) => {
     expect(await p.atomic(buildReleaseUsageStatements(rsv))).toEqual([1, 1])
     expect(used(promo)).toBe(0)
     expect(await p.atomic(buildReleaseUsageStatements(rsv))).toEqual([0, 0])
-    // kupon yeniden kullanılabilir
+    // the coupon can be used again
     const again = buildUsageStatements({
       results,
       reservationId: s.reservation(),
@@ -147,7 +147,7 @@ describeOnTargets("promosyon kullanım ifadeleri", (getDb) => {
     expect(await p.atomic(again.statements)).toEqual([1, 1])
   })
 
-  it("müşteri başına sınır; misafirde uygulanmaz", async () => {
+  it("per-customer limit; not applied to guests", async () => {
     const p = sqlitePlatform(getDb())
     const s = seed(getDb())
     const promo = s.promotion(null, 1)
@@ -165,7 +165,7 @@ describeOnTargets("promosyon kullanım ifadeleri", (getDb) => {
     expect(used(promo)).toBe(3)
   })
 
-  it("aynı rezervasyona ikinci yazım benzersiz indekse takılır (çifte sayım yok)", async () => {
+  it("a second write for the same reservation hits the unique index (no double counting)", async () => {
     const p = sqlitePlatform(getDb())
     const s = seed(getDb())
     const promo = s.promotion(null)
@@ -181,7 +181,7 @@ describeOnTargets("promosyon kullanım ifadeleri", (getDb) => {
     expect(used(promo)).toBe(1)
   })
 
-  it("loadPromotions + derleme + requires sorgusu tek batch'te", async () => {
+  it("loadPromotions + compile + requires query in a single batch", async () => {
     const p = sqlitePlatform(getDb())
     const s = seed(getDb())
     const promo = s.promotion(null)

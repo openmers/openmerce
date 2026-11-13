@@ -1,8 +1,8 @@
 import { OUTBOX_LIMITS, type OutboxLimits } from "./types"
 
 /**
- * Saf: `attempts`. denemeden sonraki bekleme. Katalog 01: `min(2^attempts × 30 sn, 1 sa)`.
- * `attempts` bu hatadan sonraki toplam deneme sayısıdır (1 → 60 sn).
+ * Pure: the wait after attempt number `attempts`. Catalog 01: `min(2^attempts × 30 s, 1 h)`.
+ * `attempts` is the total number of attempts after this error (1 → 60 s).
  */
 export function nextAttemptDelay(
   attempts: number,
@@ -13,7 +13,7 @@ export function nextAttemptDelay(
   return Math.min(delay, limits.maxBackoffMs)
 }
 
-/** Yeni deneme sayısı sınıra ulaştıysa satır `dead` olur (karar 8). */
+/** If the new attempt count reaches the limit, the row becomes `dead` (decision 8). */
 export function isDead(
   attempts: number,
   limits: Pick<OutboxLimits, "maxAttempts"> = OUTBOX_LIMITS,

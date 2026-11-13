@@ -1,7 +1,7 @@
 import { z } from "zod"
 import { type ActionDef, percentOf } from "../../types"
 
-/** Kargo ücretinin kalanından `bp` baz puan indirim (10000 = ücretsiz kargo). */
+/** A `bp` basis point discount off the remaining shipping fee (10000 = free shipping). */
 export const shippingPercent: ActionDef<{ bp: number }> = {
   code: "shippingPercent",
   args: z.object({ bp: z.number().int().min(1).max(10_000) }),

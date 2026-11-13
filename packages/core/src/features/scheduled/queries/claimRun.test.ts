@@ -8,10 +8,10 @@ import { claimRun } from "./claimRun"
 const NOW = 1_700_000_000_000
 const PERIOD = Math.floor(NOW / 300_000) * 300_000
 
-describeOnTargets("scheduled_runs sahiplenme", (getDb) => {
+describeOnTargets("scheduled_runs claiming", (getDb) => {
   const platform = () => sqlitePlatform(getDb())
 
-  it("aynı dönem ikinci kez sahiplenilemez; farklı dönem alınır", async () => {
+  it("the same period cannot be claimed twice; a different period can", async () => {
     const p = platform()
     expect(await claimRun(p, { task: "outbox.sweep", period: PERIOD, now: NOW })).toBe(true)
     expect(await claimRun(p, { task: "outbox.sweep", period: PERIOD, now: NOW })).toBe(false)
@@ -26,8 +26,8 @@ describeOnTargets("scheduled_runs sahiplenme", (getDb) => {
   })
 })
 
-describe("[sqlite] scheduled_runs iki bağlantılı dosya modu", () => {
-  it("aynı dönem için iki süreçten tam biri kazanır", async () => {
+describe("[sqlite] scheduled_runs two-connection file mode", () => {
+  it("exactly one of two processes wins for the same period", async () => {
     const file = openTestDb({ file: true })
     try {
       const conns: Database.Database[] = [file.connect(), file.connect()]

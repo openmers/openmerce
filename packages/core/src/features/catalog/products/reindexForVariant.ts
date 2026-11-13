@@ -5,9 +5,9 @@ import { outboxValues } from "../../outbox/enqueueStatement"
 import { reindexJob } from "./statements"
 
 /**
- * Varyantın ürünü için `reindex` işi; ürün `public_id`'si alt sorguyla çözülür (fiyat/stok
- * yazımı varyant bilir, ürünü okumaz). Bekleyen aynı ürün işi varsa yenisi eklenmez (`dedupe_key`).
- * `guard` tutmazsa (ör. kova değişmedi) satır yazılmaz.
+ * `reindex` job for the variant's product; the product's `public_id` is resolved via a subquery (price/stock
+ * writes know the variant, not the product). If the same product job is pending, no new one is added (`dedupe_key`).
+ * If `guard` does not hold (e.g. the bucket did not change), no row is written.
  */
 export function reindexForVariantStatement(
   variantId: SQL,

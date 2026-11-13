@@ -47,7 +47,7 @@ const quote = (over: Partial<QuoteInput> = {}) =>
   })
 
 describe("quoteShipping", () => {
-  it("karma sepet: yalnız fiziksel kalemler tartılır", () => {
+  it("mixed cart: only physical items are weighed", () => {
     const tierMethod = method(1, {
       calculatorCode: "weightTier",
       calculatorArgs: {
@@ -61,7 +61,7 @@ describe("quoteShipping", () => {
       methods: [tierMethod],
       lines: [
         item({ quantity: 2 }), // 800 g
-        item({ variantId: 2, physical: false, weight: null, length: null }), // dijital
+        item({ variantId: 2, physical: false, weight: null, length: null }), // digital
       ],
     })
     expect(q.parcel.weightGrams).toBe(800)
@@ -69,12 +69,12 @@ describe("quoteShipping", () => {
     expect(q.options.map((o) => o.amount)).toEqual([100])
   })
 
-  it("yalnız dijital kalem: kargo gerekmez", () => {
+  it("only a digital item: no shipping needed", () => {
     const q = quote({ lines: [item({ physical: false })] })
     expect(q).toMatchObject({ needsShipping: false, options: [] })
   })
 
-  it("bilinmeyen ağırlık sessizce 0 olmaz", () => {
+  it("unknown weight does not silently become 0", () => {
     const q = quote({
       methods: [
         method(1, {
@@ -88,7 +88,7 @@ describe("quoteShipping", () => {
     expect(q.options).toEqual([])
   })
 
-  it("kanal, bölge, checker ve bilinmeyen hesaplayıcı süzülür; ücrete göre sıralı", () => {
+  it("channel, zone, checker and unknown calculator are filtered; sorted by fee", () => {
     const q = quote({
       methods: [
         method(1, { calculatorArgs: { amount: 900 } }),
@@ -96,7 +96,7 @@ describe("quoteShipping", () => {
         method(3, { channelIds: [2] }),
         method(4, { checkerCode: "app.custom" }),
         method(5, { calculatorCode: "app.liveRate" }),
-        method(6, { calculatorArgs: { amount: -1 } }), // geçersiz argüman
+        method(6, { calculatorArgs: { amount: -1 } }), // invalid argument
       ],
     })
     expect(q.options.map((o) => o.methodId)).toEqual([2, 1])
@@ -105,9 +105,9 @@ describe("quoteShipping", () => {
     expect(quote({ methods: [method(2, { zoneId: 1 })], address: null }).options).toEqual([])
   })
 
-  it("mağazadan teslim: depoda yeterli stok varsa, adres gerekmez", () => {
+  it("store pickup: if the warehouse has enough stock, no address needed", () => {
     const pickup = method(7, { pickupLocationId: 3, zoneId: 1, calculatorArgs: { amount: 0 } })
-    const lines = [item({ quantity: 2 }), item({ quantity: 1 })] // aynı varyant: 3 adet
+    const lines = [item({ quantity: 2 }), item({ quantity: 1 })] // same variant: 3 units
     const stock = (n: number) => (loc: number, variant: number) =>
       loc === 3 && variant === 1 ? n : 0
     expect(

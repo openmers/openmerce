@@ -6,7 +6,7 @@ export const NOW = 1_700_000_000_000
 
 export type TestPlatform = ReturnType<typeof sqlitePlatform>
 
-/** Gerçek SQLite üzerinde varsayılan kanal (URL çözümlemesi için birincil alan adıyla). */
+/** Default channel on real SQLite (with a primary domain for URL resolution). */
 export async function seedChannel(p: TestPlatform): Promise<Channel> {
   await createDefaultChannel(p, { publicId: "chn_main", code: "main", domain: "shop.test" }, NOW)
   const channel = (await loadChannels(p))[0]
@@ -14,7 +14,7 @@ export async function seedChannel(p: TestPlatform): Promise<Channel> {
   return channel
 }
 
-/** Katalog yazımlarının `Ctx`i; `now` sayfa sırasını belirlemek için değiştirilebilir. */
+/** `Ctx` for catalog writes; `now` can be changed to control page order. */
 export function catalogCtx(
   p: TestPlatform,
   channel: Channel,
@@ -34,14 +34,14 @@ export function catalogCtx(
   }
 }
 
-/** `product_variants.tax_category_id` zorunlu; vergi feature'ı kapsam dışı olduğu için satır elle. */
+/** `product_variants.tax_category_id` is required; the tax feature is out of scope, so the row is inserted by hand. */
 export function seedTaxCategory(conn: Database.Database, code = "standard"): void {
   conn
     .prepare("INSERT INTO tax_categories (code, name, created_at, updated_at) VALUES (?, ?, ?, ?)")
     .run(code, code, NOW, NOW)
 }
 
-/** İki seçenekli (beden × renk) dört varyantlı örnek ürün. */
+/** Sample product with two options (size × color) and four variants. */
 export function productWithFourVariants(over: { skuPrefix?: string } = {}) {
   const prefix = over.skuPrefix ?? "TS"
   return {

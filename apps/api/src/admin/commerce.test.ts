@@ -6,7 +6,7 @@ import { createApp } from "../app"
 import { createNodePlatform } from "../platform/node"
 import { openNodeSqlite } from "../platform/node/sqlite"
 
-// Fiyat + stok admin uçları; düzen `products/products.test.ts` ile aynı (gerçek SQLite + HTTP).
+// Price + stock admin endpoints; same layout as `products/products.test.ts` (real SQLite + HTTP).
 
 const NOW = 1_700_000_000_000
 const HOST = "shop.test"
@@ -62,8 +62,8 @@ async function owner(h: H): Promise<string> {
 
 const json = async (res: Response) => ((await res.json()) as { json: unknown }).json
 
-describe("admin fiyat ve stok uçları", () => {
-  it("oturumsuz 401, izinsiz 403", async () => {
+describe("admin price and stock endpoints", () => {
+  it("no session 401, no permission 403", async () => {
     const h = await harness()
     expect((await h.call("setup/create", OWNER)).status).toBe(200)
     for (const path of ["priceLists/list", "prices/get", "stock/locations/list"]) {
@@ -88,7 +88,7 @@ describe("admin fiyat ve stok uçları", () => {
     expect((await h.call("stock/levels/adjust", {}, cookie)).status).toBe(403)
   })
 
-  it("geçersiz girdi 400", async () => {
+  it("invalid input returns 400", async () => {
     const h = await harness()
     const cookie = await owner(h)
     const list = { name: "Base", currency: "usd", type: "base", includesTax: true }
@@ -103,7 +103,7 @@ describe("admin fiyat ve stok uçları", () => {
     expect((await h.call("stock/levels/adjust", adjust, cookie)).status).toBe(400)
   })
 
-  it("liste → fiyat → depo → stok akışı 200; base silme 409; negatif stok 400", async () => {
+  it("list → price → warehouse → stock flow 200; deleting base 409; negative stock 400", async () => {
     const h = await harness()
     const cookie = await owner(h)
     h.sqlite.write

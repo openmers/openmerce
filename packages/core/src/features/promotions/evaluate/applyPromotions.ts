@@ -3,16 +3,16 @@ import type { Adjustment, CompiledPromotion, Discount, PromoCart, PromoLine } fr
 
 export type PromotionResult = {
   promotionId: number
-  /** Koşullar tuttu ama hiçbir yerde > 0 indirim yok: sayaç tüketmez (08 §3 "etkisiz"). */
+  /** Conditions held but there is no discount > 0 anywhere: does not consume the counter (08 §3 "no effect"). */
   effective: boolean
   discount: number
 }
 
 export type ApplyPromotionsResult = {
   adjustments: Adjustment[]
-  /** Koşulları tutan promosyonlar, uygulanma sırasında. */
+  /** Promotions whose conditions held, in application order. */
   results: PromotionResult[]
-  /** Satır başına toplam indirim (satır + dağıtılmış sipariş indirimi); vergi bunun üstünden. */
+  /** Total discount per line (line + distributed order discount); tax is computed on top of this. */
   lineDiscounts: Record<string, number>
   shippingDiscount: number
 }
@@ -22,17 +22,17 @@ function isLive(p: CompiledPromotion, cart: PromoCart, now: number, coupons: Set
   if (p.startsAt !== null && now < p.startsAt) return false
   if (p.endsAt !== null && now >= p.endsAt) return false
   if (p.couponCode !== null && !coupons.has(p.couponCode.toUpperCase())) return false
-  // gösterim için; doğruluk rezervasyonda koşullu artışla
+  // for display; correctness comes from the conditional increment at reservation
   if (p.usageLimit !== null && p.used >= p.usageLimit) return false
   return true
 }
 
 /**
- * Promosyonları sepete uygular (08-promosyon §2, saf). Tarih/kanal/kupon süzgeci, öncelik sırası
- * (yüksek önce), koşulların hepsi doğruysa eylemler. Eylemler önceki promosyonlardan **kalan**
- * tutar üstünde çalışır (üst üste binen indirim satırı eksiye düşürmez). `contract` fiyatlı satır
- * `applyToContract` olmayan promosyona görünmez. `stackable` olmayan promosyon etkili olursa
- * kalanlar atlanır; etkisiz (0 indirim) promosyon kesmez ve sayaç tüketmez.
+ * Applies promotions to the cart (08-promosyon §2, pure). Date/channel/coupon filter, priority order
+ * (higher first), actions if all conditions are true. Actions work on the amount **remaining** from
+ * earlier promotions (overlapping discounts never push a line negative). A `contract`-priced line
+ * is invisible to a promotion without `applyToContract`. If a non-`stackable` promotion is effective
+ * the rest are skipped; an ineffective (0 discount) promotion neither cuts off nor consumes the counter.
  */
 export function applyPromotions(input: {
   promotions: readonly CompiledPromotion[]

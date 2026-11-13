@@ -8,8 +8,8 @@ const headers = (over: Partial<SecurityHeadersInput> = {}) =>
 
 const cspOf = (h: Record<string, string>) => h["Content-Security-Policy"] ?? ""
 
-describe("securityHeaders: ortak başlıklar", () => {
-  it.each(surfaces)("%s: HTTPS'te HSTS + zorunlu başlıklar", (surface) => {
+describe("securityHeaders: common headers", () => {
+  it.each(surfaces)("%s: HSTS + required headers over HTTPS", (surface) => {
     const h = headers({ surface })
     expect(h["Strict-Transport-Security"]).toBe("max-age=31536000; includeSubDomains")
     expect(h["X-Content-Type-Options"]).toBe("nosniff")
@@ -21,14 +21,14 @@ describe("securityHeaders: ortak başlıklar", () => {
     expect(cspOf(h)).toContain("frame-ancestors 'none'")
   })
 
-  it.each(surfaces)("%s: HTTP'te HSTS yok, diğerleri var", (surface) => {
+  it.each(surfaces)("%s: no HSTS over HTTP, the others present", (surface) => {
     const h = headers({ surface, https: false })
     expect(h["Strict-Transport-Security"]).toBeUndefined()
     expect(h["X-Content-Type-Options"]).toBe("nosniff")
     expect(h["X-Frame-Options"]).toBe("DENY")
   })
 
-  it("ödeme kökenleri Permissions-Policy'de yalnız payment'ta açılır", () => {
+  it("payment origins are only allowed under payment in Permissions-Policy", () => {
     const h = headers({ paymentOrigins: ["https://pay.example"] })
     expect(h["Permissions-Policy"]).toBe(
       'camera=(), microphone=(), geolocation=(), payment=("https://pay.example")',
@@ -36,15 +36,15 @@ describe("securityHeaders: ortak başlıklar", () => {
     expect(headers()["Permissions-Policy"]).toContain("payment=()")
   })
 
-  it("reportOnly başlık adını değiştirir, zorlayıcı CSP yazılmaz", () => {
+  it("reportOnly changes the header name, no enforcing CSP is written", () => {
     const h = headers({ reportOnly: true })
     expect(h["Content-Security-Policy-Report-Only"]).toContain("frame-ancestors 'none'")
     expect(h["Content-Security-Policy"]).toBeUndefined()
   })
 })
 
-describe("securityHeaders: CSP profilleri", () => {
-  it("vitrin: default-src 'self', nonce, CDN görseli, ödeme kökenleri", () => {
+describe("securityHeaders: CSP profiles", () => {
+  it("storefront: default-src 'self', nonce, CDN images, payment origins", () => {
     const csp = cspOf(
       headers({
         cdnOrigin: "https://cdn.example",
@@ -58,11 +58,11 @@ describe("securityHeaders: CSP profilleri", () => {
     expect(csp).toContain("frame-src https://pay.example")
   })
 
-  it("vitrin: ödeme yoksa frame-src 'none'", () => {
+  it("storefront: frame-src 'none' without payments", () => {
     expect(cspOf(headers())).toContain("frame-src 'none'")
   })
 
-  it("admin: frame-src yalnız kurulu app kökenleri (ödeme kökeni sızmaz)", () => {
+  it("admin: frame-src only installed app origins (payment origins do not leak)", () => {
     const csp = cspOf(
       headers({
         surface: "admin",
@@ -74,18 +74,18 @@ describe("securityHeaders: CSP profilleri", () => {
     expect(frameSrc).toBe("frame-src https://app1.example https://app2.example")
   })
 
-  it("admin: kurulu app yokken frame-src 'none'", () => {
+  it("admin: frame-src 'none' when no app is installed", () => {
     expect(cspOf(headers({ surface: "admin" }))).toContain("frame-src 'none'")
   })
 
-  it("api: default-src 'none' ve çerçeve yasak", () => {
+  it("api: default-src 'none' and framing forbidden", () => {
     const csp = cspOf(headers({ surface: "api" }))
     expect(csp).toBe("default-src 'none'; frame-ancestors 'none'")
     expect(csp).not.toContain("script-src")
   })
 })
 
-describe("securityHeaders: girdi doğrulama (başlık enjeksiyonu)", () => {
+describe("securityHeaders: input validation (header injection)", () => {
   const bad = [
     "https://app.example; script-src *",
     "https://app.example inside",
@@ -95,30 +95,30 @@ describe("securityHeaders: girdi doğrulama (başlık enjeksiyonu)", () => {
     "https://app.example)",
   ]
 
-  it.each(bad)("appOrigins reddeder: %j", (value) => {
+  it.each(bad)("appOrigins rejects: %j", (value) => {
     expect(() => headers({ surface: "admin", appOrigins: [value] })).toThrow(SecurityHeaderError)
   })
 
-  it.each(bad)("paymentOrigins reddeder: %j", (value) => {
+  it.each(bad)("paymentOrigins rejects: %j", (value) => {
     expect(() => headers({ paymentOrigins: [value] })).toThrow(SecurityHeaderError)
   })
 
-  it.each(bad)("cdnOrigin reddeder: %j", (value) => {
+  it.each(bad)("cdnOrigin rejects: %j", (value) => {
     expect(() => headers({ cdnOrigin: value })).toThrow(SecurityHeaderError)
   })
 
-  it("yol ve sorgu taşıyan köken reddedilir", () => {
+  it("an origin carrying a path or query is rejected", () => {
     expect(() => headers({ cdnOrigin: "https://cdn.example/x" })).toThrow(SecurityHeaderError)
     expect(() => headers({ cdnOrigin: "https://cdn.example?x=1" })).toThrow(SecurityHeaderError)
   })
 
-  it("kuyruk eğik çizgisi kırpılır", () => {
+  it("a trailing slash is trimmed", () => {
     expect(cspOf(headers({ cdnOrigin: "https://cdn.example/" }))).toContain(
       "img-src 'self' data: https://cdn.example",
     )
   })
 
-  it("nonce tırnak/boşluk içeremez", () => {
+  it("the nonce cannot contain quotes/spaces", () => {
     expect(() => headers({ nonce: "abc'def" })).toThrow(
       expect.objectContaining({ code: "INVALID_NONCE" }),
     )

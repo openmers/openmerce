@@ -6,19 +6,19 @@ import {
   resolveChannel,
 } from "../features/channels"
 
-/** Yayınlanabilir kanal anahtarının taşındığı başlık adı (küçük harf; Hono başlıkları böyle verir). */
+/** Header name carrying the publishable channel key (lowercase; Hono gives headers this way). */
 export const CHANNEL_HEADER = "x-openmers-channel"
 
 export type ResolveRequestChannelInput = {
-  /** Bellekteki kanal tablosu (`createChannelRegistry`); sorgu yok. */
+  /** In-memory channel table (`createChannelRegistry`); no query. */
   snapshot: ChannelSnapshot
-  /** `Host` başlığı. */
+  /** The `Host` header. */
   host?: string | null
-  /** `x-openmers-channel`: kanal `code`'u veya `public_id`'si (büyük/küçük harf duyarsız). */
+  /** `x-openmers-channel`: the channel's `code` or `public_id` (case-insensitive). */
   channelHeader?: string | null
 }
 
-/** Başlıktaki anahtar → kanal. Boş anahtar `undefined` (Host'a düşülür). */
+/** Header key → channel. An empty key is `undefined` (falls back to Host). */
 export function channelFromHeader(
   snapshot: ChannelSnapshot,
   header: string | null | undefined,
@@ -31,10 +31,10 @@ export function channelFromHeader(
 }
 
 /**
- * `x-openmers-channel` varsa Host'tan önce gelir: istemci kanalını açıkça seçer (mobil).
- * Başlık yalnız kanalı seçer, alan adı yönlendirmesi üretmez. Bilinmeyen başlık
- * `INVALID_CHANNEL`, bilinmeyen Host `UNKNOWN_DOMAIN` (varsayılana düşülmez).
- * Kanal mantığı `features/channels` içindedir; burada kopyalanmaz.
+ * If `x-openmers-channel` is present it takes precedence over Host: the client picks its channel explicitly (mobile).
+ * The header only picks the channel and produces no domain redirect. Unknown header
+ * `INVALID_CHANNEL`, unknown Host `UNKNOWN_DOMAIN` (no fallback to default).
+ * Channel logic lives in `features/channels`; it is not duplicated here.
  */
 export function resolveRequestChannel(input: ResolveRequestChannelInput): ResolvedChannel {
   const header = input.channelHeader?.trim()

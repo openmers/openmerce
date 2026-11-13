@@ -14,23 +14,23 @@ import {
 export type BuildCtxInput = {
   platform: Platform
   api: ApiSurface
-  /** Bellekteki kanal tablosu; anonim yolda veritabanına inilmez. */
+  /** In-memory channel table; the anonymous path does not hit the database. */
   snapshot: ChannelSnapshot
   host?: string | null
   channelHeader?: string | null
-  /** İstenen dil/para birimi; kanalda yoksa kanalın varsayılanına düşülür. */
+  /** Requested language/currency; falls back to the channel default if the channel lacks it. */
   lang?: string
   currency?: string
   customer?: CtxCustomer
   company?: CtxCompany
   priceListIds?: readonly number[]
-  /** Verilmezse anonim aktör (oturum yolu madde 10.8). */
+  /** Anonymous actor if not given (session path in item 10.8). */
   actor?: CtxActor
   now: number
   requestId: string
 }
 
-/** İkincil alan adı birincile 301 döner; Ctx üretilmez (yönlendirmeyi `api/app.ts` yazar). */
+/** A secondary domain returns 301 to the primary; no Ctx is built (`api/app.ts` writes the redirect). */
 export type BuildCtxResult = { kind: "ctx"; ctx: Ctx } | { kind: "redirect"; to: string }
 
 function pickLang(
@@ -57,9 +57,9 @@ function assertInput(now: number, requestId: string): void {
 }
 
 /**
- * Ctx kurulumu: kanal (bellek) + segment. Oturum yoksa `actor` anonimdir ve bu yol
- * **sıfır veritabanı turudur**: `platform` yalnız bağlama konur, hiçbir portu çağrılmaz.
- * `now` ve `requestId` dışarıdan enjekte edilir (testte sahtelenebilir).
+ * Ctx setup: channel (memory) + segment. Without a session `actor` is anonymous and this path costs
+ * **zero database round trips**: `platform` is only placed on the context, none of its ports are called.
+ * `now` and `requestId` are injected from outside (can be faked in tests).
  */
 export function buildCtx(input: BuildCtxInput): BuildCtxResult {
   assertInput(input.now, input.requestId)

@@ -34,7 +34,7 @@ afterEach(() => {
   for (const close of closers.splice(0)) close()
 })
 
-/** `admin.test.ts` kalıbı: gerçek SQLite + migration + varsayılan kanal. */
+/** Same pattern as `admin.test.ts`: real SQLite + migrations + default channel. */
 async function harness() {
   const file = openTestDb({ file: true })
   const sqlite = openNodeSqlite(file.path)
@@ -76,14 +76,14 @@ async function setupAndLogin(h: H): Promise<string> {
   return pair(cookieOf(res))
 }
 
-describe("admin ürün uçları", () => {
-  it("oturumsuz 401, izinsiz 403", async () => {
+describe("admin product endpoints", () => {
+  it("no session 401, no permission 403", async () => {
     const h = await harness()
-    // Kurulum bitmeden admin kapalıdır (SETUP_REQUIRED); oturumsuz denetimi sonrasında yapılır.
+    // Admin is closed until setup finishes (SETUP_REQUIRED); the no-session check comes afterwards.
     expect((await h.call("setup/create", OWNER)).status).toBe(200)
     expect((await h.call("products/list", {})).status).toBe(401)
 
-    // Rolsüz ikinci yönetici: oturumu geçerli, `products:read` izni yok.
+    // Second admin without a role: valid session, no `products:read` permission.
     const w = h.sqlite.write
     const id = w
       .prepare(
@@ -103,7 +103,7 @@ describe("admin ürün uçları", () => {
     expect((await h.call("products/list", {}, cookie)).status).toBe(403)
   })
 
-  it("geçersiz girdi 400", async () => {
+  it("invalid input returns 400", async () => {
     const h = await harness()
     const cookie = await setupAndLogin(h)
     const empty = await h.call("products/create", { ...PRODUCT, variants: [] }, cookie)
@@ -112,7 +112,7 @@ describe("admin ürün uçları", () => {
     expect(badCursor.status).toBe(400)
   })
 
-  it("oluştur → oku → listele → güncelle → sil akışı 200/409/404", async () => {
+  it("create → read → list → update → delete flow 200/409/404", async () => {
     const h = await harness()
     const cookie = await setupAndLogin(h)
     h.setup()
@@ -159,7 +159,7 @@ describe("admin ürün uçları", () => {
     expect((await h.call("products/get", { publicId }, cookie)).status).toBe(404)
   })
 
-  it("varyant uçları: ekle → güncelle → son varyantı silme reddi", async () => {
+  it("variant endpoints: add → update → refuse to delete the last variant", async () => {
     const h = await harness()
     const cookie = await setupAndLogin(h)
     h.setup()

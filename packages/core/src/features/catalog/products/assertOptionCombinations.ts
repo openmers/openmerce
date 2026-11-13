@@ -4,9 +4,9 @@ type OptionLike = { code: string; values: ReadonlyArray<{ code: string }> }
 type VariantLike = { optionValues?: ReadonlyArray<{ option: string; value: string }> }
 
 /**
- * Seçenekli üründe kombinasyon kuralı (02-katalog-ve-arama §1): her varyant **her seçenekten tam
- * bir değer** taşır, aynı seçenekten iki değer taşımaz ve aynı kombinasyon iki varyantta
- * tekrarlanmaz. Seçeneksiz üründe varyant seçenek değeri taşımaz. Saf: DB görmez.
+ * Combination rule for products with options (02-katalog-ve-arama §1): every variant carries **exactly one
+ * value from each option**, never two values from the same option, and the same combination is not
+ * repeated across two variants. In a product without options, variants carry no option values. Pure: no DB.
  */
 export function assertOptionCombinations(
   options: readonly OptionLike[],

@@ -6,16 +6,16 @@ import type { PricingCtx } from "../types"
 
 export type GetPricesInput = {
   variantPublicIds: readonly string[]
-  /** Verilmezse kanalın bütün listeleri; verilirse yalnız bunlar (oturum kümesi). */
+  /** If not given, all of the channel's lists; if given, only these (the session set). */
   priceListPublicIds?: readonly string[]
 }
 
-/** Fiyat satırı + listenin seçim alanları; çözümleyici (`resolvePrice`) doğrudan bunu alır. */
+/** Price row + the list's selection fields; the resolver (`resolvePrice`) takes this directly. */
 export type PriceRow = PriceCandidate & { variant: string }
 
 /**
- * Tek sorgu: `price_list_id IN (...) AND variant_id IN (...)`; `prices` PK'si
- * `(price_list_id, variant_id, min_qty)` ile karşılanır (`assertNoFullScan` testi).
+ * A single query: `price_list_id IN (...) AND variant_id IN (...)`; served by the `prices` PK
+ * `(price_list_id, variant_id, min_qty)` (`assertNoFullScan` test).
  */
 export function getPricesQuery(db: Db, channelId: number, input: GetPricesInput) {
   const listFilter: SQL[] = [eq(priceLists.channelId, channelId)]
@@ -56,7 +56,7 @@ export function getPricesQuery(db: Db, channelId: number, input: GetPricesInput)
     .orderBy(asc(productVariants.publicId), asc(priceLists.publicId), asc(prices.minQty))
 }
 
-/** Admin ve çözümleme okuması; boş varyant listesinde sorgu atılmaz. */
+/** Admin and resolution read; no query is issued for an empty variant list. */
 export async function getPrices(
   ctx: Pick<PricingCtx, "platform" | "channel">,
   input: GetPricesInput,

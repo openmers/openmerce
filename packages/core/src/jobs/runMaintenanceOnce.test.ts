@@ -6,13 +6,13 @@ import { sqlitePlatform } from "../features/__testing__/sqlitePlatform"
 import { enqueueStatement } from "../features/outbox"
 import { MAINTENANCE_PERIOD_MS, MAINTENANCE_TASKS, runMaintenanceOnce } from "./runMaintenanceOnce"
 
-// Dönem sınırı (5 dk'nın tam katı): dönem anahtarı hesabı testte sabit kalsın.
+// Period boundary (an exact multiple of 5 min): keeps the period key computation stable in tests.
 const NOW = 1_700_000_100_000
 
 describeOnTargets("runMaintenanceOnce", (getDb) => {
   const platform = () => sqlitePlatform(getDb())
 
-  it("dönem başına bir kez çalışır; aynı dönemde ikinci tetik iş yapmaz", async () => {
+  it("runs once per period; a second trigger in the same period does nothing", async () => {
     const p = platform()
     await p.atomic([
       enqueueStatement(
@@ -45,7 +45,7 @@ describeOnTargets("runMaintenanceOnce", (getDb) => {
     expect(runs.every((row) => row.status === "done" && row.finishedAt !== null)).toBe(true)
   })
 
-  it("yeni dönemde yeniden çalışır", async () => {
+  it("runs again in a new period", async () => {
     const p = platform()
     await runMaintenanceOnce(p, { now: NOW })
     const next = await runMaintenanceOnce(p, { now: NOW + MAINTENANCE_PERIOD_MS })
@@ -54,7 +54,7 @@ describeOnTargets("runMaintenanceOnce", (getDb) => {
     expect(await p.db.select().from(scheduledRuns)).toHaveLength(6)
   })
 
-  it("takılı sending satırı geri alır", async () => {
+  it("requeues a stuck sending row", async () => {
     const p = platform()
     await p.atomic([
       enqueueStatement(p.db, { publicId: "evt_1", kind: "notify", payload: {} }, NOW),

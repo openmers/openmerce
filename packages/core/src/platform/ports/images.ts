@@ -1,5 +1,5 @@
-// Yüklemede boyut üretme: Cloudflare Images binding, self-host `sharp` (yalnız Node adaptöründe).
-// İsteğe bağlıdır; yoksa ya da hata verirse orijinal saklanır, yükleme bozulmaz (performans §7).
+// Generating sizes on upload: Cloudflare Images binding, self-host `sharp` (Node adapter only).
+// Optional; if missing or failing, the original is stored and the upload does not break (performance §7).
 export type ImageFormat = "webp" | "jpeg" | "png"
 
 export type Images = {

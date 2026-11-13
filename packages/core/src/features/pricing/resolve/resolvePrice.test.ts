@@ -23,7 +23,7 @@ const pick = (candidates: PriceCandidate[], quantity = 1, extra = {}) =>
   resolvePrice({ candidates, quantity, currency: "USD", now: NOW, ...extra })
 
 describe("resolvePrice", () => {
-  it("tür önceliği: contract → geçerli sale → base", () => {
+  it("type priority: contract → valid sale → base", () => {
     const base = row({})
     const sale = row({ priceList: "pl_sale", type: "sale", amount: 800 })
     const contract = row({ priceList: "pl_c", type: "contract", amount: 700 })
@@ -32,7 +32,7 @@ describe("resolvePrice", () => {
     expect(pick([base])).toMatchObject({ ok: true, price: { type: "base", amount: 1000 } })
   })
 
-  it("süresi dolmuş, başlamamış ya da expired sale atlanır", () => {
+  it("an expired, not yet started or expired-status sale is skipped", () => {
     const base = row({})
     const ended = row({ priceList: "pl_s1", type: "sale", endsAt: NOW })
     const future = row({ priceList: "pl_s2", type: "sale", startsAt: NOW + 1 })
@@ -42,7 +42,7 @@ describe("resolvePrice", () => {
     expect(pick([base, live])).toMatchObject({ price: { priceList: "pl_s4" } })
   })
 
-  it("aynı türde yüksek priority kazanır, eşitlikte public_id sırası", () => {
+  it("within the same type higher priority wins, ties broken by public_id order", () => {
     const low = row({ priceList: "pl_a", type: "sale", priority: 1, amount: 1 })
     const high = row({ priceList: "pl_b", type: "sale", priority: 5, amount: 2 })
     expect(pick([low, high])).toMatchObject({ price: { priceList: "pl_b" } })
@@ -50,7 +50,7 @@ describe("resolvePrice", () => {
     expect(pick([high, tie])).toMatchObject({ price: { priceList: "pl_0" } })
   })
 
-  it("kademe: miktara uyan en yüksek min_qty; uymayan kademe aday değil", () => {
+  it("tier: the highest min_qty matching the quantity; a non-matching tier is not a candidate", () => {
     const tiers = [1, 10, 50].map((minQty) => row({ minQty, amount: 1000 - minQty }))
     expect(pick(tiers, 9)).toMatchObject({ price: { minQty: 1 } })
     expect(pick(tiers, 10)).toMatchObject({ price: { minQty: 10 } })
@@ -58,13 +58,13 @@ describe("resolvePrice", () => {
     expect(pick(tiers, 500)).toMatchObject({ price: { minQty: 50, amount: 950 } })
   })
 
-  it("üst listede miktara uyan kademe yoksa alt listeye düşülür", () => {
+  it("if the upper list has no tier matching the quantity, falls back to the lower list", () => {
     const contract = row({ priceList: "pl_c", type: "contract", minQty: 100, amount: 1 })
     expect(pick([row({}), contract], 5)).toMatchObject({ price: { priceList: "pl_base" } })
     expect(pick([row({}), contract], 100)).toMatchObject({ price: { priceList: "pl_c" } })
   })
 
-  it("oturum kümesi dışındaki liste ve başka para birimi aday değildir", () => {
+  it("a list outside the session set and another currency are not candidates", () => {
     const contract = row({ priceList: "pl_c", type: "contract", amount: 1 })
     expect(pick([row({}), contract], 1, { priceLists: ["pl_base"] })).toMatchObject({
       price: { priceList: "pl_base" },
@@ -72,7 +72,7 @@ describe("resolvePrice", () => {
     expect(pick([row({ currency: "EUR" })])).toEqual({ ok: false, code: "NO_PRICE" })
   })
 
-  it("fiyat yoksa NO_PRICE (0 değil); geçersiz miktar da NO_PRICE", () => {
+  it("no price gives NO_PRICE (not 0); an invalid quantity also gives NO_PRICE", () => {
     expect(pick([])).toEqual({ ok: false, code: "NO_PRICE" })
     expect(pick([row({ minQty: 10 })], 9)).toEqual({ ok: false, code: "NO_PRICE" })
     expect(pick([row({})], 0)).toEqual({ ok: false, code: "NO_PRICE" })

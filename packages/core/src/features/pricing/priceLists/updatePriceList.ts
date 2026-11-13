@@ -6,7 +6,7 @@ import { auditActorOf } from "../../catalog/products/types"
 import { assertWindow, type PricingCtx, PricingError } from "../types"
 import { findPriceList, priceListGuard } from "./statements"
 
-/** Değişebilen alanlar; `currency` ve `type` sabittir (yeni liste açılır). */
+/** Changeable fields; `currency` and `type` are fixed (open a new list instead). */
 export type PriceListPatch = {
   name?: string
   priority?: number
@@ -35,9 +35,9 @@ function patchOf(input: PriceListPatch): Record<string, unknown> {
 }
 
 /**
- * Yalnız verilen alanları yazar; denetim satırı aynı `atomic()`'te ve aynı koşula bağlıdır.
- * Tek tarih verilirse geçerlilik penceresi saklı öteki tarihle SQL koşulunda denetlenir
- * (oku-karar ver-yaz yok): pencere bozulursa hiçbir satır yazılmaz, `INVALID_INPUT`.
+ * Writes only the given fields; the audit row is in the same `atomic()` and bound to the same condition.
+ * If only one date is given, the validity window is checked against the stored other date in the SQL condition
+ * (no read-decide-write): if the window would break, no row is written, `INVALID_INPUT`.
  */
 export async function updatePriceList(
   ctx: PricingCtx,

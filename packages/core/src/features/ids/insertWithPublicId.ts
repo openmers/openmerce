@@ -1,20 +1,20 @@
 import type { AtomicStatement, Platform } from "../../platform"
 import { newPublicId, type RandomBytes } from "./publicId"
 
-/** 03-veri-kurallari §1: çakışmada benzersiz indeks yetkilidir, üç kez yeniden denenir. */
+/** 03-veri-kurallari §1: on collision the unique index is authoritative, retried three times. */
 export const PUBLIC_ID_INSERT_ATTEMPTS = 3
 
 export type InsertWithPublicIdOptions = {
-  /** Önek (`chn_` ya da `chn`). */
+  /** Prefix (`chn_` or `chn`). */
   prefix: string
   random?: RandomBytes
-  /** Toplam deneme sayısı (varsayılan 3). */
+  /** Total number of attempts (default 3). */
   attempts?: number
 }
 
 /**
- * Yalnız `public_id` benzersiz indeksini ihlal eden hatayı yeniden denenebilir sayar; başka bir
- * benzersiz sütun (ör. `channels.code`) çağıranın hatasıdır ve hemen yükselir.
+ * Only treats an error violating the `public_id` unique index as retryable; another
+ * unique column (e.g. `channels.code`) is the caller's bug and is raised immediately.
  */
 export function isPublicIdCollision(error: unknown): boolean {
   const message = error instanceof Error ? error.message : String(error)
@@ -22,8 +22,8 @@ export function isPublicIdCollision(error: unknown): boolean {
 }
 
 /**
- * Kimliği üretip ifadeyi kurar; çakışmada **yeni kimlikle** yeniden dener (aynı kimlikle denemek
- * aynı hatayı verir). Denemeler tükenirse son hata yükselir.
+ * Generates the id and builds the statement; on collision retries **with a new id** (retrying with the same id
+ * gives the same error). When attempts run out, the last error is raised.
  */
 export async function insertWithPublicId(
   p: Pick<Platform, "atomic">,

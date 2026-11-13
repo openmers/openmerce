@@ -4,10 +4,10 @@ export type DomainIndex = ReadonlyMap<string, { channel: Channel; domain: Channe
 
 export type ResolvedChannel =
   | { kind: "serve"; channel: Channel; lang: string }
-  /** İkincil alan adı `redirect`: birincil alan adına 301. */
+  /** Secondary domain `redirect`: 301 to the primary domain. */
   | { kind: "redirect"; channel: Channel; to: string }
 
-/** Alan adı → kanal; bellek içi tablo bir kez kurulur (channelRegistry). */
+/** Domain → channel; the in-memory table is built once (channelRegistry). */
 export function indexDomains(channels: readonly Channel[]): DomainIndex {
   const index = new Map<string, { channel: Channel; domain: ChannelDomain }>()
   for (const channel of channels) {
@@ -16,12 +16,12 @@ export function indexDomains(channels: readonly Channel[]): DomainIndex {
   return index
 }
 
-/** `Host` başlığını küçük harf, portsuz, sonda noktasız biçime getirir. */
+/** Normalizes the `Host` header to lowercase, without port and trailing dot. */
 export function normalizeHost(host: string): string {
   return host.trim().toLowerCase().replace(/\.+$/, "").replace(/:\d+$/, "").replace(/\.+$/, "")
 }
 
-/** `Host` → kanal + dil. Bilinmeyen alan adı varsayılan kanala düşmez: `UNKNOWN_DOMAIN` (404). */
+/** `Host` → channel + language. An unknown domain does not fall back to the default channel: `UNKNOWN_DOMAIN` (404). */
 export function resolveChannel(host: string, index: DomainIndex): ResolvedChannel {
   const name = normalizeHost(host)
   const hit = index.get(name)

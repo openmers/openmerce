@@ -22,7 +22,7 @@ afterEach(() => {
   for (const close of closers.splice(0)) close()
 })
 
-/** `app.test.ts` kalıbı: gerçek SQLite + migration + varsayılan kanal. */
+/** Same pattern as `app.test.ts`: real SQLite + migrations + default channel. */
 async function harness(https = false) {
   const file = openTestDb({ file: true })
   const sqlite = openNodeSqlite(file.path)
@@ -65,8 +65,8 @@ async function setupAndLogin(h: H): Promise<string> {
   return pair(cookieOf(res))
 }
 
-describe("admin kimlik doğrulama", () => {
-  it("kurulumdan önce yalnız kurulum açık; kurulumdan sonra kurulum kilitli", async () => {
+describe("admin authentication", () => {
+  it("before setup only setup is open; after setup, setup is locked", async () => {
     const h = await harness()
     const me = await h.call("me")
     expect(me.status).toBe(403)
@@ -85,7 +85,7 @@ describe("admin kimlik doğrulama", () => {
     expect(await again.json()).toMatchObject({ json: { code: "SETUP_DONE" } })
   })
 
-  it("kurulum → giriş → admin.me 200; çerez HttpOnly + SameSite, HTTP'de Secure yok", async () => {
+  it("setup → login → admin.me 200; cookie HttpOnly + SameSite, no Secure over HTTP", async () => {
     const h = await harness()
     expect((await h.call("setup/create", OWNER)).status).toBe(200)
     const login = await h.call("auth/login", { email: OWNER.email, password: OWNER.password })
@@ -107,14 +107,14 @@ describe("admin kimlik doğrulama", () => {
     expect(JSON.stringify(body)).not.toMatch(/"id":\s*\d/)
   })
 
-  it("HTTPS'te çerez Secure taşır", async () => {
+  it("cookie carries Secure over HTTPS", async () => {
     const h = await harness(true)
     expect((await h.call("setup/create", OWNER)).status).toBe(200)
     const login = await h.call("auth/login", { email: OWNER.email, password: OWNER.password })
     expect(cookieOf(login)).toMatch(/;\s*Secure/i)
   })
 
-  it("yanlış parola ve olmayan e-posta aynı yanıt", async () => {
+  it("wrong password and unknown email get the same response", async () => {
     const h = await harness()
     expect((await h.call("setup/create", OWNER)).status).toBe(200)
     const wrong = await h.call("auth/login", { email: OWNER.email, password: "yanlis-parola-1" })
@@ -129,14 +129,14 @@ describe("admin kimlik doğrulama", () => {
     expect(routeGroup("/rpc/admin/auth/login")).toBe("login")
   })
 
-  it("oturumsuz ve sahte çerezli admin.me 401", async () => {
+  it("admin.me without session and with a forged cookie returns 401", async () => {
     const h = await harness()
     expect((await h.call("setup/create", OWNER)).status).toBe(200)
     expect((await h.call("me")).status).toBe(401)
     expect((await h.call("me", undefined, "om_a=uydurma.imza")).status).toBe(401)
   })
 
-  it("veritabanında yalnız token özeti; çalınan satırla oturum bulunmaz", async () => {
+  it("only the token hash is stored; a stolen row does not find a session", async () => {
     const h = await harness()
     const cookie = await setupAndLogin(h)
     const token = tokenOf(cookie)
@@ -148,14 +148,14 @@ describe("admin kimlik doğrulama", () => {
     expect(rows[0]).not.toContain(token)
     expect(rows[0]).toBe(await hashSessionToken(token))
 
-    // Sır bilinse bile satırdaki değer token değildir: Better Auth onu arar, bulamaz.
+    // Even if the secret is known, the stored value is not the token: Better Auth looks it up and finds nothing.
     const auth = createAdminAuth({ db: h.platform.db, secret: SECRET })
     const internal = (await auth.$context).internalAdapter
     expect(await internal.findSession(rows[0] ?? "")).toBeNull()
     expect(await internal.findSession(token)).not.toBeNull()
   })
 
-  it("çıkıştan sonra token geçersiz, satır silinir", async () => {
+  it("after logout the token is invalid and the row is deleted", async () => {
     const h = await harness()
     const cookie = await setupAndLogin(h)
     const out = await h.call("auth/logout", undefined, cookie)
@@ -165,7 +165,7 @@ describe("admin kimlik doğrulama", () => {
     expect(h.sqlite.write.prepare("SELECT count(*) FROM admin_sessions").pluck().get()).toBe(0)
   })
 
-  it("CSRF: admin POST'ta yabancı Origin'li form isteği 403", async () => {
+  it("CSRF: admin POST form request with a foreign Origin returns 403", async () => {
     const h = await harness()
     const res = await h.app.request(`http://${HOST}/rpc/admin/auth/login`, {
       method: "POST",
@@ -178,10 +178,10 @@ describe("admin kimlik doğrulama", () => {
     expect(res.status).toBe(403)
   })
 
-  it("izni olmayan prosedür 403, meta'sız prosedür 403", async () => {
+  it("procedure without permission returns 403, procedure without meta returns 403", async () => {
     const h = await harness()
     expect((await h.call("setup/create", OWNER)).status).toBe(200)
-    // Rolsüz ikinci yönetici: oturumu geçerli, izni yok.
+    // Second admin without a role: valid session, no permission.
     const w = h.sqlite.write
     const id = w
       .prepare(

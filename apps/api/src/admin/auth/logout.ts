@@ -2,7 +2,7 @@ import { isAPIError } from "better-auth/api"
 import { forwardSetCookies } from "../../auth/cookies"
 import { base } from "../../orpc/base"
 
-/** `admin.auth.logout`: oturum satırı silinir, `om_a` temizlenir; oturum yoksa da `ok`. */
+/** `admin.auth.logout`: deletes the session row and clears `om_a`; returns `ok` even without a session. */
 export const logout = base.admin.auth.logout.handler(async ({ context }) => {
   try {
     const { headers } = await context.adminAuth.api.signOut({

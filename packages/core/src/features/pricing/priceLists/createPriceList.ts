@@ -14,7 +14,7 @@ import {
 
 export type CreatePriceListInput = {
   name: string
-  /** Oluşturulduktan sonra değişmez (`prices.currency` bununla aynı kalır). */
+  /** Immutable after creation (`prices.currency` stays the same as this). */
   currency: string
   type: PriceListType
   priority?: number
@@ -24,8 +24,8 @@ export type CreatePriceListInput = {
 }
 
 /**
- * `ctx.channel` için fiyat listesi + denetim tek `atomic()`. Kanal × para birimi başına tek `base`
- * (kısmi benzersiz indeks son kapıdır): ikinci `base` `CONFLICT`.
+ * Price list + audit for `ctx.channel` in one `atomic()`. One `base` per channel × currency
+ * (the partial unique index is the last gate): a second `base` is `CONFLICT`.
  */
 export async function createPriceList(
   ctx: PricingCtx,

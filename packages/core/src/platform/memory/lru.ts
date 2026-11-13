@@ -1,9 +1,9 @@
-// Saf, çalışma zamanından bağımsız LRU: boyut sınırı + TTL. Saat dışarıdan (`now`, epoch ms) gelir.
-// Self-host `cache` ve istek ömürlü önbellek bunu kullanır.
+// Pure, runtime-independent LRU: size limit + TTL. Clock is injected (`now`, epoch ms).
+// Used by the self-host `cache` and the request-scoped cache.
 export type Lru<V> = {
-  /** Yoksa ya da süresi dolduysa `undefined`; bulunursa en yeni olur. */
+  /** `undefined` if missing or expired; becomes the newest when found. */
   get(key: string, now: number): V | undefined
-  /** `ttlMs` yoksa varsayılan; o da yoksa süresiz. Sınır aşılırsa en eski çıkar. */
+  /** Default if `ttlMs` is missing; no expiry if that is missing too. The oldest is evicted when over the limit. */
   set(key: string, value: V, now: number, ttlMs?: number): void
   delete(key: string): boolean
   readonly size: number
@@ -13,7 +13,7 @@ type Entry<V> = { value: V; expiresAt: number }
 
 export function createLru<V>(opts: { max: number; ttlMs?: number }): Lru<V> {
   if (!(opts.max >= 1)) throw new RangeError("max en az 1 olmalı")
-  // Map ekleme sırasını korur: ilk anahtar en eskisi.
+  // Map keeps insertion order: the first key is the oldest.
   const map = new Map<string, Entry<V>>()
   return {
     get(key, now) {

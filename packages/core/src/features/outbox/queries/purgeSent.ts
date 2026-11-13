@@ -8,8 +8,8 @@ export type PurgeSentInput = {
   limits?: Pick<OutboxLimits, "sentRetentionMs">
 }
 
-// Saklama yaşı `created_at` üzerinden ölçülür: `(status, created_at)` indeksi tam taramasız süpürme
-// sağlar (katalog 01 indeks kararı).
+// Retention age is measured on `created_at`: the `(status, created_at)` index allows a sweep without a full
+// scan (catalog 01 index decision).
 export function purgeSentStatement(db: Db, input: PurgeSentInput): AtomicStatement {
   const retention = (input.limits ?? OUTBOX_LIMITS).sentRetentionMs
   return db
@@ -18,7 +18,7 @@ export function purgeSentStatement(db: Db, input: PurgeSentInput): AtomicStateme
     .toSQL()
 }
 
-/** Silinen satır sayısı. */
+/** Number of deleted rows. */
 export async function purgeSent(
   p: Pick<Platform, "db" | "atomic">,
   input: PurgeSentInput,

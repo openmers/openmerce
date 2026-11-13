@@ -6,7 +6,7 @@ import {
   productFilterArgs,
 } from "../conditions/containsProducts"
 
-/** Süzgece uyan satırlara birim başına `amount` indirim; satırın kalanına kırpılır. */
+/** A per-unit `amount` discount on lines matching the filter; clipped to the line's remainder. */
 export const lineAmount: ActionDef<ProductFilter & { amount: number }> = {
   code: "lineAmount",
   args: productFilterArgs.extend({ amount: z.number().int().min(1) }),

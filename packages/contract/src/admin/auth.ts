@@ -1,15 +1,15 @@
 import { z } from "zod"
 import { adminProcedure } from "../shared/adminProcedure"
 
-// Parola sınırları: alt sınır Better Auth varsayılanı (8), üst sınır özetleme maliyetini sınırlar.
+// Password limits: the minimum is Better Auth's default (8), the maximum caps hashing cost.
 export const adminPasswordSchema = z.string().min(8).max(128)
 export const adminEmailSchema = z.email().max(254)
 
 const okOutput = z.object({ ok: z.literal(true) })
 
 /**
- * `admin.setup.create`: ilk yönetici (`SuperAdmin`) + kurulum kilidi; yalnız kurulum bitmeden açık.
- * Dönen kimlik `adm_` önekli `public_id`'dir.
+ * `admin.setup.create`: first admin (`SuperAdmin`) + setup lock; only open before setup is done.
+ * The returned id is a `public_id` with the `adm_` prefix.
  */
 export const adminSetupCreate = adminProcedure("public")
   .input(
@@ -21,15 +21,15 @@ export const adminSetupCreate = adminProcedure("public")
   )
   .output(z.object({ ok: z.literal(true), adminId: z.string() }))
 
-/** `admin.auth.login`: e-posta + parola; çerez `om_a`. Hata yanıtı hesabın varlığını belli etmez. */
+/** `admin.auth.login`: email + password; cookie `om_a`. The error response does not reveal whether the account exists. */
 export const adminAuthLogin = adminProcedure("public")
   .input(z.object({ email: adminEmailSchema, password: adminPasswordSchema }))
   .output(okOutput)
 
-/** `admin.auth.logout`: oturum satırını siler, çerezi temizler; oturum yoksa da `ok`. */
+/** `admin.auth.logout`: deletes the session row and clears the cookie; returns `ok` even without a session. */
 export const adminAuthLogout = adminProcedure("public").output(okOutput)
 
-/** `admin.me`: oturumdaki yönetici ve bu kanaldaki izinleri. İç kimlik dönmez. */
+/** `admin.me`: the session's admin and their permissions in this channel. No internal id is returned. */
 export const adminMe = adminProcedure("session").output(
   z.object({
     admin: z.object({ id: z.string(), name: z.string(), email: z.string() }),

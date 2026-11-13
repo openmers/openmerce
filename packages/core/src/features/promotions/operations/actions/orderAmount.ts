@@ -3,8 +3,8 @@ import { allocateOrderDiscount } from "../../../tax/calc/allocateOrderDiscount"
 import type { ActionDef } from "../../types"
 
 /**
- * Sipariş indirimi: `amount` satırların kalanına oransal dağıtılır (vergi `allocateOrderDiscount`,
- * kalan kuruş kuralı orada); toplam kalanı aşarsa kırpılır.
+ * Order discount: `amount` is distributed proportionally across the lines' remainders (tax `allocateOrderDiscount`,
+ * the remainder cent rule lives there); clipped if it exceeds the total remainder.
  */
 export const orderAmount: ActionDef<{ amount: number }> = {
   code: "orderAmount",

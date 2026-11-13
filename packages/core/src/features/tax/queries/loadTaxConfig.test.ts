@@ -6,7 +6,7 @@ import { loadTaxConfig } from "./loadTaxConfig"
 const NOW = 1_700_000_000_000
 
 describeOnTargets("loadTaxConfig", (getDb) => {
-  it("boş DB'de boş; bölge üyeleri ve oranlar tek turda", async () => {
+  it("empty on an empty DB; zone members and rates in one round trip", async () => {
     const db = getDb()
     const p = sqlitePlatform(db)
     expect(await loadTaxConfig(p)).toEqual({ zones: [], categories: [], rates: [] })
@@ -35,7 +35,7 @@ describeOnTargets("loadTaxConfig", (getDb) => {
     )
 
     const config = await loadTaxConfig(p)
-    expect(p.batchCalls()).toBe(2) // her çağrı tek tur
+    expect(p.batchCalls()).toBe(2) // each call is one round trip
     expect(config.zones).toEqual([
       {
         id: zone,

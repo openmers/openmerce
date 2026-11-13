@@ -8,14 +8,14 @@ import { auditActorOf } from "../../catalog/products/types"
 import { findPriceList, priceListGuard, priceListIdByPublicId } from "../priceLists/statements"
 import { isMoney, type PricingCtx, PricingError } from "../types"
 
-/** Tek istekte en çok kayıt (sözleşmedeki `BULK_MAX_RECORDS` ile aynı). */
+/** Maximum entries per request (same as `BULK_MAX_RECORDS` in the contract). */
 export const SET_PRICES_MAX = 500
 
 export type SetPriceItem = {
   variantPublicId: string
-  /** Miktar kademesi; varsayılan 1. */
+  /** Quantity tier; default 1. */
   minQty?: number
-  /** Küçük birim tamsayı; para birimi listeden yazılır (istemciden alınmaz). */
+  /** Integer in minor units; the currency is written from the list (not taken from the client). */
   amount: number
   compareAtAmount?: number | null
 }
@@ -34,11 +34,11 @@ function invalidReason(item: SetPriceItem, minQty: number): string | undefined {
 }
 
 /**
- * `prices.setMany` (03-fiyat §7): liste + varyant + kademe → tutar upsert'i, tek `atomic()`.
- * İdempotent (aynı yük iki kez = aynı satırlar). Kayıt başına sonuç: geçersiz kayıt yazılmaz
- * (`INVALID_INPUT`), olmayan varyant 0 satır döner (`NOT_FOUND`), diğerleri yazılır.
- * Liste kanalın varsayılan listesiyse her varyantın ürünü için `reindex` işi aynı batch'tedir;
- * yazımdan sonra `pl:<public_id>` etiketi temizlenir (03-fiyat §5).
+ * `prices.setMany` (03-fiyat §7): list + variant + tier → amount upsert, in one `atomic()`.
+ * Idempotent (the same payload twice = the same rows). Per-entry result: an invalid entry is not written
+ * (`INVALID_INPUT`), a missing variant returns 0 rows (`NOT_FOUND`), the rest are written.
+ * If the list is the channel's default list, a `reindex` job for each variant's product is in the same batch;
+ * after the write the `pl:<public_id>` tag is purged (03-fiyat §5).
  */
 export async function setPrices(
   ctx: PricingCtx,
@@ -114,7 +114,7 @@ export async function setPrices(
     ),
   )
   const result = await p.atomic(stmts)
-  // Denetim satırı yalnız liste varsa yazılır: yoksa bütün kayıtlar 0 satır, liste `NOT_FOUND`.
+  // The audit row is only written if the list exists: otherwise every entry is 0 rows and the list is `NOT_FOUND`.
   if (!affected(result, stmts.length - 1))
     await findPriceList(p.db, input.priceListPublicId, channelId)
 

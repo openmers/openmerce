@@ -1,13 +1,13 @@
-# Entegrasyon testleri
+# Integration tests
 
-Strateji: [../docs/08-isletme/03-test.md](../docs/08-isletme/03-test.md). Yapı Medusa'nın `integration-tests/` düzeninden uyarlandı; çalıştırıcı `packages/test-utils` içindedir.
+Strategy: [../docs/08-isletme/03-test.md](../docs/08-isletme/03-test.md). The layout follows a common `integration-tests/` convention; the runner lives in `packages/test-utils`.
 
-| Klasör      | Ne                                                                                      | Hedef            |
-| ----------- | --------------------------------------------------------------------------------------- | ---------------- |
-| `api/`      | Shop ve Admin API'yi HTTP üzerinden, kaynağa göre (`__tests__/shop`, `__tests__/admin`) | D1 **ve** SQLite |
-| `core/`     | HTTP'siz feature mantığı: rezervasyon, settlement, iade, outbox, medya                  | D1 **ve** SQLite |
-| `race/`     | Eşzamanlı alıcı, çift webhook, kredi limiti yarışı: tam bir kazanan                     | D1 **ve** SQLite |
-| `contract/` | Strateji/operasyon/port ortak sözleşme testleri, sızıntı kapısı, önbellek politikası    | Vitest           |
-| `helpers/`  | Ortak tohum veri ve oturum yardımcıları                                                 |                  |
+| Folder      | What                                                                            | Target            |
+| ----------- | ------------------------------------------------------------------------------- | ----------------- |
+| `api/`      | Shop and Admin API over HTTP, by resource (`__tests__/shop`, `__tests__/admin`) | D1 **and** SQLite |
+| `core/`     | Feature logic without HTTP: reservation, settlement, refunds, outbox, media     | D1 **and** SQLite |
+| `race/`     | Concurrent buyers, duplicate webhooks, credit limit races: exactly one winner   | D1 **and** SQLite |
+| `contract/` | Shared contract tests for strategies/operations/ports, leak gate, cache policy  | Vitest            |
+| `helpers/`  | Shared seed data and session helpers                                            |                   |
 
-Birim testleri burada değil, ilgili dosyanın yanında (`*.test.ts`) durur. Bir modülün (`packages/modules/*`) kendi entegrasyon testleri o modülün `integration-tests/` klasöründe olur (Medusa'daki paket başına düzen).
+Unit tests do not live here; they sit next to the file they test (`*.test.ts`). A module's (`packages/modules/*`) own integration tests live in that module's `integration-tests/` folder (one layout per package).

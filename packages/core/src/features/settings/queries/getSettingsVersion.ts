@@ -3,7 +3,7 @@ import { and, eq } from "drizzle-orm"
 import type { Db } from "../../../platform"
 import { SETTINGS_VERSION_KEY } from "../registry"
 
-/** Global ayar sürümü; satır yoksa 0. */
+/** Global settings version; 0 if there is no row. */
 export async function getSettingsVersion(db: Db): Promise<number> {
   const rows = await db
     .select({ value: settings.value })

@@ -1,9 +1,9 @@
 import { TaxError } from "../types"
 
 export type SplitInput = {
-  /** Satır tutarı (küçük birim): dahilse brüt, hariçse net. */
+  /** Line amount (minor units): gross if inclusive, net if exclusive. */
   amount: number
-  /** Toplam oran, baz puan. */
+  /** Total rate, basis points. */
   rateBp: number
   includesTax: boolean
 }
@@ -12,7 +12,7 @@ export type Split = { net: number; tax: number; gross: number }
 
 const BP = 10_000n
 
-/** `a / b`, yarım yukarı (negatif olmayan tamsayılar). */
+/** `a / b`, half-up (non-negative integers). */
 function divRound(a: bigint, b: bigint): bigint {
   return (2n * a + b) / (2n * b)
 }
@@ -24,10 +24,10 @@ function assertInt(value: number, what: string): void {
 }
 
 /**
- * Dahil/hariç dönüşüm (09-vergi §2.3-2.4, saf); e-fatura app'i de bunu kullanır. Yuvarlama
- * **satır düzeyinde** ve tektir: dahilse net = round(brüt × 10000 / (10000 + oran)), vergi = brüt −
- * net; hariçse vergi = round(net × oran / 10000), brüt = net + vergi. Yarım yukarı; ara çarpım
- * `bigint` (taşma yok). Her iki yönde `net + tax = gross` kesin.
+ * Inclusive/exclusive conversion (09-vergi §2.3-2.4, pure); the e-invoice app uses it too. Rounding
+ * happens **at line level** and once: if inclusive, net = round(gross × 10000 / (10000 + rate)), tax = gross −
+ * net; if exclusive, tax = round(net × rate / 10000), gross = net + tax. Half-up; the intermediate product is
+ * a `bigint` (no overflow). `net + tax = gross` holds exactly in both directions.
  */
 export function splitGrossNet(input: SplitInput): Split {
   assertInt(input.amount, "tutar")
@@ -44,7 +44,7 @@ export function splitGrossNet(input: SplitInput): Split {
   return { net: input.amount, tax, gross }
 }
 
-/** Satırları ayrı ayrı böler; sipariş toplamları satırların toplamıdır (yeniden yuvarlanmaz). */
+/** Splits lines individually; order totals are the sum of the lines (not re-rounded). */
 export function splitLines(lines: readonly SplitInput[]): Split & { lines: Split[] } {
   const out = lines.map(splitGrossNet)
   const sum = (k: keyof Split) => out.reduce((acc, s) => acc + s[k], 0)

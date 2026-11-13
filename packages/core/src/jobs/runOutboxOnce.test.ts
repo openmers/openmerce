@@ -38,7 +38,7 @@ async function rowBy(p: ReturnType<typeof sqlitePlatform>, publicId: string) {
 describeOnTargets("runOutboxOnce", (getDb) => {
   const platform = () => sqlitePlatform(getDb())
 
-  it("işi handler'a verir ve sent işaretler", async () => {
+  it("hands the job to the handler and marks it sent", async () => {
     const p = platform()
     await enqueue(p, "evt_1", { kind: "event", event: "order.placed" })
     const seen: string[] = []
@@ -55,7 +55,7 @@ describeOnTargets("runOutboxOnce", (getDb) => {
     expect(await rowBy(p, "evt_1")).toMatchObject({ status: "sent", attempts: 0, claimedAt: null })
   })
 
-  it("handler hatası denemeyi artırır, diğer iş etkilenmez", async () => {
+  it("a handler error increments attempts, other jobs are unaffected", async () => {
     const p = platform()
     await enqueue(p, "evt_bad", { kind: "event", event: "order.placed" })
     await enqueue(p, "evt_ok", { kind: "event", event: "order.placed" })
@@ -75,7 +75,7 @@ describeOnTargets("runOutboxOnce", (getDb) => {
     expect(await rowBy(p, "evt_ok")).toMatchObject({ status: "sent" })
   })
 
-  it("bilinmeyen topic failed olur, sessizce yutulmaz", async () => {
+  it("an unknown topic becomes failed, not silently swallowed", async () => {
     const p = platform()
     await enqueue(p, "evt_1", { kind: "webhook", event: "app.unknown" })
 
@@ -88,7 +88,7 @@ describeOnTargets("runOutboxOnce", (getDb) => {
     })
   })
 
-  it("olaysız iş türü topic olur (event yoksa kind)", async () => {
+  it("a job kind without an event becomes the topic (kind if there is no event)", async () => {
     const p = platform()
     await enqueue(p, "evt_1", { kind: "reindex", payload: { product: "prod_1" } })
     const topics: string[] = []
@@ -105,7 +105,7 @@ describeOnTargets("runOutboxOnce", (getDb) => {
     expect(topics).toEqual(["reindex"])
   })
 
-  it("10. denemede dead olur ve bildirim satırı yazar", async () => {
+  it("becomes dead on the 10th attempt and writes a notification row", async () => {
     const p = platform()
     await enqueue(p, "evt_1", { kind: "event", event: "order.placed" })
     await p.atomic([
@@ -140,15 +140,15 @@ describeOnTargets("runOutboxOnce", (getDb) => {
     })
   })
 
-  it("sahiplenilecek satır yoksa sayaçlar sıfır", async () => {
+  it("counters are zero when there is no row to claim", async () => {
     const p = platform()
     const counters = await runOutboxOnce(p, defineHandlers({}), { now: NOW })
     expect(counters).toEqual({ claimed: 0, sent: 0, failed: 0, dead: 0 })
   })
 })
 
-describe("[sqlite] runOutboxOnce iki tüketici", () => {
-  it("aynı partiyi çift işlemez", async () => {
+describe("[sqlite] runOutboxOnce with two consumers", () => {
+  it("does not process the same batch twice", async () => {
     const file = openTestDb({ file: true })
     try {
       const c1 = file.connect()

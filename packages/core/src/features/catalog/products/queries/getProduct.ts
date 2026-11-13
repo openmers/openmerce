@@ -69,12 +69,12 @@ export type ProductDetail = {
   channels: string[]
 }
 
-/** İstenen dilde ad; yoksa ilk çeviri, o da yoksa kod (admin normalize okuma). */
+/** Name in the requested language; otherwise the first translation, otherwise the code (admin normalized read). */
 function pickName(rows: ReadonlyArray<{ lang: string; name: string }>, lang: string, code: string) {
   return rows.find((row) => row.lang === lang)?.name ?? rows[0]?.name ?? code
 }
 
-/** Admin için normalize okuma: yazma tablolarından ürün + çeviriler + seçenekler + varyantlar. */
+/** Normalized read for admin: product + translations + options + variants from the write tables. */
 export async function getProduct(
   ctx: Pick<CatalogCtx, "platform" | "lang">,
   publicId: string,

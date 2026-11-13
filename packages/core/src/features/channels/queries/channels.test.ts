@@ -28,10 +28,10 @@ function need<T>(value: T | undefined, what: string): T {
   return value
 }
 
-describeOnTargets("channels sorguları", (getDb) => {
+describeOnTargets("channels queries", (getDb) => {
   const platform = () => sqlitePlatform(getDb())
 
-  it("loadChannels boş DB'de boş; alan adlarını kanallarına bağlar, tek tur", async () => {
+  it("loadChannels is empty on an empty DB; binds domains to their channels in one round trip", async () => {
     const p = platform()
     expect(await loadChannels(p)).toEqual([])
 
@@ -41,13 +41,13 @@ describeOnTargets("channels sorguları", (getDb) => {
     await insertChannelDomain(p, { channelId: de.id, domain: "de.shop.com" }, NOW)
 
     const loaded = await loadChannels(p)
-    expect(p.batchCalls()).toBe(3) // her loadChannels = 1 tur
+    expect(p.batchCalls()).toBe(3) // each loadChannels = 1 round trip
     expect(loaded).toHaveLength(2)
     expect(loaded[0]?.domains.map((d) => d.domain)).toEqual(["shop.com"])
     expect(loaded[1]?.domains.map((d) => d.domain)).toEqual(["de.shop.com"])
   })
 
-  it("createDefaultChannel EN/USD ve birincil alan adını tek atomic'te yazar", async () => {
+  it("createDefaultChannel writes EN/USD and the primary domain in one atomic", async () => {
     const p = platform()
     await createDefaultChannel(p, { publicId: "chn_a", domain: "Shop.COM:443." }, NOW)
     const [ch] = await loadChannels(p)
@@ -60,7 +60,7 @@ describeOnTargets("channels sorguları", (getDb) => {
     })
   })
 
-  it("ikinci varsayılan kanal reddedilir; ilk kanal ve alan adı kalır", async () => {
+  it("a second default channel is rejected; the first channel and domain remain", async () => {
     const p = platform()
     await createDefaultChannel(p, { publicId: "chn_a", domain: "one.com" }, NOW)
     await expect(
@@ -70,7 +70,7 @@ describeOnTargets("channels sorguları", (getDb) => {
     expect(await p.db.select().from(channelDomains)).toHaveLength(1)
   })
 
-  it("public_id verilmezse üretilir (insertChannel ve createDefaultChannel)", async () => {
+  it("public_id is generated if not given (insertChannel and createDefaultChannel)", async () => {
     const p = platform()
     const generated = await insertChannel(p, input({ publicId: undefined, code: "auto" }), NOW)
     expect(generated).toMatch(/^chn_[0-9A-HJKMNP-TV-Z]{10}$/)
@@ -80,7 +80,7 @@ describeOnTargets("channels sorguları", (getDb) => {
     expect(await loadChannels(p)).toHaveLength(2)
   })
 
-  it("insertChannel: code tekrarı reddedilir, büyük harfli code küçük harfe çevrilir", async () => {
+  it("insertChannel: duplicate code is rejected, an uppercase code is lowercased", async () => {
     const p = platform()
     await insertChannel(p, input(), NOW)
     await expect(insertChannel(p, input({ publicId: "chn_0000000002" }), NOW)).rejects.toThrow(
@@ -90,7 +90,7 @@ describeOnTargets("channels sorguları", (getDb) => {
     expect((await loadChannels(p)).map((c) => c.code)).toEqual(["main", "upper"])
   })
 
-  it("insertChannel: para birimi ve dil listeleri kodda doğrulanır", async () => {
+  it("insertChannel: currency and language lists are validated in code", async () => {
     const p = platform()
     await expect(insertChannel(p, input({ currencies: ["EUR"] }), NOW)).rejects.toMatchObject({
       code: "INVALID_CHANNEL",
@@ -100,7 +100,7 @@ describeOnTargets("channels sorguları", (getDb) => {
     })
   })
 
-  it("insertChannelDomain: aynı alan adı iki kanala, ikinci birincil aynı kanala eklenemez", async () => {
+  it("insertChannelDomain: the same domain cannot go to two channels, a second primary cannot be added to the same channel", async () => {
     const p = platform()
     await insertChannel(p, input(), NOW)
     await insertChannel(p, input({ publicId: "chn_0000000002", code: "second" }), NOW)
@@ -120,7 +120,7 @@ describeOnTargets("channels sorguları", (getDb) => {
     )
   })
 
-  it("insertChannelDomain küçük harfe çevirir; ham büyük harf DB check'ine takılır", async () => {
+  it("insertChannelDomain lowercases; raw uppercase hits the DB check", async () => {
     const p = platform()
     await insertChannel(p, input(), NOW)
     const ch = need((await loadChannels(p))[0], "kanal")
@@ -140,7 +140,7 @@ describeOnTargets("channels sorguları", (getDb) => {
     ).toEqual([])
   })
 
-  it("updateChannel her güncellemede settings_version'ı 1 artırır, updated_at değişir", async () => {
+  it("updateChannel bumps settings_version by 1 on every update, updated_at changes", async () => {
     const p = platform()
     await insertChannel(p, input(), NOW)
     const ch = need((await loadChannels(p))[0], "kanal")
@@ -159,7 +159,7 @@ describeOnTargets("channels sorguları", (getDb) => {
     expect(await updateChannel(p, 999, { statementName: "yok" }, NOW)).toBe(0)
   })
 
-  it("varsayılan kanal silinmez", async () => {
+  it("the default channel is not deleted", async () => {
     const p = platform()
     await createDefaultChannel(p, { publicId: "chn_a", domain: "one.com" }, NOW)
     const ch = need((await loadChannels(p))[0], "kanal")
@@ -167,7 +167,7 @@ describeOnTargets("channels sorguları", (getDb) => {
     expect(await loadChannels(p)).toHaveLength(1)
   })
 
-  it("varsayılan olmayan kanal alan adlarıyla birlikte silinir", async () => {
+  it("a non-default channel is deleted together with its domains", async () => {
     const p = platform()
     await insertChannel(p, input(), NOW)
     const ch = need((await loadChannels(p))[0], "kanal")
@@ -178,7 +178,7 @@ describeOnTargets("channels sorguları", (getDb) => {
     expect(await p.db.select().from(channelDomains)).toEqual([])
   })
 
-  it("bellekteki kopya eskiyse SQL koruması silmez (etkilenen 0)", async () => {
+  it("if the in-memory copy is stale the SQL guard does not delete (0 affected)", async () => {
     const p = platform()
     await insertChannel(p, input({ isDefault: true }), NOW)
     const ch = need((await loadChannels(p))[0], "kanal")
@@ -189,7 +189,7 @@ describeOnTargets("channels sorguları", (getDb) => {
     expect(await p.db.select().from(channelDomains)).toHaveLength(1)
   })
 
-  it("FK açıkken alan adı silinmeden kanal silinemez", async () => {
+  it("with FKs on, a channel cannot be deleted before its domains", async () => {
     const p = platform()
     await insertChannel(p, input(), NOW)
     const ch = need((await loadChannels(p))[0], "kanal")
@@ -201,7 +201,7 @@ describeOnTargets("channels sorguları", (getDb) => {
     expect(await loadChannels(p)).toHaveLength(1)
   })
 
-  it("domain araması indeksten yapılır (tam tarama yok)", () => {
+  it("domain lookup uses the index (no full scan)", () => {
     assertNoFullScan(getDb(), {
       sql: "SELECT channel_id FROM channel_domains WHERE domain = ?",
       params: ["shop.com"],

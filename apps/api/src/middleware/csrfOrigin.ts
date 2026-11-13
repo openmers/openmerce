@@ -3,9 +3,9 @@ import type { AppEnv } from "../http/env"
 import { apiError } from "../http/errors"
 
 const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"])
-// Tarayıcının ön uçuşsuz (CORS preflight'sız) çapraz kökenden gönderebildiği gövde tipleri.
+// Body types a browser can send cross-origin without a CORS preflight.
 const FORM_TYPES = ["application/x-www-form-urlencoded", "multipart/form-data", "text/plain"]
-/** İmzalı webhook yolları: sağlayıcı tarayıcı değildir, imza doğrulanır. */
+/** Signed webhook paths: the provider is not a browser, the signature is verified. */
 export const WEBHOOK_PREFIX = "/hooks/"
 
 function isFormType(contentType: string | undefined): boolean {
@@ -23,9 +23,9 @@ function originHost(origin: string | undefined): string | null {
 }
 
 /**
- * CSRF (`06-guvenlik-ve-yetki`): durum değiştiren, form tipli istekte `Origin` isteğin Host'u ile
- * eşleşmezse (ya da yoksa) 403. JSON istekleri tarayıcıda ön uçuş ister, kapsam dışı; `Authorization`
- * başlıklı istek tarayıcı formundan gelemez; imzalı webhook yolu muaf.
+ * CSRF (`06-guvenlik-ve-yetki`): a state-changing, form-typed request whose `Origin` does not match
+ * the request Host (or is missing) gets 403. JSON requests need a browser preflight and are out of scope;
+ * requests with an `Authorization` header cannot come from a browser form; signed webhook paths are exempt.
  */
 export function csrfOrigin(): MiddlewareHandler<AppEnv> {
   return async (c, next) => {

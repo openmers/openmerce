@@ -11,7 +11,7 @@ export type SaveResponseInput = {
   response: unknown
 }
 
-/** Komutun `atomic()`'ine eklenen yanıt yazımı; yalnız `in_progress` satırı `done` yapar. */
+/** Response write added to the command's `atomic()`; only turns an `in_progress` row into `done`. */
 export function saveResponseStatement(
   db: Db,
   input: SaveResponseInput,
@@ -36,7 +36,7 @@ export function saveResponseStatement(
     .toSQL()
 }
 
-/** `true` = yanıt yazıldı; `false` = anahtar yok ya da zaten `done`. */
+/** `true` = the response was written; `false` = the key is missing or already `done`. */
 export async function saveResponse(
   p: Pick<Platform, "db" | "atomic">,
   input: SaveResponseInput,

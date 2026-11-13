@@ -7,7 +7,7 @@ import { productsRouter } from "./products"
 import { createSetup } from "./setup/create"
 import { stockRouter } from "./stock"
 
-/** Admin router'ı: sözleşmeyle aynı biçim (`contract.admin`). */
+/** Admin router: same shape as the contract (`contract.admin`). */
 export const adminRouter = {
   setup: { create: createSetup },
   auth: { login, logout },

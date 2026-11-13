@@ -2,7 +2,7 @@ import { settings } from "@openmers/db"
 import type { Platform } from "../../../platform"
 import { SETUP_COMPLETED_KEY } from "../registry"
 
-/** `setup.completed_at` satırını bir kez yazar; etkilenen satır (0 = kurulum zaten bitmiş). */
+/** Writes the `setup.completed_at` row once; affected rows (0 = setup already done). */
 export async function markSetupCompleted(
   p: Pick<Platform, "db" | "atomic">,
   now: number,

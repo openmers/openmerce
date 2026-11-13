@@ -20,10 +20,10 @@ const NOW = 1_700_000_000_000
 const ACTOR = { type: "admin", id: 1 } as const
 const global = { scope: "global", scopeId: 0 } as const
 
-describeOnTargets("settings sorguları", (getDb) => {
+describeOnTargets("settings queries", (getDb) => {
   const platform = () => testPlatform(getDb())
 
-  it("getSettings iki kapsamı tek sorguda döner, başka kanalı karıştırmaz", async () => {
+  it("getSettings returns two scopes in one query and does not mix in another channel", async () => {
     const p = platform()
     await setSetting(p, { ...global, key: "store.name", value: "G" }, NOW, ACTOR)
     await setSetting(
@@ -49,7 +49,7 @@ describeOnTargets("settings sorguları", (getDb) => {
     expect(rows.some((r) => r.scopeId === 6)).toBe(false)
   })
 
-  it("boş kapsam listesi sorgu atmadan boş döner; okuma indeks kullanır", async () => {
+  it("an empty scope list returns empty without querying; the read uses an index", async () => {
     const p = platform()
     expect(await getSettings(p.db, [])).toEqual([])
     await setSetting(p, { ...global, key: "store.name", value: "G" }, NOW, ACTOR)
@@ -59,11 +59,11 @@ describeOnTargets("settings sorguları", (getDb) => {
     )
   })
 
-  it("getSettingsVersion satır yokken 0", async () => {
+  it("getSettingsVersion is 0 when there are no rows", async () => {
     expect(await getSettingsVersion(platform().db)).toBe(0)
   })
 
-  it("her yazımda sürüm tam 1 artar; aynı anahtar tek satırda kalır", async () => {
+  it("each write bumps the version by exactly 1; the same key stays in one row", async () => {
     const p = platform()
     await setSetting(p, { ...global, key: "store.name", value: "A" }, NOW, ACTOR)
     expect(await getSettingsVersion(p.db)).toBe(1)
@@ -77,7 +77,7 @@ describeOnTargets("settings sorguları", (getDb) => {
     )
   })
 
-  it("geçersiz değer, bilinmeyen anahtar, sır gibi anahtar ve izinsiz kapsam reddedilir", async () => {
+  it("invalid value, unknown key, secret-like key and unauthorized scope are rejected", async () => {
     const p = platform()
     await expect(
       setSetting(p, { ...global, key: "audit.retention_days", value: 0 }, NOW, ACTOR),
@@ -96,14 +96,14 @@ describeOnTargets("settings sorguları", (getDb) => {
         ACTOR,
       ),
     ).rejects.toMatchObject({ code: "SCOPE_NOT_ALLOWED" })
-    // iç sayaç: kimse yazmaz
+    // internal counter: nobody writes it
     await expect(
       setSetting(p, { ...global, key: "settings.version", value: 9 }, NOW, ACTOR),
     ).rejects.toMatchObject({ code: "SCOPE_NOT_ALLOWED" })
     expect(await getSettingsVersion(p.db)).toBe(0)
   })
 
-  it("global kapsamda scope_id ≠ 0 DB check'iyle reddedilir", async () => {
+  it("global scope with scope_id ≠ 0 is rejected by the DB check", async () => {
     await expect(
       setSetting(
         platform(),
@@ -114,7 +114,7 @@ describeOnTargets("settings sorguları", (getDb) => {
     ).rejects.toThrow(/settings_scope_id_ck/)
   })
 
-  it("denetim satırı aynı atomic'te; ayar yazımı patlarsa denetim satırı yok", async () => {
+  it("the audit row is in the same atomic; if the settings write fails there is no audit row", async () => {
     const p = platform()
     await setSetting(p, { ...global, key: "store.name", value: "G" }, NOW, ACTOR)
     expect(
@@ -132,7 +132,7 @@ describeOnTargets("settings sorguları", (getDb) => {
     ).toBe(1)
   })
 
-  it("markSetupCompleted bir kez yazar; ilk değer korunur", async () => {
+  it("markSetupCompleted writes once; the first value is kept", async () => {
     const p = platform()
     expect(await markSetupCompleted(p, 111)).toBe(1)
     expect(await markSetupCompleted(p, 222)).toBe(0)
@@ -142,8 +142,8 @@ describeOnTargets("settings sorguları", (getDb) => {
   })
 })
 
-// İki bağlantı ancak dosya veritabanında anlamlı; bu yüzden describeOnTargets dışında.
-describe("[sqlite] iki bağlantılı dosya modu", () => {
+// Two connections only make sense with a file database; hence outside describeOnTargets.
+describe("[sqlite] two-connection file mode", () => {
   let file: TestDbFile | undefined
   afterEach(() => {
     file?.close()
@@ -159,7 +159,7 @@ describe("[sqlite] iki bağlantılı dosya modu", () => {
     return [c1, c2]
   }
 
-  it("markSetupCompleted yarışı: tam bir kazanan, değer onunki kalır", async () => {
+  it("markSetupCompleted race: exactly one winner, its value stays", async () => {
     const [c1, c2] = twoConnections()
     const claim = async (conn: Database.Database, now: number) => {
       const n = await markSetupCompleted(testPlatform(conn), now)
@@ -178,7 +178,7 @@ describe("[sqlite] iki bağlantılı dosya modu", () => {
     ).toBe(1)
   })
 
-  it("iki eşzamanlı setSetting sonrası sürüm 2 artar", async () => {
+  it("after two concurrent setSetting calls the version goes up by 2", async () => {
     const [c1, c2] = twoConnections()
     await Promise.all([
       setSetting(testPlatform(c1), { ...global, key: "store.name", value: "A" }, NOW, ACTOR),

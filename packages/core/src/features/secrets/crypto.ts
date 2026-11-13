@@ -1,7 +1,7 @@
-// Sır kasası kriptosu (06-guvenlik-ve-yetki "Sır kasası"): yalnız Web Crypto, AES-256-GCM.
-// KEK doğrudan kullanılmaz: HKDF-SHA-256 ile sürüme bağlı bir veri anahtarı türetilir.
+// Secret vault crypto (06-guvenlik-ve-yetki "Secret vault"): Web Crypto only, AES-256-GCM.
+// The KEK is not used directly: a version-bound data key is derived with HKDF-SHA-256.
 
-/** Şu an yazılan KEK sürümü; döndürme komutu gelince platformdan gelir. */
+/** The KEK version currently written; comes from the platform once the rotation command exists. */
 export const CURRENT_KEK_VERSION = 1
 
 const IV_BYTES = 12
@@ -10,7 +10,7 @@ const encoder = new TextEncoder()
 
 export type Kek = CryptoKey | string
 
-/** Şifreli metnin bağlandığı satır kimliği; başka satıra kopyalanan şifreli metin çözülmez. */
+/** Row id the ciphertext is bound to; a ciphertext copied to another row does not decrypt. */
 export type SecretAddress = { scope: string; scopeId: number; key: string }
 
 export type SealedSecret = {
@@ -19,14 +19,14 @@ export type SealedSecret = {
   kekVersion: number
 }
 
-/** `string` KEK UTF-8 bayt olarak HKDF girdisidir; `CryptoKey` ise `HKDF` + `deriveKey` olmalı. */
+/** A `string` KEK is HKDF input as UTF-8 bytes; a `CryptoKey` must be `HKDF` + `deriveKey`. */
 async function kekMaterial(kek: Kek): Promise<CryptoKey> {
   if (typeof kek !== "string") return kek
   if (kek.length === 0) throw new Error("KEK boş")
   return crypto.subtle.importKey("raw", encoder.encode(kek), "HKDF", false, ["deriveKey"])
 }
 
-/** HKDF-SHA-256(salt sabit, info = "openmers/secrets/v<sürüm>") → AES-256-GCM anahtarı. */
+/** HKDF-SHA-256(fixed salt, info = "openmers/secrets/v<version>") → AES-256-GCM key. */
 export async function deriveDataKey(kek: Kek, kekVersion: number): Promise<CryptoKey> {
   return crypto.subtle.deriveKey(
     {
@@ -42,7 +42,7 @@ export async function deriveDataKey(kek: Kek, kekVersion: number): Promise<Crypt
   )
 }
 
-/** AAD: `JSON.stringify([scope, scopeId, key])` UTF-8; JSON dizisi alan sınırlarını belirsiz bırakmaz. */
+/** AAD: `JSON.stringify([scope, scopeId, key])` as UTF-8; a JSON array leaves no ambiguous field boundaries. */
 export function secretAad(addr: SecretAddress): Uint8Array<ArrayBuffer> {
   return encoder.encode(JSON.stringify([addr.scope, addr.scopeId, addr.key]))
 }
@@ -60,11 +60,11 @@ export async function encryptSecret(
     key,
     encoder.encode(plaintext),
   )
-  // Saklama: ciphertext = GCM çıktısı (şifreli metin ‖ 16 bayt etiket), iv ayrı sütun.
+  // Storage: ciphertext = GCM output (ciphertext ‖ 16-byte tag), iv in a separate column.
   return { ciphertext: new Uint8Array(out), iv, kekVersion }
 }
 
-/** Kurcalanmış şifreli metin/IV/AAD ya da yanlış KEK'te Web Crypto `OperationError` fırlatır. */
+/** Web Crypto throws `OperationError` on tampered ciphertext/IV/AAD or a wrong KEK. */
 export async function decryptSecret(
   kek: Kek,
   addr: SecretAddress,
@@ -85,9 +85,9 @@ function bytes(v: string | Uint8Array<ArrayBuffer>): Uint8Array<ArrayBuffer> {
 }
 
 /**
- * Sabit zamanlı eşitlik (webhook imzaları, token karşılaştırma). İki girdi rastgele tek kullanımlık
- * anahtarla HMAC-SHA-256'dan geçirilir, sabit uzunluklu özetler erken çıkışsız karşılaştırılır;
- * böylece uzunluk farkı ve ilk farklı baytın yeri zamanlamadan sızmaz.
+ * Constant-time equality (webhook signatures, token comparison). Both inputs go through HMAC-SHA-256 with
+ * a random one-time key, and the fixed-length digests are compared without early exit;
+ * so neither a length difference nor the position of the first differing byte leaks through timing.
  */
 export async function constantTimeEqual(
   a: string | Uint8Array<ArrayBuffer>,

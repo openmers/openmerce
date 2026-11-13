@@ -3,7 +3,7 @@ import { getTableColumns, type Table } from "drizzle-orm"
 import type { Platform } from "../../../platform"
 import type { Channel, ChannelDomain, ChannelRow } from "../types"
 
-// `batch` ham satır döner (snake_case, JSON metin, 0/1); Drizzle'ın sütun eşlemesiyle tipe çevrilir.
+// `batch` returns raw rows (snake_case, JSON text, 0/1); converted to types via Drizzle's column mapping.
 export function mapRow<T extends Table>(table: T, row: Record<string, unknown>): T["$inferSelect"] {
   const out: Record<string, unknown> = {}
   for (const [prop, col] of Object.entries(getTableColumns(table))) {
@@ -13,7 +13,7 @@ export function mapRow<T extends Table>(table: T, row: Record<string, unknown>):
   return out as T["$inferSelect"]
 }
 
-/** Bütün kanallar + alan adları, `batch` ile tek tur. */
+/** All channels + domains, in one round trip via `batch`. */
 export async function loadChannels(p: Pick<Platform, "db" | "batch">): Promise<Channel[]> {
   const [channelRows = [], domainRows = []] = await p.batch([
     p.db.select().from(channels).orderBy(channels.id).toSQL(),

@@ -43,7 +43,7 @@ describeOnTargets("fiyat", (getDb) => {
     return { p, ctx, product: product.publicId, a, b, base: base.publicId }
   }
 
-  it("liste: ikinci base CONFLICT, bozuk pencere INVALID_INPUT, base silinemez", async () => {
+  it("list: second base CONFLICT, broken window INVALID_INPUT, base cannot be deleted", async () => {
     const { ctx, base } = await prepare()
     const again = { name: "B2", currency: "USD", type: "base" as const, includesTax: true }
     await expect(createPriceList(ctx, again)).rejects.toMatchObject({ code: "CONFLICT" })
@@ -75,7 +75,7 @@ describeOnTargets("fiyat", (getDb) => {
     expect(await listPriceLists(ctx)).toHaveLength(1)
   })
 
-  it("toplu yazım: kayıt başına sonuç, üst sınır, idempotent, para birimi listeden", async () => {
+  it("bulk write: per-entry result, upper limit, idempotent, currency from the list", async () => {
     const { ctx, a, b, base } = await prepare()
     const items = [
       { variantPublicId: a, amount: 1000, compareAtAmount: 1200 },
@@ -106,7 +106,7 @@ describeOnTargets("fiyat", (getDb) => {
     ).rejects.toMatchObject({ code: "NOT_FOUND" })
   })
 
-  it("varsayılan listeye yazım reindex işi üretir, diğer listeye yazım üretmez", async () => {
+  it("writing to the default list creates a reindex job, writing to another list does not", async () => {
     const { ctx, a, product, base } = await prepare()
     const sale = await createPriceList(ctx, {
       name: "Sale",
@@ -131,7 +131,7 @@ describeOnTargets("fiyat", (getDb) => {
     )
   })
 
-  it("okuma tek sorgu, PK'den yürür; çözümleme öncelik/kademe/yok", async () => {
+  it("read is one query walking the PK; resolution by priority/tier/none", async () => {
     const { p, ctx, a, b, base } = await prepare()
     const sale = await createPriceList(ctx, {
       name: "Sale",
@@ -176,7 +176,7 @@ describeOnTargets("fiyat", (getDb) => {
     )
   })
 
-  it("kur: gün başına upsert, yoksa null (tahmin yok)", async () => {
+  it("exchange rate: upsert per day, null if missing (no guessing)", async () => {
     const { p } = await prepare()
     const rate = {
       day: "2026-11-13",

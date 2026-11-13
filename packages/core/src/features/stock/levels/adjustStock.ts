@@ -18,16 +18,16 @@ import {
 export type AdjustStockInput = {
   variantPublicId: string
   locationPublicId: string
-  /** İşaretli `on_hand` farkı (sayım düzeltmesi); 0 olamaz. */
+  /** Signed `on_hand` delta (count correction); cannot be 0. */
   delta: number
   thresholds?: BucketThresholds
 }
 
 /**
- * Elle düzeltme (04-stok `adjustment`): seviye + `stock_movements` + denetim (+ kova değiştiyse
- * `reindex`) **aynı** `atomic()`. Satır yoksa sıfırla açılır. Sonuç `on_hand` negatifse hiçbir
- * satır yazılmaz (`INVALID_INPUT`). Koşullu satırlar güncellemeden önce gelir ve güncellemeyle
- * aynı koşula bağlıdır; aynı transaction'da araya yazım girmez, ikisi birlikte tutar ya da tutmaz.
+ * Manual adjustment (04-stok `adjustment`): level + `stock_movements` + audit (+ `reindex` if the bucket
+ * changed) in the **same** `atomic()`. If the row is missing it is opened at zero. If the resulting `on_hand` is negative no
+ * row is written (`INVALID_INPUT`). Conditional rows come before the update and are bound to the same
+ * condition as the update; no write can interleave within the same transaction, so both hold or neither does.
  */
 export async function adjustStock(
   ctx: StockCtx,

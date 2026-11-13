@@ -1,6 +1,6 @@
 import { shopHealth } from "./health"
 
-/** Shop API sözleşmesi; kaynak başına bir dosya (`shop/<kaynak>.ts`). */
+/** Shop API contract; one file per resource (`shop/<resource>.ts`). */
 export const shop = { health: shopHealth }
 
 export { shopHealth, shopHealthOutput } from "./health"

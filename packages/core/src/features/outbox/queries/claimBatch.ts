@@ -8,7 +8,7 @@ export type ClaimBatchInput = {
   limit: number
 }
 
-/** Sahiplenme adayları: `(status, priority, next_attempt_at)` indeksini kullanır. */
+/** Claim candidates: uses the `(status, priority, next_attempt_at)` index. */
 export function dueCandidatesQuery(db: Db, input: ClaimBatchInput) {
   return db
     .select({ id: outbox.id })
@@ -19,7 +19,7 @@ export function dueCandidatesQuery(db: Db, input: ClaimBatchInput) {
     .toSQL()
 }
 
-/** Adayı koşullu sahiplenir: satır bu arada başkasına gittiyse 0 satır döner. */
+/** Claims a candidate conditionally: returns 0 rows if the row went to someone else in the meantime. */
 export function claimStatement(db: Db, id: number, now: number): AtomicStatement {
   return db
     .update(outbox)
@@ -35,8 +35,8 @@ export function claimStatement(db: Db, id: number, now: number): AtomicStatement
 }
 
 /**
- * Sıradaki partiyi sahiplenir. Aday listesi bir okuma turudur; kazananı koşullu `UPDATE` belirler,
- * bu yüzden iki tüketici aynı satırı alamaz. Dönen kimlikler yalnız bu çağrının kazandıklarıdır.
+ * Claims the next batch. The candidate list is one read round trip; a conditional `UPDATE` decides the winner,
+ * so two consumers cannot take the same row. The returned ids are only the ones this call won.
  */
 export async function claimBatch(
   p: Pick<Platform, "db" | "atomic" | "batch">,

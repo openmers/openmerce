@@ -3,8 +3,8 @@ import { getSettingDefinition, type SettingScope } from "./registry"
 export type SettingRow = { scope: SettingScope; scopeId: number; key: string; value: unknown }
 
 /**
- * Düşüş zinciri: kanal → global → kod varsayılanı (07-yapilandirma, §6 karar 10).
- * `admin_user`/`customer`/`built_in_app` satırları bu zincire karışmaz.
+ * Fallback chain: channel → global → code default (07-yapilandirma, §6 decision 10).
+ * `admin_user`/`customer`/`built_in_app` rows do not enter this chain.
  */
 export function resolveSetting(
   key: string,

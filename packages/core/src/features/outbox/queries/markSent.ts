@@ -2,7 +2,7 @@ import { outbox } from "@openmers/db"
 import { and, eq } from "drizzle-orm"
 import type { AtomicStatement, Db, Platform } from "../../../platform"
 
-/** Yalnız bu tüketicinin sahiplendiği (`sending`) satırı `sent` yapar. */
+/** Turns only the row claimed by this consumer (`sending`) into `sent`. */
 export function markSentStatement(db: Db, id: number, now: number): AtomicStatement {
   return db
     .update(outbox)
@@ -11,7 +11,7 @@ export function markSentStatement(db: Db, id: number, now: number): AtomicStatem
     .toSQL()
 }
 
-/** `true` = geçiş bu çağrıda oldu; `false` = satır artık `sending` değil. */
+/** `true` = the transition happened in this call; `false` = the row is no longer `sending`. */
 export async function markSent(
   p: Pick<Platform, "db" | "atomic">,
   id: number,

@@ -1,10 +1,10 @@
 import type { DBAdapter, Where } from "better-auth/types"
 
-// Better Auth 1.7.23 `session.token`'ı düz saklar ve özet seçeneği sunmaz (katalog karar 13).
-// Bu sarmalayıcı adaptör ile Better Auth arasında durur: oturum modelinde yazarken token'ın
-// SHA-256 özetini yazar, aramada (`token` eşitlik / `in`) aranan token'ı özetler ve dönen satıra
-// düz token'ı geri koyar (Better Auth çereze bunu imzalar). Veritabanında yalnız özet durur;
-// çalınan satırdaki özet çerez olarak işe yaramaz (yeniden özetlenir, eşleşmez).
+// Better Auth 1.7.23 stores `session.token` in plain text and offers no hashing option (catalog decision 13).
+// This wrapper sits between the adapter and Better Auth: when writing the session model it stores the
+// token's SHA-256 hash, on lookup (`token` equality / `in`) it hashes the searched token, and puts the
+// plain token back on returned rows (Better Auth signs that into the cookie). Only the hash is in the database;
+// a hash from a stolen row is useless as a cookie (it gets hashed again and does not match).
 
 const SESSION_MODELS = new Set(["session", "adminSessions", "admin_sessions"])
 
@@ -44,10 +44,10 @@ function restore<T>(row: T, plain: Plain): T {
 
 type AnyAdapter = Omit<DBAdapter, "transaction"> & Partial<Pick<DBAdapter, "transaction">>
 
-/** Adaptörü (ve işlem içindeki adaptörü) oturum token'ı özetleyen sürümle sarar. */
+/** Wraps the adapter (and the in-transaction adapter) with a version that hashes session tokens. */
 export function withHashedSessionTokens<A extends AnyAdapter>(inner: A): A {
   const own = (model: string) => SESSION_MODELS.has(model)
-  // biome-ignore lint/suspicious/noExplicitAny: DBAdapter yöntemleri jenerik; sarmalayıcı tipten bağımsız
+  // biome-ignore lint/suspicious/noExplicitAny: DBAdapter methods are generic; the wrapper is type-agnostic
   const a = inner as any
   const wrapped: AnyAdapter = {
     ...inner,

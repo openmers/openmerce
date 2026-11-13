@@ -1,5 +1,5 @@
-// Kimlik üretiminin dışa açık yüzeyi (yol haritası 6.5-6.6). Önek haritasının tek kaynağı
-// `@openmers/db`'dedir (`schema/public-id-prefixes.ts`); burada yalnız yeniden dışa açılır.
+// Public surface of id generation (roadmap 6.5-6.6). The single source of the prefix map
+// is `@openmers/db` (`schema/public-id-prefixes.ts`); it is only re-exported here.
 export {
   isPublicIdPrefix,
   isTokenPrefix,

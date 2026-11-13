@@ -1,9 +1,9 @@
 import type { AtomicResult, AtomicStatement, BatchRows } from "@openmers/core"
 import type Database from "better-sqlite3"
 
-// shortcut: her çağrıda `prepare`; hazırlanmış ifade önbelleği (performans §7) ölçüm gerekirse eklenir.
+// shortcut: `prepare` on every call; a prepared statement cache (performance §7) gets added if measurements call for it.
 
-/** İfadeleri tek senkron transaction'da sırayla çalıştırır; biri hata verirse hepsi geri alınır. */
+/** Runs the statements in order in one synchronous transaction; if one fails, all are rolled back. */
 export function nodeAtomic(db: Database.Database) {
   const run = db.transaction(
     (stmts: readonly AtomicStatement[]): AtomicResult =>
@@ -12,7 +12,7 @@ export function nodeAtomic(db: Database.Database) {
   return async (stmts: readonly AtomicStatement[]): Promise<AtomicResult> => run(stmts)
 }
 
-/** Bağımsız okumalar, süreç içinde sırayla. */
+/** Independent reads, in order within the process. */
 export function nodeBatch(db: Database.Database) {
   return async (queries: readonly AtomicStatement[]): Promise<BatchRows[]> =>
     queries.map((q) => db.prepare(q.sql).all(...q.params) as BatchRows)

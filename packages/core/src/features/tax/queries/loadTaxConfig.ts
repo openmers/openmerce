@@ -3,7 +3,7 @@ import type { Platform } from "../../../platform"
 import { mapRow } from "../../channels/queries/loadChannels"
 import type { TaxConfig, Zone } from "../types"
 
-/** Bölgeler + üyeler + kategoriler + oranlar, `batch` ile tek tur (09-vergi §1). */
+/** Zones + members + categories + rates, in one round trip via `batch` (09-vergi §1). */
 export async function loadTaxConfig(p: Pick<Platform, "db" | "batch">): Promise<TaxConfig> {
   const [zoneRows = [], memberRows = [], categoryRows = [], rateRows = []] = await p.batch([
     p.db.select().from(zones).orderBy(zones.id).toSQL(),

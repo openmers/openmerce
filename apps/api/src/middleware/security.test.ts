@@ -19,7 +19,7 @@ afterEach(() => {
   for (const close of closers.splice(0)) close()
 })
 
-/** `app.test.ts` kalıbı: gerçek SQLite + migration + varsayılan kanal; yalnız `rateLimit` değişir. */
+/** Same pattern as `app.test.ts`: real SQLite + migrations + default channel; only `rateLimit` differs. */
 async function harness(limit?: RateLimit, log?: (m: string, e: unknown) => void) {
   const file = openTestDb({ file: true })
   const sqlite = openNodeSqlite(file.path)
@@ -58,7 +58,7 @@ const form = (origin?: string): RequestInit => ({
 })
 
 describe("CSRF Origin", () => {
-  it("yanlış ya da eksik Origin'li form POST 403, güvenlik başlıklarıyla", async () => {
+  it("form POST with a wrong or missing Origin returns 403 with security headers", async () => {
     const app = await harness()
     const res = await app.request(URL_RPC, form("https://saldirgan.test"))
     expect(res.status).toBe(403)
@@ -73,7 +73,7 @@ describe("CSRF Origin", () => {
     expect(multipart.status).toBe(403)
   })
 
-  it("doğru Origin'li form POST, JSON ve imzalı webhook yolu geçer", async () => {
+  it("form POST with the right Origin, JSON and the signed webhook path pass", async () => {
     const app = await harness()
     expect((await app.request(URL_RPC, form(`https://${HOST}`))).status).not.toBe(403)
     const json = await app.request(URL_RPC, {
@@ -87,8 +87,8 @@ describe("CSRF Origin", () => {
   })
 })
 
-describe("hız sınırı", () => {
-  it("aşımda 429 + Retry-After; kova kanal + rota grubu + istemci", async () => {
+describe("rate limiting", () => {
+  it("429 + Retry-After when exceeded; bucket is channel + route group + client", async () => {
     const keys: string[] = []
     const app = await harness(async (key) => {
       keys.push(key)
@@ -104,7 +104,7 @@ describe("hız sınırı", () => {
     expect(keys).toEqual(["main:api:203.0.113.7"])
   })
 
-  it("sınırlayıcı çökerse istek geçer ve hata loglanır (fail-open)", async () => {
+  it("if the limiter crashes the request passes and the error is logged (fail-open)", async () => {
     const logged: unknown[] = []
     const app = await harness(
       async () => {

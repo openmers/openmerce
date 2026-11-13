@@ -6,7 +6,7 @@ import { loadShippingMethods } from "./loadShippingMethods"
 const NOW = 1_700_000_000_000
 
 describeOnTargets("loadShippingMethods", (getDb) => {
-  it("yöntemler kanal bağlantılarıyla tek turda; JSON argümanlar çözülür", async () => {
+  it("methods with channel links in one round trip; JSON arguments are parsed", async () => {
     const db = getDb()
     const p = sqlitePlatform(db)
     expect(await loadShippingMethods(p)).toEqual([])

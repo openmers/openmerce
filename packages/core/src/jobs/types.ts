@@ -1,31 +1,31 @@
 import type { OutboxKind } from "../features/outbox"
 import type { Platform } from "../platform"
 
-/** Outbox satırının tüketiciye görünen hâli; `payload` küçüktür (kimlikler + değişen alanlar). */
+/** The consumer-facing view of an outbox row; `payload` is small (ids + changed fields). */
 export type OutboxJob = {
   id: number
   publicId: string
   kind: OutboxKind
-  /** `event ?? kind`; handler kaydının anahtarı. */
+  /** `event ?? kind`; the key of the handler registry. */
   topic: string
   payload: Record<string, unknown>
-  /** Bu denemeden önceki sayı (markFailed +1 yazar). */
+  /** Count before this attempt (markFailed writes +1). */
   attempts: number
 }
 
 export type JobContext = {
   platform: Platform
-  /** Turun saati; iş içinde `Date.now()` çağrılmaz. */
+  /** The tick's clock; `Date.now()` is not called inside a job. */
   now: number
 }
 
-/** İşi yapan fonksiyon. Hata fırlatırsa satır `failed` olur; idempotent olmak zorundadır. */
+/** The function doing the work. If it throws, the row becomes `failed`; it must be idempotent. */
 export type JobHandler = (job: OutboxJob, ctx: JobContext) => Promise<void> | void
 
-/** `topic → handler`. Kayıtsız topic `failed` olur (bilinmeyen iş sessizce yutulmaz). */
+/** `topic → handler`. An unregistered topic becomes `failed` (unknown jobs are not silently swallowed). */
 export type JobHandlers = Readonly<Record<string, JobHandler>>
 
-/** Bir turun sayaçları. `dead` = deneme sınırına ulaşan satır (10. deneme). */
+/** Counters of a tick. `dead` = rows that reached the attempt limit (10th attempt). */
 export type OutboxRunCounters = {
   claimed: number
   sent: number

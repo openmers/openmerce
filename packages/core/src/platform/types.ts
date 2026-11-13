@@ -3,29 +3,29 @@ import type { BaseSQLiteDatabase } from "drizzle-orm/sqlite-core"
 import type { AtomicResult, AtomicStatement } from "./atomic"
 import type { Cache, Enqueue, Images, Purge, RateLimit, Storage } from "./ports"
 
-/** D1 (async) ve better-sqlite3 (sync) Drizzle örneklerinin ortak tipi; core her çağrıyı `await` eder. */
+/** Common type of the D1 (async) and better-sqlite3 (sync) Drizzle instances; core `await`s every call. */
 export type Db = BaseSQLiteDatabase<"sync" | "async", unknown, typeof schema>
 
-/** Bir satır dizisi; sütun adları veritabanındaki gibi (snake_case). */
+/** An array of rows; column names as in the database (snake_case). */
 export type BatchRows = Record<string, unknown>[]
 
-/** `apps/api` açılışta hedefe göre tek bir `Platform` kurar; core yalnız bunu görür (01-platform-arayuzu). */
+/** `apps/api` builds a single `Platform` for its target at startup; core only sees this (01-platform-arayuzu). */
 export type Platform = {
-  /** Yazma + tutarlı okuma. */
+  /** Write + consistent read. */
   db: Db
-  /** Vitrin okumaları: D1 okuma oturumu / salt-okunur ikinci bağlantı. */
+  /** Storefront reads: D1 read session / second read-only connection. */
   readDb: Db
-  /** Hepsi ya da hiçbiri; ifadeler sırayla, koşullu. Dönüş her ifadenin etkilediği satır sayısı. */
+  /** All or nothing; statements in order, conditional. Returns the number of rows affected by each statement. */
   atomic(stmts: readonly AtomicStatement[]): Promise<AtomicResult>
-  /** Bağımsız okumalar tek turda (D1) / sırayla (self-host); sorgu sırasıyla satırlar. */
+  /** Independent reads in one round trip (D1) / in order (self-host); rows in query order. */
   batch(queries: readonly AtomicStatement[]): Promise<BatchRows[]>
   storage: Storage
   cache: Cache
   purge: Purge
   enqueue: Enqueue
   rateLimit: RateLimit
-  /** `kek` yoksa kasa uykuda (madde 11). */
+  /** Without `kek` the vault is dormant (item 11). */
   secrets: { kek?: CryptoKey | string }
-  /** Binding / `sharp` yoksa yok. */
+  /** Absent when there is no binding / `sharp`. */
   images?: Images
 }

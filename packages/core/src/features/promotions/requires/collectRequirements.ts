@@ -7,7 +7,7 @@ import type { CompiledPromotion } from "../types"
 export type RequirementCtx = { customerId: number | null }
 
 type Requirement = {
-  /** `null`: sorgu gerekmez, değer yok (ör. misafir). */
+  /** `null`: no query needed, no value (e.g. guest). */
   query(p: Pick<Platform, "db">, ctx: RequirementCtx): AtomicStatement | null
   read(rows: BatchRows): unknown
 }
@@ -27,15 +27,15 @@ const REQUIREMENTS: Record<string, Requirement> = {
 }
 
 export type CollectedRequirements = {
-  /** Sepet verisi `batch`'ine eklenecek sorgular (ek tur yok). */
+  /** Queries to add to the cart data `batch` (no extra round trip). */
   queries: AtomicStatement[]
-  /** `batch` sonucundaki bu sorguların satırlarını (aynı sırada) `PromoCart.data`'ya çevirir. */
+  /** Converts the rows of these queries in the `batch` result (in the same order) into `PromoCart.data`. */
   read(rows: readonly BatchRows[]): Record<string, unknown>
 }
 
 /**
- * Promosyon koşullarının `requires` anahtarlarını toplar (08-promosyon §2): her anahtar en çok bir
- * sorgu, hepsi çağıranın sepet verisi `batch`'ine girer. Bilinmeyen anahtar hatadır.
+ * Collects the `requires` keys of promotion conditions (08-promosyon §2): at most one query per key,
+ * all of them go into the caller's cart data `batch`. An unknown key is an error.
  */
 export function collectRequirements(
   p: Pick<Platform, "db">,

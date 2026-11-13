@@ -2,7 +2,7 @@ import { z } from "zod"
 import type { CalculatorDef } from "../types"
 import { fallbackArg, pickTier, type Tier, tierArgs } from "./tiers"
 
-/** Ağırlık kademesi (gram). Bilinmeyen ağırlık: `fallbackAmount` varsa o, yoksa uygun değil. */
+/** Weight tier (grams). Unknown weight: `fallbackAmount` if present, otherwise not eligible. */
 export const weightTier: CalculatorDef<{ tiers: Tier[]; fallbackAmount?: number }> = {
   code: "weightTier",
   args: z.object({ tiers: tierArgs, ...fallbackArg }),

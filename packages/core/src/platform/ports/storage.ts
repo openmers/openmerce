@@ -1,4 +1,4 @@
-// Dosya deposu: Cloudflare R2, self-host disk veya S3 uyumlu.
+// File storage: Cloudflare R2, self-host disk or S3-compatible.
 export type StorageBody = ReadableStream<Uint8Array> | ArrayBuffer | Uint8Array | string
 
 export type StorageMeta = { size: number; contentType?: string; etag?: string }
@@ -7,10 +7,10 @@ export type StorageObject = StorageMeta & { body: ReadableStream<Uint8Array> }
 
 export type Storage = {
   put(key: string, body: StorageBody, opts?: { contentType?: string }): Promise<void>
-  /** Yoksa `null`. */
+  /** `null` if missing. */
   get(key: string): Promise<StorageObject | null>
-  /** Yoksa sessizce geçer. */
+  /** Passes silently if missing. */
   delete(key: string): Promise<void>
-  /** Gövdesiz üst veri; yoksa `null`. */
+  /** Metadata without the body; `null` if missing. */
   head(key: string): Promise<StorageMeta | null>
 }

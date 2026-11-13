@@ -3,14 +3,14 @@ import type { AtomicStatement, Db, Platform } from "../../../platform"
 
 export type ClaimRunInput = {
   task: string
-  /** Dönemin cron'a göre başlangıcı, epoch ms. */
+  /** Start of the period according to cron, epoch ms. */
   period: number
   now: number
 }
 
 /**
- * Çalıştırmayı `(task, period)` benzersiz satırına koşullu ekler; iki tetikten tam biri kazanır.
- * Satır önceden varsa 0 satır döner ve görev çalıştırılmaz.
+ * Conditionally inserts the run into the unique `(task, period)` row; exactly one of two triggers wins.
+ * If the row already exists, 0 rows are returned and the task does not run.
  */
 export function claimRunStatement(db: Db, input: ClaimRunInput): AtomicStatement {
   return db
@@ -27,7 +27,7 @@ export function claimRunStatement(db: Db, input: ClaimRunInput): AtomicStatement
     .toSQL()
 }
 
-/** `true` = bu çağrı çalıştırmayı sahiplendi. */
+/** `true` = this call claimed the run. */
 export async function claimRun(
   p: Pick<Platform, "db" | "atomic">,
   input: ClaimRunInput,

@@ -6,12 +6,12 @@ import type { Db, Platform } from "../platform"
 import { handlerFor, topicOf } from "./registry"
 import type { JobHandlers, OutboxJob, OutboxRunCounters } from "./types"
 
-/** `last_error` sütununa yazılacak en uzun metin; sağlayıcı hataları gövde taşıyabilir. */
+/** Longest text written to the `last_error` column; provider errors may carry bodies. */
 const MAX_ERROR_LENGTH = 500
 
 export type RunOutboxOnceInput = {
   now: number
-  /** Tur başına satır (varsayılan 20). */
+  /** Rows per tick (default 20). */
   limit?: number
   limits?: OutboxLimits
 }
@@ -21,7 +21,7 @@ function describeError(error: unknown): string {
   return message.length > MAX_ERROR_LENGTH ? message.slice(0, MAX_ERROR_LENGTH) : message
 }
 
-/** Sahiplenilen satırları tek okumada getirir; sıra `claimBatch`'in öncelik sırasıdır. */
+/** Fetches the claimed rows in a single read; the order is `claimBatch`'s priority order. */
 async function loadClaimed(db: Db, ids: readonly number[]): Promise<OutboxJob[]> {
   const rows = await db
     .select({
@@ -53,9 +53,9 @@ async function loadClaimed(db: Db, ids: readonly number[]): Promise<OutboxJob[]>
 }
 
 /**
- * Bir tur: `claimBatch` → her iş için handler → `markSent` / `markFailed`.
- * Bir işin hatası diğerlerini durdurmaz (her satır kendi denemesiyle bağımsızdır); kayıtsız topic
- * `failed` olur ve deneme sınırında `dead`a düşer.
+ * One tick: `claimBatch` → handler for each job → `markSent` / `markFailed`.
+ * One job's failure does not stop the others (each row is independent with its own attempts); an unregistered topic
+ * becomes `failed` and falls to `dead` at the attempt limit.
  */
 export async function runOutboxOnce(
   platform: Platform,

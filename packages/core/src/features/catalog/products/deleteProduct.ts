@@ -7,12 +7,12 @@ import { classifyProductMiss, mapWriteError, productVersionGuard, reindexJob } f
 import { auditActorOf, type CatalogCtx } from "./types"
 
 /**
- * Ürünü **yumuşak** siler (02-veritabanı `products.deleted_at`): ürün ve bütün varyantları
- * `deleted_at` alır, sürüm artar; silinen varyantın SKU'su yeniden kullanılabilir (kısmi indeks).
- * Vitrin 301/410 kararını ayardan verir (14-seo). İndeks `reindex` işiyle temizlenir.
+ * **Soft** deletes the product (02-veritabani `products.deleted_at`): the product and all its variants
+ * get `deleted_at` and the version goes up; a deleted variant's SKU can be reused (partial index).
+ * The storefront decides 301/410 from settings (14-seo). The index is cleaned by the `reindex` job.
  *
- * Koşullu ifadeler **eski sürüme** bağlıdır; sürümü artıran `UPDATE` son ifadedir (bkz.
- * `updateProduct`): kaybeden çağrı hiçbir satır yazmaz.
+ * Conditional statements are bound to the **old version**; the version-bumping `UPDATE` is the last statement (see
+ * `updateProduct`): the losing call writes no rows.
  */
 export async function deleteProduct(
   ctx: CatalogCtx,

@@ -3,8 +3,8 @@ import type { Address, Zone } from "../../tax/types"
 import type { ShippingMethod } from "../types"
 
 /**
- * Bölge uygunluğu (saf): bölgesiz yöntem her yere; bölgeli yöntem adres o bölgedeyse. Adres
- * henüz yoksa bölgeli yöntem uygun değildir. Bölge tablosu vergiyle ortak (`zones`).
+ * Zone eligibility (pure): a method without zones ships everywhere; a zoned method only if the address is in that zone.
+ * If there is no address yet, a zoned method is not eligible. The zone table is shared with tax (`zones`).
  */
 export function zoneEligible(
   method: Pick<ShippingMethod, "zoneId">,

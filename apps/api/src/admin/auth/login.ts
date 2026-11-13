@@ -4,9 +4,9 @@ import { forwardSetCookies } from "../../auth/cookies"
 import { base } from "../../orpc/base"
 
 /**
- * `admin.auth.login`: Better Auth `signInEmail`. Yanlış parola, olmayan e-posta ve askıdaki hesap
- * aynı `UNAUTHENTICATED` yanıtını alır (Better Auth olmayan hesapta da parola özetler: süre aynı).
- * Hız sınırı Hono'da `login` kovası (`/auth/` yolu).
+ * `admin.auth.login`: Better Auth `signInEmail`. Wrong password, unknown email and a suspended account
+ * all get the same `UNAUTHENTICATED` response (Better Auth hashes a password for unknown accounts too: same timing).
+ * Rate limiting is the `login` bucket in Hono (`/auth/` path).
  */
 export const login = base.admin.auth.login.handler(async ({ input, context }) => {
   let headers: Headers

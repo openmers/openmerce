@@ -9,7 +9,7 @@ async function run(p: Atomic, stmts: ReturnType<typeof reserveStatements>): Prom
   return affected(result, stmts.length - 1)
 }
 
-/** Kalemlerin hepsini ayırır ya da hiçbirini; yetmezse `INSUFFICIENT_STOCK` (hiç satır yazılmaz). */
+/** Reserves all lines or none; `INSUFFICIENT_STOCK` if short (no rows written). */
 export async function reserveStock(
   p: Atomic,
   lines: readonly StockLine[],
@@ -21,7 +21,7 @@ export async function reserveStock(
   }
 }
 
-/** Referansın ayırmasını bırakır; zaten bırakılmış/düşülmüşse etkisiz (`false`). */
+/** Releases the reference's reservation; no effect (`false`) if already released/committed. */
 export async function releaseStock(
   p: Atomic,
   lines: readonly StockLine[],
@@ -31,7 +31,7 @@ export async function releaseStock(
   return run(p, releaseStatements(lines, ref, now))
 }
 
-/** Ayrılanı eldekiden düşer (`sale` hareketi); ayırma yoksa ya da bırakılmışsa etkisiz (`false`). */
+/** Subtracts the reserved amount from on-hand (`sale` movement); no effect (`false`) if there is no reservation or it was released. */
 export async function commitStock(
   p: Atomic,
   lines: readonly StockLine[],

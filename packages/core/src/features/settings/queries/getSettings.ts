@@ -6,7 +6,7 @@ import type { SettingRow } from "../resolveSetting"
 
 export type ScopeRef = { scope: SettingScope; scopeId: number }
 
-/** Sorgunun kendisi; `assertNoFullScan` testi aynı SQL'i planlar. */
+/** The query itself; the `assertNoFullScan` test plans the same SQL. */
 export function getSettingsQuery(db: Db, scopes: readonly ScopeRef[]) {
   const match = scopes.map((s) => and(eq(settings.scope, s.scope), eq(settings.scopeId, s.scopeId)))
   return db
@@ -20,7 +20,7 @@ export function getSettingsQuery(db: Db, scopes: readonly ScopeRef[]) {
     .where(or(...match))
 }
 
-/** Verilen kapsamların bütün satırları tek sorguda (`settings_scope_key_uq` solundan). */
+/** All rows of the given scopes in one query (from the left of `settings_scope_key_uq`). */
 export async function getSettings(db: Db, scopes: readonly ScopeRef[]): Promise<SettingRow[]> {
   if (scopes.length === 0) return []
   return await getSettingsQuery(db, scopes)

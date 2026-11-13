@@ -1,10 +1,10 @@
 import type { ApiInitialContext } from "../orpc/base"
 
-/** Hono değişkenleri: istek kimliği en dış ara katmanda yazılır, kanal bağlamı ondan sonra. */
+/** Hono variables: the request id is set in the outermost middleware, the channel context after it. */
 export type AppEnv = {
   Variables: {
     requestId: string
-    /** Çözülen kanalın kodu; hız sınırı kovası için. */
+    /** Code of the resolved channel; used for the rate limit bucket. */
     channel: string
     apiContext: ApiInitialContext
   }

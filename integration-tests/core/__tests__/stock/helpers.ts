@@ -4,7 +4,7 @@ import { sqlitePlatform } from "../../../../packages/core/src/features/__testing
 import { catalogCtx, seedChannel, seedTaxCategory } from "../catalog/helpers"
 import { scalar } from "../helpers"
 
-/** İki varyantlı ürün + kanala bağlı bir depo; iç kimlikler rezervasyon ifadeleri için. */
+/** Product with two variants + one warehouse linked to the channel; internal ids for reservation statements. */
 export async function seedStock(conn: Database.Database) {
   const p = sqlitePlatform(conn)
   const channel = await seedChannel(p)

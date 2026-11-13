@@ -9,7 +9,7 @@ import {
 } from "./pagination"
 
 describe("cursorInputSchema", () => {
-  it("limit varsayılanı ve imleç isteğe bağlı", () => {
+  it("limit default and optional cursor", () => {
     expect(cursorInputSchema.parse({})).toEqual({ limit: DEFAULT_PAGE_SIZE })
     expect(cursorInputSchema.parse({ cursor: "abc", limit: 10 })).toEqual({
       cursor: "abc",
@@ -17,7 +17,7 @@ describe("cursorInputSchema", () => {
     })
   })
 
-  it("limit sınırları", () => {
+  it("limit bounds", () => {
     expect(cursorInputSchema.safeParse({ limit: 0 }).success).toBe(false)
     expect(cursorInputSchema.safeParse({ limit: MAX_PAGE_SIZE + 1 }).success).toBe(false)
     expect(cursorInputSchema.safeParse({ limit: 1.5 }).success).toBe(false)
@@ -26,7 +26,7 @@ describe("cursorInputSchema", () => {
 })
 
 describe("pageSchema", () => {
-  it("{ items, nextCursor } ve null imleç", () => {
+  it("{ items, nextCursor } and a null cursor", () => {
     const schema = pageSchema(z.object({ id: z.string() }))
     expect(schema.parse({ items: [{ id: "a" }], nextCursor: null })).toEqual({
       items: [{ id: "a" }],
@@ -38,7 +38,7 @@ describe("pageSchema", () => {
 })
 
 describe("withTotal", () => {
-  it("total ekler, page alanlarını korur", () => {
+  it("adds total and keeps the page fields", () => {
     const schema = withTotal(pageSchema(z.object({ id: z.string() })))
     expect(schema.parse({ items: [], nextCursor: "c1", total: 0 })).toEqual({
       items: [],

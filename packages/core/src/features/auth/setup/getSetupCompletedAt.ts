@@ -3,7 +3,7 @@ import { and, eq } from "drizzle-orm"
 import type { Platform } from "../../../platform"
 import { SETUP_COMPLETED_KEY } from "../../settings/registry"
 
-/** `settings (global, 0, 'setup.completed_at')`; satır yoksa `null` (kurulum bitmedi). */
+/** `settings (global, 0, 'setup.completed_at')`; `null` if there is no row (setup not done). */
 export async function getSetupCompletedAt(p: Pick<Platform, "db">): Promise<number | null> {
   const [row] = await p.db
     .select({ value: settings.value })

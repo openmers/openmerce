@@ -21,7 +21,7 @@ export type CreateLocationInput = {
   pickupEnabled?: boolean
 }
 
-/** Depo + denetim tek `atomic()`; kanala bağlama ayrı (`linkLocationToChannel`). */
+/** Warehouse + audit in one `atomic()`; linking to a channel is separate (`linkLocationToChannel`). */
 export async function createLocation(
   ctx: StockCtx,
   input: CreateLocationInput,
@@ -58,7 +58,7 @@ export async function createLocation(
   return { publicId }
 }
 
-/** Depoyu `ctx.channel`'a bağlar ya da önceliğini günceller (küçük önce); depo yoksa `NOT_FOUND`. */
+/** Links the warehouse to `ctx.channel` or updates its priority (lower first); `NOT_FOUND` if the warehouse is missing. */
 export async function linkLocationToChannel(
   ctx: StockCtx,
   input: { locationPublicId: string; priority: number },
@@ -93,11 +93,11 @@ export type LocationItem = {
   countryCode: string | null
   active: boolean
   pickupEnabled: boolean
-  /** `ctx.channel`'a bağlıysa önceliği, değilse `null`. */
+  /** The priority if linked to `ctx.channel`, otherwise `null`. */
   channelPriority: number | null
 }
 
-/** Depo listesi (az satırlı tablo); kanal bağlantısı PK ile birleşir. */
+/** Warehouse list (a table with few rows); the channel link is joined via the PK. */
 export async function listLocations(ctx: Pick<StockCtx, "platform" | "channel">) {
   const rows: LocationItem[] = await ctx.platform.db
     .select({

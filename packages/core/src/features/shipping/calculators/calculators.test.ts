@@ -18,19 +18,19 @@ const tiers = [
   { upTo: 5000, amount: 250 },
 ]
 
-describe("hesaplayıcılar", () => {
-  it("flat sabit ücret", () => {
+describe("calculators", () => {
+  it("flat fixed fee", () => {
     expect(flat.calculate({ amount: 499 }, parcel({ weightGrams: null }))).toEqual({
       ok: true,
       amount: 499,
     })
   })
 
-  it("weightTier: sınır dahil, kademeler birikmez, sonlu son kademenin üstü uygun değil", () => {
+  it("weightTier: boundary inclusive, tiers do not accumulate, above a finite last tier is not eligible", () => {
     const at = (g: number) => weightTier.calculate({ tiers }, parcel({ weightGrams: g }))
     expect(at(0)).toEqual({ ok: true, amount: 100 })
     expect(at(1000)).toEqual({ ok: true, amount: 100 })
-    expect(at(1001)).toEqual({ ok: true, amount: 250 }) // 100 + 250 değil
+    expect(at(1001)).toEqual({ ok: true, amount: 250 }) // not 100 + 250
     expect(at(5000)).toEqual({ ok: true, amount: 250 })
     expect(at(5001)).toEqual({ ok: false, reason: "out_of_range" })
     const open = [...tiers, { upTo: null, amount: 900 }]
@@ -40,7 +40,7 @@ describe("hesaplayıcılar", () => {
     })
   })
 
-  it("weightTier: bilinmeyen ağırlık 0 sayılmaz; yedek ücret ya da uygun değil", () => {
+  it("weightTier: unknown weight is not treated as 0; fallback fee or not eligible", () => {
     const unknown = parcel({ weightGrams: null })
     expect(weightTier.calculate({ tiers }, unknown)).toEqual({
       ok: false,
@@ -52,7 +52,7 @@ describe("hesaplayıcılar", () => {
     })
   })
 
-  it("desi: hacim / bölen, sınır dahil", () => {
+  it("desi: volume / divisor, boundary inclusive", () => {
     const args = {
       divisor: 3000,
       tiers: [
@@ -79,7 +79,7 @@ describe("hesaplayıcılar", () => {
     })
   })
 
-  it("freeOver: eşikte ücretsiz", () => {
+  it("freeOver: free at the threshold", () => {
     const args = { threshold: 50_000, amount: 300 }
     expect(freeOver.calculate(args, parcel({ subtotal: 49_999 }))).toEqual({
       ok: true,
@@ -88,7 +88,7 @@ describe("hesaplayıcılar", () => {
     expect(freeOver.calculate(args, parcel({ subtotal: 50_000 }))).toEqual({ ok: true, amount: 0 })
   })
 
-  it("kademe argümanı: artan sıra, sınırsız yalnız sonda", () => {
+  it("tier argument: ascending order, unbounded only at the end", () => {
     expect(tierArgs.safeParse(tiers).success).toBe(true)
     expect(tierArgs.safeParse([...tiers].reverse()).success).toBe(false)
     expect(tierArgs.safeParse([{ upTo: null, amount: 1 }, ...tiers]).success).toBe(false)

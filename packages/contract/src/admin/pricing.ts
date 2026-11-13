@@ -2,8 +2,8 @@ import { z } from "zod"
 import { adminProcedure } from "../shared/adminProcedure"
 import { bulkInput, bulkResults } from "../shared/bulk"
 
-// Admin fiyat yüzeyi (yol haritası 16): liste CRUD + varyant fiyatı okuma/yazma.
-// Para tamsayı küçük birimdir; para birimi listeden gelir, kayıtta istemciden alınmaz.
+// Admin pricing surface (roadmap 16): list CRUD + reading/writing variant prices.
+// Money is an integer in minor units; the currency comes from the list, not from the client per entry.
 
 const publicIdSchema = z.string().min(1).max(64)
 const money = z.number().int().min(0).max(Number.MAX_SAFE_INTEGER)
@@ -34,7 +34,7 @@ const patchSchema = z.object({
 
 const okResult = z.object({ ok: z.literal(true), publicId: z.string() })
 
-/** `admin.priceLists.list`: `ctx.channel`'ın listeleri. */
+/** `admin.priceLists.list`: lists of `ctx.channel`. */
 export const adminPriceListsList = adminProcedure("prices:read")
   .input(z.object({}))
   .output(z.array(priceListSchema))
@@ -53,12 +53,12 @@ export const adminPriceListsCreate = adminProcedure("prices:write")
   )
   .output(okResult)
 
-/** `currency` ve `type` değişmez. */
+/** `currency` and `type` are immutable. */
 export const adminPriceListsUpdate = adminProcedure("prices:write")
   .input(z.object({ publicId: publicIdSchema, patch: patchSchema }))
   .output(okResult)
 
-/** `base` liste silinemez (409). */
+/** A `base` list cannot be deleted (409). */
 export const adminPriceListsDelete = adminProcedure("prices:write")
   .input(z.object({ publicId: publicIdSchema }))
   .output(okResult)
@@ -77,7 +77,7 @@ const priceRowSchema = z.object({
   currency: z.string(),
 })
 
-/** `admin.prices.get`: varyant(lar)ın fiyat satırları; liste verilmezse kanalın bütün listeleri. */
+/** `admin.prices.get`: price rows of the variant(s); without a list, all of the channel's lists. */
 export const adminPricesGet = adminProcedure("prices:read")
   .input(
     z.object({
@@ -87,7 +87,7 @@ export const adminPricesGet = adminProcedure("prices:read")
   )
   .output(z.array(priceRowSchema))
 
-/** `admin.prices.set` (`prices.setMany`): upsert, kayıt başına sonuç, idempotent. */
+/** `admin.prices.set` (`prices.setMany`): upsert, per-entry result, idempotent. */
 export const adminPricesSet = adminProcedure("prices:write")
   .input(
     z.object({

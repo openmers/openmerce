@@ -2,7 +2,7 @@ import { updateProduct } from "@openmers/core"
 import { base } from "../../orpc/base"
 import { rethrowCatalog } from "./errors"
 
-/** `admin.products.update`: `version` koşullu; çakışmada 409 `CONFLICT`. */
+/** `admin.products.update`: conditional on `version`; 409 `CONFLICT` on conflict. */
 export const updateProductRoute = base.admin.products.update.handler(async ({ input, context }) => {
   try {
     const updated = await updateProduct(context.ctx, input)

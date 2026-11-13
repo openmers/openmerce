@@ -23,7 +23,7 @@ type Harness = {
   close(): void
 }
 
-/** Gerçek SQLite + gerçek migration'lar + `createDefaultChannel` tohumu; sürücü taklidi yok. */
+/** Real SQLite + real migrations + `createDefaultChannel` seed; no driver mocks. */
 async function harness(over: { channels?: Pick<ChannelRegistry, "get"> } = {}): Promise<Harness> {
   const file = openTestDb({ file: true })
   const sqlite = openNodeSqlite(file.path)
@@ -38,7 +38,7 @@ async function harness(over: { channels?: Pick<ChannelRegistry, "get"> } = {}): 
     platform,
     channels,
     now: () => NOW,
-    // HTTPS kapalı: testte HTTP; HSTS yazılmamalı.
+    // HTTPS off: tests use HTTP; HSTS must not be written.
     https: false,
     requestId: () => "req_test",
     authSecret: "test-auth-secret-0123456789abcdef0123",
@@ -64,7 +64,7 @@ function expectSecurityHeaders(res: Response): void {
   expect(res.headers.get("Strict-Transport-Security")).toBeNull()
 }
 
-describe("API kabuğu", () => {
+describe("API shell", () => {
   let h: Harness
 
   beforeEach(async () => {
@@ -76,13 +76,13 @@ describe("API kabuğu", () => {
     h.close()
   })
 
-  it("GET /api/health 200 döner ve istekte çözülen kanalın kodunu verir", async () => {
+  it("GET /api/health returns 200 and the code of the channel resolved for the request", async () => {
     const res = await h.app.request(`http://${HOST}/api/health`)
     expect(res.status).toBe(200)
     expect(await res.json()).toEqual({ ok: true, channel: "main" })
   })
 
-  it("x-openmers-channel bilinmeyen anahtarı 404 eder", async () => {
+  it("x-openmers-channel with an unknown key returns 404", async () => {
     const res = await h.app.request(`http://${HOST}/api/health`, {
       headers: { "x-openmers-channel": "yok" },
     })
@@ -90,7 +90,7 @@ describe("API kabuğu", () => {
     expect(await res.json()).toMatchObject({ ok: false, code: "CHANNEL_UNKNOWN" })
   })
 
-  it("bilinmeyen Host 404 döner; 404 yanıtı güvenlik başlıklarını taşır, HTTP'de HSTS yok", async () => {
+  it("unknown Host returns 404; the 404 response carries security headers, no HSTS over HTTP", async () => {
     const res = await h.app.request("http://bilinmeyen.test/api/health")
     expect(res.status).toBe(404)
     expect(await res.json()).toMatchObject({
@@ -105,7 +105,7 @@ describe("API kabuğu", () => {
     expectSecurityHeaders(notFound)
   })
 
-  it("500 yanıtı iç iletiyi sızdırmaz ve güvenlik başlıklarını taşır", async () => {
+  it("500 response does not leak the internal message and carries security headers", async () => {
     const broken = await harness({
       channels: {
         get: async () => {
@@ -126,7 +126,7 @@ describe("API kabuğu", () => {
     }
   })
 
-  it("/rpc üzerinde GET reddedilir, POST çalışır", async () => {
+  it("GET is rejected on /rpc, POST works", async () => {
     const get = await h.app.request(`http://${HOST}/rpc/shop/health`)
     expect(get.status).toBeGreaterThanOrEqual(400)
 
@@ -136,11 +136,11 @@ describe("API kabuğu", () => {
       body: "{}",
     })
     expect(post.status).toBe(200)
-    // RPC zarfı: çıktı `{ json: ... }` içinde döner (tipli istemci bunu çözer).
+    // RPC envelope: output comes back inside `{ json: ... }` (the typed client unwraps it).
     expect(await post.json()).toEqual({ json: { ok: true, channel: "main" } })
   })
 
-  it("/api/openapi.json health yolunu GET olarak içerir", async () => {
+  it("/api/openapi.json contains the health path as GET", async () => {
     const res = await h.app.request(`http://${HOST}/api/openapi.json`)
     expect(res.status).toBe(200)
     const doc = (await res.json()) as { paths: Record<string, Record<string, unknown>> }

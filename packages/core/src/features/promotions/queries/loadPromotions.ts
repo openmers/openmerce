@@ -4,7 +4,7 @@ import type { Platform } from "../../../platform"
 import { mapRow } from "../../channels/queries/loadChannels"
 import type { PromotionChannelLink, PromotionRow } from "../registry/compilePromotions"
 
-/** Etkin promosyonlar + kanal bağlantıları, `batch` ile tek tur (`compilePromotions` girdisi). */
+/** Enabled promotions + channel links, in one round trip via `batch` (input of `compilePromotions`). */
 export async function loadPromotions(
   p: Pick<Platform, "db" | "batch">,
 ): Promise<{ rows: PromotionRow[]; links: PromotionChannelLink[] }> {

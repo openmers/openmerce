@@ -13,7 +13,7 @@ const variant = (size: string, color: string) => ({
 })
 
 describe("assertOptionCombinations", () => {
-  it("her seçenekten tam bir değer taşıyan benzersiz kombinasyonları kabul eder", () => {
+  it("accepts unique combinations carrying exactly one value from each option", () => {
     expect(() =>
       assertOptionCombinations(options, [
         variant("s", "red"),
@@ -24,19 +24,19 @@ describe("assertOptionCombinations", () => {
     ).not.toThrow()
   })
 
-  it("eksik seçenek reddedilir", () => {
+  it("a missing option is rejected", () => {
     expect(() =>
       assertOptionCombinations(options, [{ optionValues: [{ option: "size", value: "s" }] }]),
     ).toThrow(/her seçenekten bir değer/)
   })
 
-  it("tekrarlı kombinasyon reddedilir", () => {
+  it("a duplicate combination is rejected", () => {
     expect(() =>
       assertOptionCombinations(options, [variant("s", "red"), variant("s", "red")]),
     ).toThrow(/kombinasyon yineleniyor/)
   })
 
-  it("aynı seçenekten iki değer ve bilinmeyen kod reddedilir", () => {
+  it("two values from the same option and an unknown code are rejected", () => {
     expect(() =>
       assertOptionCombinations(options, [
         {
@@ -56,14 +56,14 @@ describe("assertOptionCombinations", () => {
     ).toThrow(/bilinmeyen seçenek/)
   })
 
-  it("seçeneksiz üründe varyant seçenek değeri taşımaz", () => {
+  it("in a product without options, variants carry no option values", () => {
     expect(() => assertOptionCombinations([], [{ optionValues: [] }])).not.toThrow()
     expect(() =>
       assertOptionCombinations([], [{ optionValues: [{ option: "size", value: "s" }] }]),
     ).toThrow(/bilinmeyen seçenek/)
   })
 
-  it("seçenek ve değer kodlarının tekrarı reddedilir", () => {
+  it("duplicate option and value codes are rejected", () => {
     expect(() =>
       assertOptionCombinations(
         [

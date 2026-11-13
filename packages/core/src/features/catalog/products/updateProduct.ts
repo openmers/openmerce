@@ -22,7 +22,7 @@ const PATCH_FIELDS = [
   "privateMetadata",
 ] as const
 
-/** Tanımlı alanlar; verilmeyen alan `UPDATE`a girmez (patch anlamı). */
+/** Defined fields; a field not given does not enter the `UPDATE` (patch semantics). */
 function productPatch(input: UpdateProductInput["patch"]): Partial<typeof products.$inferInsert> {
   const patch: Partial<typeof products.$inferInsert> = {}
   const target = patch as Record<string, unknown>
@@ -34,12 +34,12 @@ function productPatch(input: UpdateProductInput["patch"]): Partial<typeof produc
 }
 
 /**
- * Ürün güncellemesi: `version` koşullu tek `atomic()` (02-veritabanı, ortak kural 7).
+ * Product update: a single `version`-conditional `atomic()` (02-veritabani, shared rule 7).
  *
- * Sıra önemlidir: çeviri/denetim/outbox yazımları **eski sürüme** bağlı koşulludur, sürümü artıran
- * `UPDATE` ise **son** ifadedir. Aynı transaction içinde eski sürüm değişmediği için koşullar ya
- * hep tutar ya hiç tutmaz; yarışı kaybeden çağrı hiçbir satır yazmaz ve `CONFLICT` alır. (Sürümü
- * önce artırmak, kaybedenin `version + 1` koşulunu kazananın yeni sürümüyle eşleştirirdi.)
+ * Order matters: translation/audit/outbox writes are conditional on the **old version**, while the version-bumping
+ * `UPDATE` is the **last** statement. Since the old version does not change within the same transaction, the conditions
+ * either all hold or none do; the race-losing call writes no rows and gets `CONFLICT`. (Bumping the version
+ * first would make the loser's `version + 1` condition match the winner's new version.)
  */
 export async function updateProduct(
   ctx: CatalogCtx,

@@ -1,2 +1,2 @@
-// HTTP önbelleğini etikete göre temizleme: Cloudflare Cache purge API, self-host reverse proxy ya da no-op.
+// Purging the HTTP cache by tag: Cloudflare Cache purge API, self-host reverse proxy or no-op.
 export type Purge = (tags: readonly string[]) => Promise<void>

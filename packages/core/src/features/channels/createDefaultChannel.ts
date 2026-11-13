@@ -5,17 +5,17 @@ import { channelIdByPublicId, insertChannelStatement } from "./queries/insertCha
 import { insertChannelDomainStatement } from "./queries/insertChannelDomain"
 
 export type DefaultChannelInput = {
-  /** Verilmezse `chn_` önekli kimlik üretilir (madde 6.6). */
+  /** If not given, an id with the `chn_` prefix is generated (item 6.6). */
   publicId?: string
   code?: string
   currency?: string
   lang?: string
   timezone?: string
-  /** Verilirse birincil alan adı olur. */
+  /** If given, becomes the primary domain. */
   domain?: string
 }
 
-/** Kurulum sihirbazı 2. adım (§3.3): varsayılan kanal + birincil alan adı tek `atomic()`'te. EN, USD. */
+/** Setup wizard step 2 (§3.3): default channel + primary domain in one `atomic()`. EN, USD. */
 export async function createDefaultChannel(
   p: Pick<Platform, "db" | "atomic">,
   input: DefaultChannelInput,

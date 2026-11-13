@@ -12,7 +12,7 @@ const B2B = 1
 const B2C = 2
 
 describe("resolvePermissions", () => {
-  it("rol kanal başına: B2B'de sipariş yöneticisi, B2C'de okuyucu", () => {
+  it("roles are per channel: order manager in B2B, reader in B2C", () => {
     const assignments = [
       { roleCode: "orders_manager", channelId: B2B, permissions: ["orders:read", "orders:write"] },
       { roleCode: "reader", channelId: B2C, permissions: ["orders:read"] },
@@ -22,7 +22,7 @@ describe("resolvePermissions", () => {
     expect(resolvePermissions(assignments, 99)).toEqual(new Set())
   })
 
-  it("null kanallı atama her kanalda (yeni açılan dahil) geçerli; izinler birleşir", () => {
+  it("an assignment with a null channel applies to every channel (including newly opened ones); permissions merge", () => {
     const assignments = [
       { roleCode: "reader", channelId: null, permissions: ["orders:read"] },
       { roleCode: "stock", channelId: B2B, permissions: ["stock:write"] },
@@ -31,7 +31,7 @@ describe("resolvePermissions", () => {
     expect(resolvePermissions(assignments, 42)).toEqual(new Set(["orders:read"]))
   })
 
-  it("SuperAdmin kayıtlı her izni alır; başka kanaldaki SuperAdmin ataması etkisiz", () => {
+  it("SuperAdmin gets every registered permission; a SuperAdmin assignment on another channel has no effect", () => {
     const all = resolvePermissions(
       [{ roleCode: SUPER_ADMIN_ROLE, channelId: null, permissions: [] }],
       B2C,
@@ -46,7 +46,7 @@ describe("resolvePermissions", () => {
     expect(scoped.size).toBe(0)
   })
 
-  it("sözlükte olmayan izin yok sayılır", () => {
+  it("a permission not in the dictionary is ignored", () => {
     const set = resolvePermissions(
       [{ roleCode: "x", channelId: null, permissions: ["orders:read", "kaldirildi:yaz"] }],
       B2B,
@@ -55,12 +55,12 @@ describe("resolvePermissions", () => {
   })
 })
 
-describe("izin kaydı", () => {
-  it("built-in app izin ekler; biçim ve çakışma denetlenir", () => {
+describe("permission registry", () => {
+  it("a built-in app adds permissions; format and collisions are checked", () => {
     expect(isPermission("reviews:moderate")).toBe(false)
     registerAppPermissions("reviews", ["reviews:moderate"])
     expect(isPermission("reviews:moderate")).toBe(true)
-    // aynı app'in yeniden kaydı (yeniden yükleme) hata değil
+    // re-registering the same app (reload) is not an error
     registerAppPermissions("reviews", ["reviews:moderate"])
 
     expect(() => registerAppPermissions("other", ["reviews:moderate"])).toThrow(PermissionError)

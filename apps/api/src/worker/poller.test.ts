@@ -10,7 +10,7 @@ import { createPoller, type Scheduler } from "./poller"
 
 const NOW = 1_700_000_100_000
 
-/** Gerçek saati beklemeden turları elle çalıştıran zamanlayıcı. */
+/** Scheduler that runs ticks manually without waiting for the real clock. */
 function fakeScheduler() {
   let pending: (() => void | Promise<void>) | undefined
   const scheduler: Scheduler = {
@@ -24,7 +24,7 @@ function fakeScheduler() {
   }
   return {
     scheduler,
-    /** Kurulu zamanlayıcıyı bir kez çalıştırır ve turun bitmesini bekler. */
+    /** Runs the installed timer once and waits for the tick to finish. */
     async fire(): Promise<void> {
       const callback = pending
       pending = undefined
@@ -34,7 +34,7 @@ function fakeScheduler() {
   }
 }
 
-/** Node `Platform`'u (madde 5.9) bellek içi bağlantıyla kurar; sürücü taklit edilmez. */
+/** Builds the Node `Platform` (item 5.9) with an in-memory connection; the driver is not mocked. */
 function nodePlatform(conn: Database.Database): Platform {
   const db = drizzle(conn, { schema })
   return createNodePlatform({
@@ -44,7 +44,7 @@ function nodePlatform(conn: Database.Database): Platform {
 }
 
 describeOnTargets("poller", (getDb) => {
-  it("sahte zamanlayıcıyla bir tur atar ve kapanır", async () => {
+  it("runs one tick with a fake scheduler and stops", async () => {
     const platform = nodePlatform(getDb())
     await platform.atomic([
       enqueueStatement(
@@ -67,7 +67,7 @@ describeOnTargets("poller", (getDb) => {
     expect(poller.isRunning()).toBe(true)
     await fake.fire()
     expect(await platform.db.select().from(outbox)).toMatchObject([{ status: "sent" }])
-    // Tur bitince bir sonraki zamanlayıcı kurulur.
+    // When a tick finishes, the next timer is installed.
     expect(fake.pending()).toBe(true)
 
     await poller.stop()
@@ -75,7 +75,7 @@ describeOnTargets("poller", (getDb) => {
     expect(fake.pending()).toBe(false)
   })
 
-  it("tick() zamanlayıcı kurmaz, handler hatası turu düşürmez", async () => {
+  it("tick() does not install a timer, a handler error does not crash the tick", async () => {
     const platform = nodePlatform(getDb())
     const fake = fakeScheduler()
     await platform.atomic([

@@ -10,7 +10,7 @@ import { expect, it } from "vitest"
 import { sqlitePlatform } from "../../../../packages/core/src/features/__testing__/sqlitePlatform"
 import { catalogCtx, NOW, productWithFourVariants, seedChannel, seedTaxCategory } from "./helpers"
 
-describeOnTargets("catalog admin sorguları", (getDb) => {
+describeOnTargets("catalog admin queries", (getDb) => {
   const prepare = async () => {
     const p = sqlitePlatform(getDb())
     const channel = await seedChannel(p)
@@ -18,7 +18,7 @@ describeOnTargets("catalog admin sorguları", (getDb) => {
     return { p, ctx: catalogCtx(p, channel) }
   }
 
-  it("listProducts imleçle sayfalar, güncelleme sırasına göre iner, iç id sızdırmaz", async () => {
+  it("listProducts paginates with a cursor, descends by update order, does not leak internal ids", async () => {
     const { p, ctx } = await prepare()
     const ids: string[] = []
     for (const [i, suffix] of ["a", "b", "c"].entries()) {
@@ -41,7 +41,7 @@ describeOnTargets("catalog admin sorguları", (getDb) => {
     expect(JSON.stringify([first, second])).not.toMatch(/"id":\d/)
   })
 
-  it("liste sorgusu indeksten yürür (tam tarama yok) ve geçersiz imleç reddedilir", async () => {
+  it("the list query walks the index (no full scan) and an invalid cursor is rejected", async () => {
     const { p, ctx } = await prepare()
     await createProduct(ctx, productWithFourVariants())
     assertNoFullScan(getDb(), listProductsQuery(p.db).toSQL())
@@ -54,7 +54,7 @@ describeOnTargets("catalog admin sorguları", (getDb) => {
     })
   })
 
-  it("getProduct yumuşak silinen ürünü döndürmez; liste de göstermez", async () => {
+  it("getProduct does not return a soft-deleted product; the list does not show it either", async () => {
     const { ctx } = await prepare()
     const created = await createProduct(ctx, productWithFourVariants())
     expect(await getProduct(ctx, "prod_yok")).toBeNull()

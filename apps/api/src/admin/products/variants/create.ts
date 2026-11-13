@@ -2,7 +2,7 @@ import { addVariant } from "@openmers/core"
 import { base } from "../../../orpc/base"
 import { rethrowCatalog } from "../errors"
 
-/** `admin.products.variants.create`: ürüne varyant ekler; ürün yoksa 404. */
+/** `admin.products.variants.create`: adds a variant to the product; 404 if the product is missing. */
 export const createVariantRoute = base.admin.products.variants.create.handler(
   async ({ input, context }) => {
     try {

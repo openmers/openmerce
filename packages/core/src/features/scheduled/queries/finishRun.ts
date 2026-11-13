@@ -10,7 +10,7 @@ export type FinishRunInput = {
   error?: string
 }
 
-/** `claimRun` ile açılan çalışmayı kapatır (`running` satırı asılı kalmaz). */
+/** Closes a run opened with `claimRun` (no `running` row is left hanging). */
 export function finishRunStatement(db: Db, input: FinishRunInput): AtomicStatement {
   return db
     .update(scheduledRuns)
@@ -24,7 +24,7 @@ export function finishRunStatement(db: Db, input: FinishRunInput): AtomicStateme
     .toSQL()
 }
 
-/** `true` = çalışma satırı bu çağrıda kapandı. */
+/** `true` = the run row was closed in this call. */
 export async function finishRun(
   p: Pick<Platform, "db" | "atomic">,
   input: FinishRunInput,

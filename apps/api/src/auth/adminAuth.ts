@@ -5,21 +5,21 @@ import { drizzleAdapter } from "better-auth/adapters/drizzle"
 import { eq } from "drizzle-orm"
 import { withHashedSessionTokens } from "./hashedSessions"
 
-/** Yönetici oturum çerezi (`08-kimlik-dogrulama` §1); vitrin çerezi `om_s` ayrı örnektedir. */
+/** Admin session cookie (`08-kimlik-dogrulama` §1); the storefront cookie `om_s` is a separate instance. */
 export const ADMIN_SESSION_COOKIE = "om_a"
 
 export type AdminAuthOptions = {
   db: Platform["db"]
-  /** Çerez imzası; en az 32 karakter. */
+  /** Cookie signing secret; at least 32 characters. */
   secret: string
 }
 
 /**
- * Better Auth 1.7.23 yönetici örneği (katalog karar 13): `admin_*` tabloları `modelName`/`fields`
- * ile, tamsayı kimlik `generateId: "serial"`, yalnız e-posta + parola, kayıt kapalı (ilk hesap
- * `createFirstAdmin`, sonrakiler davetle). Oturum token'ı veritabanında yalnız SHA-256 özetidir
- * (`withHashedSessionTokens`). Better Auth'un kendi HTTP işleyicisi bağlanmaz; uçlar oRPC'dedir.
- * `Secure` bayrağı istek başına (HTTPS) oRPC katmanında eklenir, bu yüzden burada kapalıdır.
+ * Better Auth 1.7.23 admin instance (catalog decision 13): `admin_*` tables via `modelName`/`fields`,
+ * integer ids with `generateId: "serial"`, email + password only, sign-up disabled (first account via
+ * `createFirstAdmin`, the rest by invitation). The session token is stored only as a SHA-256 hash
+ * (`withHashedSessionTokens`). Better Auth's own HTTP handler is not mounted; endpoints live in oRPC.
+ * The `Secure` flag is added per request (HTTPS) in the oRPC layer, so it is off here.
  */
 export function createAdminAuth(opts: AdminAuthOptions) {
   const { db } = opts
@@ -35,14 +35,14 @@ export function createAdminAuth(opts: AdminAuthOptions) {
     session: {
       modelName: "adminSessions",
       fields: { userId: "adminUserId" },
-      // Kısa ve hareketsizlikte biten: 8 saat, 15 dakikada bir kayar.
+      // Short and expiring on inactivity: 8 hours, sliding every 15 minutes.
       expiresIn: 60 * 60 * 8,
       updateAge: 60 * 15,
       additionalFields: {
         sessionVersion: { type: "number", input: false, returned: true },
-        // shortcut: izinler istek başına çözülür (`loadAdminActor`); oturuma izin/politika görüntüsü
-        // yazımı oturum önbelleğiyle (madde 12.5) gelir. Tür "string" + nesne: Drizzle `json`
-        // sütunu kendisi kodlar (tür "json" olsa Better Auth da kodlar, iki kez kodlanır).
+        // shortcut: permissions are resolved per request (`loadAdminActor`); writing a permission/policy snapshot
+        // to the session comes with the session cache (item 12.5). Type "string" + object: Drizzle encodes the `json`
+        // column itself (with type "json" Better Auth would encode too, encoding it twice).
         permissions: {
           type: "string",
           input: false,
@@ -54,7 +54,7 @@ export function createAdminAuth(opts: AdminAuthOptions) {
     databaseHooks: {
       session: {
         create: {
-          // Askıdaki/davetli yönetici oturum açamaz; oturum yöneticinin güncel sürümünü taşır.
+          // Suspended/invited admins cannot log in; the session carries the admin's current version.
           async before(session) {
             const [admin] = await db
               .select({
@@ -76,7 +76,7 @@ export function createAdminAuth(opts: AdminAuthOptions) {
       cookies: { session_token: { name: ADMIN_SESSION_COOKIE } },
       defaultCookieAttributes: { httpOnly: true, sameSite: "lax", path: "/" },
     },
-    // Hız sınırı Hono katmanında (`login` kovası); Better Auth'un bellek sayacı kapalı.
+    // Rate limiting lives in the Hono layer (`login` bucket); Better Auth's in-memory counter is off.
     rateLimit: { enabled: false },
     telemetry: { enabled: false },
   })

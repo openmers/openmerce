@@ -1,23 +1,23 @@
 import type { z } from "zod"
 
-/** Bellekteki kargo yöntemi (`shipping_methods` + `shipping_method_channels`). */
+/** In-memory shipping method (`shipping_methods` + `shipping_method_channels`). */
 export type ShippingMethod = {
   id: number
   publicId: string
   name: string
-  /** `null` = her yere. */
+  /** `null` = everywhere. */
   zoneId: number | null
   checkerCode: string | null
   checkerArgs: Record<string, unknown> | null
   calculatorCode: string
   calculatorArgs: Record<string, unknown>
   taxCategoryId: number
-  /** Doluysa mağazadan teslim yöntemi (teslim biçimi veridir, ad metninden çıkarılmaz). */
+  /** If set, a store pickup method (the delivery type is data, not inferred from the name text). */
   pickupLocationId: number | null
   channelIds: number[]
 }
 
-/** Sepet kalemi; ağırlık gram, ölçüler milimetre, birim başına; `null` = bilinmiyor (0 değil). */
+/** Cart item; weight in grams, dimensions in millimetres, per unit; `null` = unknown (not 0). */
 export type ShipLine = {
   variantId: number
   quantity: number
@@ -28,17 +28,17 @@ export type ShipLine = {
   height: number | null
 }
 
-/** Fiziksel kalemlerin toplamı; kalemlerden biri bilinmiyorsa toplam da `null`. */
+/** Total of physical items; if any item is unknown the total is `null` too. */
 export type Parcel = {
   weightGrams: number | null
   volumeMm3: number | null
-  /** Tutar üstü ücretsiz için sepet tutarı (küçük birim). */
+  /** Cart amount for free-over shipping (minor units). */
   subtotal: number
 }
 
 export type CalcResult =
   | { ok: true; amount: number }
-  /** Hata değil: yöntem bu sepete uygun değil. */
+  /** Not an error: the method is not eligible for this cart. */
   | { ok: false; reason: "unknown_weight" | "unknown_size" | "out_of_range" }
 
 export type CalculatorDef<A = unknown> = {

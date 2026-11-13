@@ -8,7 +8,7 @@ export type RequeueStuckInput = {
   limits?: Pick<OutboxLimits, "claimTimeoutMs">
 }
 
-/** `sending`'de zaman aşımından uzun kalan satırları `failed`a geri alır (karar 8). */
+/** Moves rows stuck in `sending` longer than the timeout back to `failed` (decision 8). */
 export function requeueStuckStatement(db: Db, input: RequeueStuckInput): AtomicStatement {
   const timeout = (input.limits ?? OUTBOX_LIMITS).claimTimeoutMs
   return db
@@ -18,7 +18,7 @@ export function requeueStuckStatement(db: Db, input: RequeueStuckInput): AtomicS
     .toSQL()
 }
 
-/** Geri alınan satır sayısı. */
+/** Number of requeued rows. */
 export async function requeueStuck(
   p: Pick<Platform, "db" | "atomic">,
   input: RequeueStuckInput,

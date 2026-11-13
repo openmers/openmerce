@@ -10,11 +10,11 @@ const NOW = 1_700_000_000_000
 const REF: SecretRef = { scope: "global", scopeId: 0, key: "payment.stripe.secret_key" }
 const SYSTEM = { type: "system" } as const
 
-describeOnTargets("sır kasası", (getDb) => {
+describeOnTargets("secret vault", (getDb) => {
   const awake = () => ({ ...sqlitePlatform(getDb()), secrets: { kek: "test-kek" } })
   const asleep = () => ({ ...sqlitePlatform(getDb()), secrets: {} })
 
-  it("setSecret yalnız şifreli metin yazar; useSecret çözer; denetimde değer yok", async () => {
+  it("setSecret writes only ciphertext; useSecret decrypts; no value in the audit", async () => {
     const p = awake()
     expect(await hasSecret(p, REF)).toBe(false)
     await setSecret(p, REF, "sk_live_gizli", NOW, SYSTEM)
@@ -31,13 +31,13 @@ describeOnTargets("sır kasası", (getDb) => {
     expect(audits).toHaveLength(1)
     expect(JSON.stringify(audits[0])).not.toContain("sk_live")
 
-    // üzerine yazma aynı satırı günceller
+    // overwriting updates the same row
     await setSecret(p, REF, "sk_live_yeni", NOW + 1, SYSTEM)
     expect(await p.db.select().from(secrets)).toHaveLength(1)
     expect(await useSecret(p, REF, (v) => v)).toBe("sk_live_yeni")
   })
 
-  it("şifreli metin başka satıra kopyalanırsa çözülmez (AAD)", async () => {
+  it("a ciphertext copied to another row does not decrypt (AAD)", async () => {
     const p = awake()
     const other: SecretRef = { ...REF, key: "payment.stripe.webhook_secret" }
     await setSecret(p, REF, "a", NOW, SYSTEM)
@@ -51,7 +51,7 @@ describeOnTargets("sır kasası", (getDb) => {
     await expect(useSecret(p, other, (v) => v)).rejects.toThrow()
   })
 
-  it("KEK yokken kasa uykuda: setSecret açık hata, hasSecret false, useSecret hata", async () => {
+  it("without a KEK the vault is dormant: setSecret explicit error, hasSecret false, useSecret error", async () => {
     await setSecret(awake(), REF, "değer", NOW, SYSTEM)
     const p = asleep()
     await expect(setSecret(p, REF, "x", NOW, SYSTEM)).rejects.toMatchObject({
@@ -62,7 +62,7 @@ describeOnTargets("sır kasası", (getDb) => {
     await expect(useSecret(p, REF, (v) => v)).rejects.toMatchObject({ code: "VAULT_ASLEEP" })
   })
 
-  it("olmayan sır SECRET_NOT_FOUND", async () => {
+  it("a missing secret gives SECRET_NOT_FOUND", async () => {
     await expect(useSecret(awake(), REF, (v) => v)).rejects.toMatchObject({
       code: "SECRET_NOT_FOUND",
     })

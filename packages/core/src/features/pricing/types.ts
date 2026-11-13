@@ -1,6 +1,6 @@
 import type { CatalogCtx } from "../catalog/products/types"
 
-/** Beklenen fiyat hataları `code` taşıyan tipli hatadır (katalogla aynı desen). */
+/** Expected pricing errors are typed errors carrying a `code` (same pattern as the catalog). */
 export type PricingErrorCode = "INVALID_INPUT" | "NOT_FOUND" | "CONFLICT"
 
 export class PricingError extends Error {
@@ -13,7 +13,7 @@ export class PricingError extends Error {
   }
 }
 
-/** Fiyat yazımlarının `Ctx` parçası (katalogla aynı; denetim aktörü `auditActorOf`). */
+/** The `Ctx` part of pricing writes (same as the catalog; audit actor via `auditActorOf`). */
 export type PricingCtx = CatalogCtx
 
 export type PriceListType = "base" | "sale" | "contract"
@@ -28,19 +28,19 @@ export function assertCurrency(currency: string): void {
   }
 }
 
-/** Para tamsayı küçük birimdir; kayan nokta ve güvenli aralık dışı reddedilir. */
+/** Money is an integer in minor units; floating point and values outside the safe range are rejected. */
 export function isMoney(value: unknown): value is number {
   return typeof value === "number" && Number.isSafeInteger(value) && value >= 0
 }
 
-/** `starts_at < ends_at` (ikisi de doluysa). */
+/** `starts_at < ends_at` (when both are set). */
 export function assertWindow(startsAt?: number | null, endsAt?: number | null): void {
   if (startsAt != null && endsAt != null && startsAt >= endsAt) {
     throw new PricingError("INVALID_INPUT", "başlangıç bitişten önce olmalı")
   }
 }
 
-/** SQLite hatalarını beklenen fiyat hatalarına çevirir; başka hata olduğu gibi yükselir. */
+/** Maps SQLite errors to expected pricing errors; any other error is rethrown as is. */
 export function mapPricingWriteError(error: unknown): never {
   const message = error instanceof Error ? error.message : String(error)
   if (/UNIQUE/i.test(message) && /price_lists\.(channel_id|currency)/i.test(message)) {

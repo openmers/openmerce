@@ -3,7 +3,7 @@ import type { CatalogCtx } from "../catalog/products/types"
 
 export type StockErrorCode = "INVALID_INPUT" | "NOT_FOUND" | "CONFLICT" | "INSUFFICIENT_STOCK"
 
-/** Beklenen stok hataları `code` taşıyan tipli hatadır (katalogla aynı desen). */
+/** Expected stock errors are typed errors carrying a `code` (same pattern as the catalog). */
 export class StockError extends Error {
   constructor(
     readonly code: StockErrorCode,
@@ -14,7 +14,7 @@ export class StockError extends Error {
   }
 }
 
-/** Stok yazımlarının `Ctx` parçası (katalogla aynı; denetim aktörü `auditActorOf`). */
+/** The `Ctx` part of stock writes (same as the catalog; audit actor via `auditActorOf`). */
 export type StockCtx = CatalogCtx
 
 /**
@@ -27,7 +27,7 @@ export type StockRef = {
   id: number | SQL
 }
 
-/** Rezervasyon/bırakma/düşüm kalemi; iç kimlikler (checkout sepet satırından bilir). */
+/** Reserve/release/commit line; internal ids (checkout knows them from the cart line). */
 export type StockLine = { variantId: number; locationId: number; quantity: number }
 
 export function assertCount(value: number, what: string, min = 0): void {

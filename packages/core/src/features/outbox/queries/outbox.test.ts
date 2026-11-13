@@ -41,10 +41,10 @@ async function enqueue(
   )
 }
 
-describeOnTargets("outbox sorguları", (getDb) => {
+describeOnTargets("outbox queries", (getDb) => {
   const platform = () => sqlitePlatform(getDb())
 
-  it("enqueueStatement tek başına yazmaz; iş ifadesi patlarsa satır kalmaz", async () => {
+  it("enqueueStatement does not write on its own; if the job statement fails no row remains", async () => {
     const p = platform()
     const job = enqueueStatement(p.db, { publicId: "evt_a", kind: "notify", payload: {} }, NOW)
     expect(await getDb().prepare("SELECT count(*) FROM outbox").pluck().get()).toBe(0)
@@ -58,7 +58,7 @@ describeOnTargets("outbox sorguları", (getDb) => {
     expect(await p.db.select().from(outbox)).toHaveLength(0)
   })
 
-  it("enqueue kind önceliğini ve varsayılan zamanı yazar; dedupe anahtarı birleştirir", async () => {
+  it("enqueue writes kind priority and the default time; the dedupe key merges", async () => {
     const p = platform()
     const row = await enqueue(p, 1, { kind: "reindex", dedupeKey: "product:5" })
     expect(row).toMatchObject({
@@ -78,7 +78,7 @@ describeOnTargets("outbox sorguları", (getDb) => {
     expect(await p.db.select().from(outbox)).toHaveLength(1)
   })
 
-  it("claimBatch yalnız vadesi gelenleri sahiplenir; ikinci çağrı kalanı alır", async () => {
+  it("claimBatch only claims due rows; a second call takes the rest", async () => {
     const p = platform()
     await enqueue(p, 1)
     await enqueue(p, 2)
@@ -92,7 +92,7 @@ describeOnTargets("outbox sorguları", (getDb) => {
     expect(rows.filter((r) => r.status === "pending")).toHaveLength(1)
   })
 
-  it("markSent yalnız sahiplenilmiş satırı kapatır", async () => {
+  it("markSent only closes a claimed row", async () => {
     const p = platform()
     const row = await enqueue(p, 1)
     expect(await markSent(p, row.id, NOW)).toBe(false)
@@ -102,7 +102,7 @@ describeOnTargets("outbox sorguları", (getDb) => {
     expect(await markSent(p, row.id, NOW + 2)).toBe(false)
   })
 
-  it("markFailed denemeyi artırır, geri çekilir ve 10. denemede dead olur", async () => {
+  it("markFailed increments attempts, backs off and becomes dead on the 10th attempt", async () => {
     const p = platform()
     const row = await enqueue(p, 1)
     let now = NOW
@@ -123,7 +123,7 @@ describeOnTargets("outbox sorguları", (getDb) => {
     }
   })
 
-  it("requeueStuck 5 dakikadan uzun sending satırı failed'a alır", async () => {
+  it("requeueStuck moves sending rows older than 5 minutes to failed", async () => {
     const p = platform()
     await enqueue(p, 1)
     await enqueue(p, 2)
@@ -145,7 +145,7 @@ describeOnTargets("outbox sorguları", (getDb) => {
     expect(rows.find((r) => r.publicId === "evt_2")?.status).toBe("failed")
   })
 
-  it("purgeSent 7 günden eski sent satırları siler, bekleyenlere dokunmaz", async () => {
+  it("purgeSent deletes sent rows older than 7 days, leaves pending ones alone", async () => {
     const p = platform()
     await p.atomic([
       enqueueStatement(
@@ -163,7 +163,7 @@ describeOnTargets("outbox sorguları", (getDb) => {
     expect((await p.db.select().from(outbox)).map((r) => r.publicId)).toEqual(["evt_new"])
   })
 
-  it("sahiplenme ve süpürme sorguları tam tarama yapmaz", async () => {
+  it("claim and sweep queries do not do a full scan", async () => {
     const p = platform()
     assertNoFullScan(getDb(), dueCandidatesQuery(p.db, { now: NOW, limit: 10 }))
     assertNoFullScan(getDb(), purgeSentStatement(p.db, { now: NOW }))
@@ -171,8 +171,8 @@ describeOnTargets("outbox sorguları", (getDb) => {
   })
 })
 
-describe("[sqlite] outbox iki bağlantılı dosya modu", () => {
-  it("iki tüketici aynı satırı sahiplenemez; sahiplenenler ayrık", async () => {
+describe("[sqlite] outbox two-connection file mode", () => {
+  it("two consumers cannot claim the same row; claimed sets are disjoint", async () => {
     const file = openTestDb({ file: true })
     try {
       const c1 = file.connect()
@@ -194,7 +194,7 @@ describe("[sqlite] outbox iki bağlantılı dosya modu", () => {
       const claimed = [...a, ...b]
       expect(claimed.length).toBeGreaterThan(0)
       expect(new Set(claimed).size).toBe(claimed.length)
-      // Aday okuması ile koşullu yazma arasında kaybeden taraf boş dönebilir; kalan bir sonraki turda alınır.
+      // Between the candidate read and the conditional write the losing side may come back empty; the rest is taken on the next tick.
       const rest = await claimBatch(p1, { now: NOW, limit: 5 })
       expect([...claimed, ...rest].sort()).toEqual([1, 2, 3])
     } finally {

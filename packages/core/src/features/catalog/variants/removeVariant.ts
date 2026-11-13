@@ -6,14 +6,14 @@ import { enqueueStatement } from "../../outbox"
 import { mapWriteError, reindexJob, variantOfProductGuard } from "../products/statements"
 import { auditActorOf, type CatalogCtx, CatalogError } from "../products/types"
 
-/** Son varyant silinemez: ürünün en az bir varyantı kalır (02-katalog §1). */
+/** The last variant cannot be deleted: a product keeps at least one variant (02-katalog §1). */
 const NOT_LAST_VARIANT = sql`(SELECT count(*) FROM "product_variants" pv
   WHERE pv."product_id" = "product_variants"."product_id" AND pv."deleted_at" IS NULL) > 1`
 
 /**
- * Varyantı yumuşak siler (`deleted_at`; SKU yeniden kullanılabilir). Koşullu tek `atomic()`:
- * sürüm tutmalı, varyant ürünün altında olmalı ve **son varyant olmamalı**. Silinemeyen durumda
- * hiçbir satır yazılmaz; sonra `NOT_FOUND` / `CONFLICT` / `INVALID_INPUT` olarak sınıflandırılır.
+ * Soft deletes the variant (`deleted_at`; the SKU can be reused). A single conditional `atomic()`:
+ * the version must match, the variant must be under the product and **must not be the last one**. If it cannot
+ * be deleted no row is written; it is then classified as `NOT_FOUND` / `CONFLICT` / `INVALID_INPUT`.
  */
 export async function removeVariant(
   ctx: CatalogCtx,
@@ -24,7 +24,7 @@ export async function removeVariant(
   const productId = sql`(SELECT ${products.id} FROM ${products} WHERE ${products.publicId} = ${input.productPublicId})`
   const guard = variantOfProductGuard(input.productPublicId, input.publicId, input.version)
 
-  // Koşullu satırlar eski sürüme bağlı; sürümü artıran `UPDATE` son ifade (bkz. `updateProduct`).
+  // Conditional rows are bound to the old version; the version-bumping `UPDATE` is the last statement (see `updateProduct`).
   const stmts: AtomicStatement[] = [
     auditStatement(
       p.db,

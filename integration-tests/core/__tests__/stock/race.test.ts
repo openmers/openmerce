@@ -4,9 +4,9 @@ import { describe, expect, it } from "vitest"
 import { sqlitePlatform } from "../../../../packages/core/src/features/__testing__/sqlitePlatform"
 import { level, seedStock } from "./helpers"
 
-// Yarış: dosya veritabanı, iki bağımsız bağlantı (iki istek). Doğruluk koşullu yazımdadır.
-describe("[sqlite] stok yarışı", () => {
-  it("iki bağlantı son 1 adedi aynı anda ayırır: tam bir kazanan, reserved 1", async () => {
+// Race: file database, two independent connections (two requests). Correctness lies in the conditional write.
+describe("[sqlite] stock race", () => {
+  it("two connections reserve the last unit at once: exactly one winner, reserved 1", async () => {
     const file = openTestDb({ file: true })
     try {
       const s = await seedStock(file.connect())

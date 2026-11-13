@@ -1,4 +1,4 @@
-/** Beklenen vergi hataları `code` taşıyan tipli hatadır (fiyatla aynı desen). */
+/** Expected tax errors are typed errors carrying a `code` (same pattern as pricing). */
 export type TaxErrorCode = "INVALID_INPUT"
 
 export class TaxError extends Error {
@@ -11,7 +11,7 @@ export class TaxError extends Error {
   }
 }
 
-/** ISO 3166-1 alpha-2 ülke + isteğe bağlı ISO 3166-2 alt bölge. */
+/** ISO 3166-1 alpha-2 country + optional ISO 3166-2 subdivision. */
 export type Address = { country: string; region?: string | null }
 
 export type ZoneMember = { country: string; region: string | null }
@@ -25,11 +25,11 @@ export type TaxRate = {
   publicId: string
   zoneId: number
   taxCategoryId: number
-  /** `null` = herkes. */
+  /** `null` = everyone. */
   customerGroupId: number | null
-  /** Baz puan (%20 = 2000). */
+  /** Basis points (20% = 2000). */
   rateBp: number
 }
 
-/** Bellekteki vergi tablosu (09-vergi §1: tümü bellekte). */
+/** In-memory tax table (09-vergi §1: all in memory). */
 export type TaxConfig = { zones: Zone[]; categories: TaxCategory[]; rates: TaxRate[] }

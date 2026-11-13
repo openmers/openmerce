@@ -4,13 +4,13 @@ import type { Platform } from "../../../platform"
 import { assertCurrency, PricingError } from "../types"
 
 export type CurrencyRateInput = {
-  /** `YYYY-MM-DD`, UTC takvim günü. */
+  /** `YYYY-MM-DD`, UTC calendar day. */
   day: string
   base: string
   quote: string
   /** 1 `base` = `rateE9 / 10^9` `quote`. */
   rateE9: number
-  /** `manual` ya da `RateProvider` kodu. */
+  /** `manual` or a `RateProvider` code. */
   source: string
 }
 
@@ -20,7 +20,7 @@ function assertDay(day: string): void {
   if (!DAY.test(day)) throw new PricingError("INVALID_INPUT", `geçersiz gün: ${day}`)
 }
 
-/** Günün kurunu yazar ya da düzeltir (PK `(day, base, quote)` üzerinde upsert). */
+/** Writes or corrects the day's rate (upsert on PK `(day, base, quote)`). */
 export async function setRate(
   p: Pick<Platform, "db" | "atomic">,
   input: CurrencyRateInput,
@@ -51,8 +51,8 @@ export async function setRate(
 }
 
 /**
- * Yalnız o günün kuru (`rate_e9`); yoksa `null`. Kur tahmin edilmez: önceki günün kuruna
- * düşmek çağıranın (kur görevinin) açık kararıdır.
+ * Only that day's rate (`rate_e9`); `null` if missing. Rates are not guessed: falling back to the previous
+ * day's rate is an explicit decision of the caller (the rate task).
  */
 export async function getRate(
   p: Pick<Platform, "db">,

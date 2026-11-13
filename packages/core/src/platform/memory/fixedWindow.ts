@@ -1,12 +1,12 @@
 import type { RateLimitResult } from "../ports/rateLimit"
 import { createLru } from "./lru"
 
-// Saf bellek içi sabit pencere sayacı (self-host `rateLimit`). Saat dışarıdan (`now`, epoch ms).
+// Pure in-memory fixed window counter (self-host `rateLimit`). Clock is injected (`now`, epoch ms).
 export type FixedWindow = { hit(key: string, now: number): RateLimitResult }
 
 type Window = { start: number; count: number }
 
-/** Pencere başına `limit` istek. Anahtarlar LRU'da tutulur; `maxKeys` aşılırsa en eskisi sıfırlanır. */
+/** `limit` requests per window. Keys are kept in an LRU; if `maxKeys` is exceeded the oldest is reset. */
 export function createFixedWindow(opts: {
   limit: number
   windowMs: number

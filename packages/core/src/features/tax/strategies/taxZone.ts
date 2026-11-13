@@ -1,8 +1,8 @@
 import type { Address, Zone } from "../types"
 
 /**
- * Bölgenin adresi kapsama derecesi: 2 = alt bölge eşleşti, 1 = tüm ülke üyesi, 0 = kapsamıyor.
- * Kargo uygunluğu da bunu kullanır (zones vergi ve kargoda ortak).
+ * How well a zone covers the address: 2 = subdivision matched, 1 = whole-country member, 0 = not covered.
+ * Shipping eligibility uses it too (zones are shared by tax and shipping).
  */
 export function zoneMatch(zone: Zone, address: Address): 0 | 1 | 2 {
   const country = address.country.toUpperCase()
@@ -18,15 +18,15 @@ export function zoneMatch(zone: Zone, address: Address): 0 | 1 | 2 {
 
 export type TaxZoneInput = {
   zones: readonly Zone[]
-  /** Teslimat adresi; yoksa kanalın varsayılanı. */
+  /** Shipping address; otherwise the channel's default. */
   address?: Address | null
   channelDefaultZoneId: number | null
 }
 
 /**
- * Varsayılan `taxZone` stratejisi (09-vergi §2.1, saf). Adresi kapsayan bölgelerden en özeli
- * (alt bölge > ülke), eşitlikte küçük `id`. Adres yoksa ya da hiçbir bölge kapsamıyorsa kanalın
- * varsayılan bölgesi; o da yoksa `null` (vergi satırı üretilmez).
+ * Default `taxZone` strategy (09-vergi §2.1, pure). The most specific zone covering the address
+ * (subdivision > country), ties by smaller `id`. If there is no address or no zone covers it, the channel's
+ * default zone; if that is missing too, `null` (no tax line is produced).
  */
 export function taxZone(input: TaxZoneInput): number | null {
   if (input.address) {

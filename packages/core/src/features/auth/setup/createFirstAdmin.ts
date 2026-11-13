@@ -17,7 +17,7 @@ import { getSetupCompletedAt } from "./getSetupCompletedAt"
 export type CreateFirstAdminInput = {
   name: string
   email: string
-  /** Better Auth parola özeti (`better-auth/crypto` `hashPassword`); core özet hesaplamaz. */
+  /** Better Auth password hash (`better-auth/crypto` `hashPassword`); core does not compute hashes. */
   passwordHash: string
   requestId?: string
 }
@@ -26,17 +26,17 @@ export type CreateFirstAdminResult =
   | { ok: true; adminId: string }
   | { ok: false; code: "SETUP_DONE" }
 
-/** Kurulum kilidi satırının benzersiz indeksi ihlal edildi mi (yarışı kaybeden çağrı). */
+/** Whether the unique index of the setup lock row was violated (the call that lost the race). */
 function isSetupConflict(error: unknown): boolean {
   const message = error instanceof Error ? error.message : String(error)
   return /UNIQUE/i.test(message) && /settings\./i.test(message)
 }
 
 /**
- * Kurulum sihirbazının ilk yöneticisi (`08-kimlik-dogrulama` §4, katalog `settings`): tek
- * `atomic()`'te kurulum kilidi + `SuperAdmin` rolü + yönetici + parola hesabı + rol ataması +
- * denetim. Kilit ilk ifadedir ve `ON CONFLICT` almaz: ikinci (ya da yarışı kaybeden) çağrıda
- * benzersiz indeks bütün partiyi geri alır, sonuç `SETUP_DONE` olur (tam bir kazanan).
+ * First admin of the setup wizard (`08-kimlik-dogrulama` §4, catalog `settings`): in one
+ * `atomic()`, setup lock + `SuperAdmin` role + admin + password account + role assignment +
+ * audit. The lock is the first statement and has no `ON CONFLICT`: on the second (or race-losing) call
+ * the unique index rolls back the whole batch and the result is `SETUP_DONE` (exactly one winner).
  */
 export async function createFirstAdmin(
   p: Pick<Platform, "db" | "atomic">,
@@ -44,7 +44,7 @@ export async function createFirstAdmin(
   now: number,
 ): Promise<CreateFirstAdminResult> {
   if ((await getSetupCompletedAt(p)) !== null) return { ok: false, code: "SETUP_DONE" }
-  // Better Auth girişte e-postayı küçültüp arar.
+  // Better Auth lowercases the email on login lookup.
   const email = input.email.trim().toLowerCase()
   const adminIdSql = sql`(SELECT ${adminUsers.id} FROM ${adminUsers} WHERE ${adminUsers.email} = ${email})`
   const roleIdSql = sql`(SELECT ${roles.id} FROM ${roles} WHERE ${roles.code} = ${SUPER_ADMIN_ROLE})`
@@ -85,7 +85,7 @@ export async function createFirstAdmin(
         updatedAt: new Date(now),
       })
       .toSQL(),
-    // Better Auth credential hesabı: providerId `credential`, accountId = kullanıcı kimliği (metin).
+    // Better Auth credential account: providerId `credential`, accountId = user id (text).
     p.db
       .insert(adminAccounts)
       .values({

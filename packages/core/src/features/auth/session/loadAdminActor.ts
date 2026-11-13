@@ -12,10 +12,10 @@ export type AdminActor = {
 }
 
 /**
- * Oturumdaki yöneticiyi ve `channelId` kanalındaki izinlerini yükler. Yönetici yoksa, `active`
- * değilse ya da oturumun `session_version` kopyası güncel değilse `null` (oturum reddedilir).
+ * Loads the session's admin and their permissions in channel `channelId`. `null` (session rejected) if the
+ * admin is missing, not `active`, or the session's `session_version` copy is stale.
  */
-// shortcut: istek başına iki sorgu; oturum önbelleği (madde 10.7 / 12.5) gelince tek okumaya iner.
+// shortcut: two queries per request; drops to a single read once the session cache (item 10.7 / 12.5) arrives.
 export async function loadAdminActor(
   p: Pick<Platform, "db">,
   input: { adminUserId: number; sessionVersion: number; channelId: number },

@@ -1,11 +1,11 @@
 import type { ShipLine, ShippingMethod } from "../types"
 
-/** Depo × varyant satılabilir adedi (çağıran stok okumasından verir). */
+/** Sellable quantity per warehouse × variant (the caller provides it from a stock read). */
 export type StockAt = (locationId: number, variantId: number) => number
 
 /**
- * Mağazadan teslim uygunluğu (10-kargo §4, saf): yöntemin deposunda her fiziksel kalemin adedi
- * kadar satılabilir stok var. Depo `pickup_enabled` denetimi çağıranın yöntem listesindedir.
+ * Store pickup eligibility (10-kargo §4, pure): the method's warehouse has sellable stock for each physical
+ * item's quantity. The warehouse `pickup_enabled` check lives in the caller's method list.
  */
 export function pickupEligible(
   method: Pick<ShippingMethod, "pickupLocationId">,

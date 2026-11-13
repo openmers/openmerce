@@ -1,5 +1,5 @@
-// İzin sözlüğü kodda (06-guvenlik-ve-yetki "Roller ve izinler"; katalog 01 B: ayrı tablo yok).
-// `role_permissions.permission`, API anahtarı ve uygulama token'ı izinleri bu sözlükten gelir.
+// The permission dictionary lives in code (06-guvenlik-ve-yetki "Roles and permissions"; catalog 01 B: no separate table).
+// `role_permissions.permission`, API key and app token permissions come from this dictionary.
 
 export const CORE_PERMISSIONS = [
   "orders:read",
@@ -51,11 +51,11 @@ export const CORE_PERMISSIONS = [
 export type CorePermission = (typeof CORE_PERMISSIONS)[number]
 
 /**
- * Built-in app izinleri tip düzeyinde modül genişletmesiyle eklenir:
+ * Built-in app permissions are added at the type level via module augmentation:
  * `declare module "@openmers/core" { interface AppPermissions { "reviews:moderate": true } }`
- * ve çalışma zamanında `registerAppPermissions` ile.
+ * and at runtime via `registerAppPermissions`.
  */
-// biome-ignore lint/suspicious/noEmptyInterface: modül genişletmesi için boş başlar
+// biome-ignore lint/suspicious/noEmptyInterface: starts empty for module augmentation
 export interface AppPermissions {}
 
 export type Permission = CorePermission | Extract<keyof AppPermissions, string>
@@ -77,7 +77,7 @@ export class PermissionError extends Error {
 const known = new Set<string>(CORE_PERMISSIONS)
 const appOwners = new Map<string, string>()
 
-/** Built-in app izinlerini ekler; biçim `<varlık>:<eylem>`, çekirdek ya da başka app ile çakışma hatadır. */
+/** Adds built-in app permissions; format `<entity>:<action>`, a collision with core or another app is an error. */
 export function registerAppPermissions(appId: string, permissions: readonly string[]): void {
   for (const p of permissions) {
     if (!PERMISSION_FORMAT.test(p)) {
@@ -97,7 +97,7 @@ export function isPermission(value: string): value is Permission {
   return known.has(value)
 }
 
-/** Kayıtlı bütün izinler (çekirdek + app); `SuperAdmin` çözümlemesi bunu kullanır. */
+/** All registered permissions (core + apps); used to resolve `SuperAdmin`. */
 export function allPermissions(): ReadonlySet<string> {
   return known
 }

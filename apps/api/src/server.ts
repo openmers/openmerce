@@ -11,15 +11,15 @@ import { createNodePlatform } from "./platform/node"
 import { openNodeSqlite } from "./platform/node/sqlite"
 import { createPoller } from "./worker/poller"
 
-// Node giriş noktası (`01-platform-arayuzu` §11): env → Platform → uygulama.
-// Kipler (aynı belge): `--worker` yalnız iş tüketicisi, bayraksız API + aynı süreçte tüketici.
-// Migration'lar uygulanmış varsayılır (madde 6.10 çalıştırıcısı; deploy/docker/entrypoint.sh).
+// Node entry point (`01-platform-arayuzu` §11): env → Platform → app.
+// Modes (same document): `--worker` is only the job consumer; without flags, API + an in-process consumer.
+// Migrations are assumed to be applied (item 6.10 runner; deploy/docker/entrypoint.sh).
 const env = readEnv()
 const workerOnly = process.argv.includes("--worker")
 const sqlite = openNodeSqlite(env.OPENMERS_DB)
 const platform = createNodePlatform({ sqlite, kek: env.OPENMERS_KEK })
 
-// Gerçek handler'lar kendi feature'larıyla gelir (brif kapsamı dışı); kayıtsız topic `failed` olur.
+// Real handlers arrive with their own features (out of scope); unregistered topics become `failed`.
 const poller = createPoller({
   platform,
   handlers: defineHandlers({}),
@@ -29,7 +29,7 @@ poller.start()
 
 const channels = createChannelRegistry({
   load: () => loadChannels(platform),
-  // shortcut: kanal tablosu sürümü şimdilik global ayar sürümü; kanal başına sayaç toplamı madde 14.
+  // shortcut: the channel table version is the global settings version for now; per-channel counter sum in item 14.
   version: () => getSettingsVersion(platform.db),
   checkEveryMs: 30_000,
 })
@@ -46,7 +46,7 @@ const server = workerOnly
 
 if (workerOnly) console.log("openmers iş tüketicisi (--worker)")
 
-// Düzgün kapanış: süren parti biter, sonra bağlantılar kapanır.
+// Graceful shutdown: the running batch finishes, then connections close.
 let closing = false
 async function shutdown(): Promise<void> {
   if (closing) return

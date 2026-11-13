@@ -7,7 +7,7 @@ import { insertWithPublicId, isPublicIdCollision } from "./insertWithPublicId"
 
 const NOW = 1_700_000_000_000
 
-/** Her denemede farklı `code`: böylece yalnız `public_id` çakışması sınanır. */
+/** A different `code` on every attempt: so only a `public_id` collision is tested. */
 const channelInput = (publicId: string, code = `c-${publicId}`) => ({
   publicId,
   code,
@@ -18,7 +18,7 @@ const channelInput = (publicId: string, code = `c-${publicId}`) => ({
   timezone: "UTC",
 })
 
-/** Sırayla verilen bayt değerlerini döner; liste bitince son değeri tekrarlar. */
+/** Returns the given byte values in order; repeats the last value once the list runs out. */
 function sequence(values: number[]) {
   let index = 0
   return (length: number) => {
@@ -29,7 +29,7 @@ function sequence(values: number[]) {
 }
 
 describe("isPublicIdCollision", () => {
-  it("yalnız public_id benzersiz ihlalini yeniden denenebilir sayar", () => {
+  it("only treats a public_id unique violation as retryable", () => {
     expect(isPublicIdCollision(new Error("UNIQUE constraint failed: channels.public_id"))).toBe(
       true,
     )
@@ -41,9 +41,9 @@ describe("isPublicIdCollision", () => {
 describeOnTargets("insertWithPublicId", (getDb) => {
   const platform = () => sqlitePlatform(getDb())
 
-  it("çakışmada yeni kimlikle yeniden dener", async () => {
+  it("retries with a new id on collision", async () => {
     const p = platform()
-    // İlk satır `chn_1111111111` kimliğini alır; üreteç önce aynı kimliği verir, sonra başkasını.
+    // The first row takes the id `chn_1111111111`; the generator first gives the same id, then another.
     await p.atomic([insertChannelStatement(p.db, channelInput("chn_1111111111", "seeded"), NOW)])
 
     const publicId = await insertWithPublicId(
@@ -55,7 +55,7 @@ describeOnTargets("insertWithPublicId", (getDb) => {
     expect(await p.db.select().from(channels)).toHaveLength(2)
   })
 
-  it("üç denemede de çakışırsa son hatayı yükseltir", async () => {
+  it("raises the last error if all three attempts collide", async () => {
     const p = platform()
     await p.atomic([insertChannelStatement(p.db, channelInput("chn_1111111111", "seeded"), NOW)])
 
@@ -69,7 +69,7 @@ describeOnTargets("insertWithPublicId", (getDb) => {
     expect(await p.db.select().from(channels)).toHaveLength(1)
   })
 
-  it("başka bir benzersiz sütunun ihlali yeniden denenmez", async () => {
+  it("a violation of another unique column is not retried", async () => {
     const p = platform()
     await p.atomic([insertChannelStatement(p.db, channelInput("chn_1111111111", "seeded"), NOW)])
 

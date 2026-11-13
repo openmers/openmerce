@@ -5,15 +5,15 @@ import { assertChannelDeletable } from "../defaultChannel"
 import type { ChannelRow } from "../types"
 
 /**
- * Varsayılan olmayan kanalı alan adlarıyla birlikte tek `atomic()`'te siler. Dönüş silinen kanal
- * sayısı (0/1). `is_default = 0` koşulu SQL'de de var: bellekteki kopya eskiyse varsayılan korunur.
+ * Deletes a non-default channel together with its domains in one `atomic()`. Returns the number of deleted
+ * channels (0/1). The `is_default = 0` condition is in SQL too: if the in-memory copy is stale the default is protected.
  */
 export async function deleteChannel(
   p: Pick<Platform, "db" | "atomic">,
   channel: Pick<ChannelRow, "id" | "isDefault" | "code">,
 ): Promise<number> {
   assertChannelDeletable(channel)
-  // shortcut: sipariş/sepet denetimi yok, tablolar aşama 2'de; eklenince bu koşula NOT EXISTS girer.
+  // shortcut: no order/cart check, those tables come in phase 2; once added, a NOT EXISTS goes into this condition.
   const deletable = p.db
     .select({ id: channels.id })
     .from(channels)

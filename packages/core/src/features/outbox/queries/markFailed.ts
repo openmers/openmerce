@@ -9,14 +9,14 @@ export type MarkFailedInput = {
   id: number
   error: string
   now: number
-  /** Bildirim gövdesine yazılır (`event ?? kind`). */
+  /** Written into the notification body (`event ?? kind`). */
   topic?: string
   limits?: OutboxLimits
-  /** Bildirim satırının kimliği; verilmezse üretilir (testte sabitlenebilir). */
+  /** Id of the notification row; generated if not given (can be fixed in tests). */
   notifyPublicId?: string
 }
 
-// `attempts` aynı UPDATE içinde eski değeriyle okunur; gecikme bu yüzden tek ifadede seçilir.
+// `attempts` is read with its old value within the same UPDATE; that is why the delay is chosen in a single statement.
 function delayCase(limits: OutboxLimits) {
   const parts = []
   for (let attempts = 1; attempts < limits.maxAttempts; attempts += 1) {
@@ -29,11 +29,11 @@ function delayCase(limits: OutboxLimits) {
 }
 
 /**
- * `dead` olacak satır için mağaza sahibine bildirim satırı (katalog 01 `outbox` "mağaza sahibine
- * bildirim", yol haritası 9.7). Koşul, aşağıdaki UPDATE'in ön koşuluyla birebir aynıdır
- * (`sending` + son deneme), bu yüzden yalnız gerçekten `dead` olan satır için bir kez yazılır.
- * Drizzle koşullu `INSERT ... SELECT` ifade edemediği için SQL elle yazılır; tablo/kolon adları
- * `0005_events.sql` ile aynıdır.
+ * Notification row to the store owner for a row about to become `dead` (catalog 01 `outbox` "notify the store
+ * owner", roadmap 9.7). The condition is exactly the same as the precondition of the UPDATE below
+ * (`sending` + last attempt), so it is written once, only for a row that actually becomes `dead`.
+ * Drizzle cannot express a conditional `INSERT ... SELECT`, so the SQL is written by hand; table/column names
+ * match `0005_events.sql`.
  */
 export function deadNotificationStatement(input: MarkFailedInput): AtomicStatement {
   const limits = input.limits ?? OUTBOX_LIMITS
@@ -61,9 +61,9 @@ WHERE EXISTS (SELECT 1 FROM outbox WHERE id = ? AND status = 'sending' AND attem
 }
 
 /**
- * Deneme +1, üstel geri çekilme `next_attempt_at`; sınıra ulaşınca `dead` (karar 8) ve aynı
- * `atomic()` içinde bildirim satırı.
- * Koşullu: yalnız `sending` satırı; başka bir tüketici araya giremez.
+ * Attempts +1, exponential backoff `next_attempt_at`; on reaching the limit `dead` (decision 8) and a
+ * notification row in the same `atomic()`.
+ * Conditional: only a `sending` row; no other consumer can interleave.
  */
 export function markFailedStatement(db: Db, input: MarkFailedInput): AtomicStatement {
   const limits = input.limits ?? OUTBOX_LIMITS
@@ -86,8 +86,8 @@ export function markFailedStatement(db: Db, input: MarkFailedInput): AtomicState
 }
 
 /**
- * `true` = satır bu çağrıda `failed`/`dead` oldu. Bildirim satırı önce yazılır (koşulu UPDATE'in
- * ön koşulu), sonra satır `dead`/`failed` işaretlenir; ikisi tek birimdir.
+ * `true` = the row became `failed`/`dead` in this call. The notification row is written first (its condition is the
+ * UPDATE's precondition), then the row is marked `dead`/`failed`; both are one unit.
  */
 export async function markFailed(
   p: Pick<Platform, "db" | "atomic">,

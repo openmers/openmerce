@@ -2,7 +2,7 @@ import { channels } from "@openmers/db"
 import { eq, sql } from "drizzle-orm"
 import type { Platform } from "../../../platform"
 
-/** Değiştirilebilir alanlar; kimlik, varsayılanlık ve sayaç dışarıda. */
+/** Changeable fields; id, default flag and counter are excluded. */
 export type ChannelPatch = Partial<
   Omit<
     typeof channels.$inferInsert,
@@ -10,7 +10,7 @@ export type ChannelPatch = Partial<
   >
 >
 
-/** Alanları günceller; `settings_version + 1` ve `updated_at` aynı ifadede. Etkilenen satır (0 = yok). */
+/** Updates fields; `settings_version + 1` and `updated_at` in the same statement. Affected rows (0 = none). */
 export async function updateChannel(
   p: Pick<Platform, "db" | "atomic">,
   id: number,

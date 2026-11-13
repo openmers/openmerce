@@ -3,17 +3,17 @@ import Database from "better-sqlite3"
 import { type BetterSQLite3Database, drizzle } from "drizzle-orm/better-sqlite3"
 
 export type NodeSqlite = {
-  /** Tek yazma bağlantısı. */
+  /** The single write connection. */
   write: Database.Database
-  /** Salt-okunur ikinci bağlantı (vitrin okumaları). */
+  /** Second, read-only connection (storefront reads). */
   read: Database.Database
   db: BetterSQLite3Database<typeof schema>
   readDb: BetterSQLite3Database<typeof schema>
   close(): void
 }
 
-// Performans §7: WAL, synchronous=NORMAL, busy_timeout, foreign_keys=ON. `path` bir dosya olmalı;
-// `:memory:` her bağlantıya ayrı veritabanı açar.
+// Performance §7: WAL, synchronous=NORMAL, busy_timeout, foreign_keys=ON. `path` must be a file;
+// `:memory:` opens a separate database per connection.
 export function openNodeSqlite(path: string, opts: { busyTimeoutMs?: number } = {}): NodeSqlite {
   const busy = `busy_timeout = ${opts.busyTimeoutMs ?? 5000}`
   const write = new Database(path)
@@ -22,7 +22,7 @@ export function openNodeSqlite(path: string, opts: { busyTimeoutMs?: number } = 
   write.pragma(busy)
   write.pragma("foreign_keys = ON")
 
-  // WAL dosyaya kalıcı yazıldı; salt-okunur bağlantı onu kullanır.
+  // WAL is persisted to the file; the read-only connection uses it.
   const read = new Database(path, { readonly: true })
   read.pragma(busy)
   read.pragma("foreign_keys = ON")

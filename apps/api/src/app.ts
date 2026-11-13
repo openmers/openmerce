@@ -18,17 +18,17 @@ import { openApiDocument, openApiHandler, rpcHandler } from "./orpc/handlers"
 
 export type AppOptions = SecureOptions & {
   platform: Platform
-  /** Bellekteki kanal tablosu (`createChannelRegistry`): istek başına sorgu yok. */
+  /** In-memory channel table (`createChannelRegistry`): no query per request. */
   channels: Pick<ChannelRegistry, "get">
   now?: () => number
   requestId?: () => string
-  /** Yönetici oturum çerezi imzası (Better Auth `secret`), en az 32 karakter. */
+  /** Admin session cookie signing secret (Better Auth `secret`), at least 32 characters. */
   authSecret: string
-  /** Hız sınırlayıcı hatası logu (fail-open); varsayılan `console.error`. */
+  /** Rate limiter error log (fail-open); defaults to `console.error`. */
   log?: (message: string, error: unknown) => void
 }
 
-/** `Host`: gerçek sunucuda başlık, `app.request` testinde URL'den gelir. */
+/** `Host`: a header on a real server, taken from the URL in `app.request` tests. */
 function hostOf(c: { req: { header(name: string): string | undefined; url: string } }): string {
   return c.req.header("host") ?? new URL(c.req.url).host
 }
@@ -40,7 +40,7 @@ function redirectUrl(requestUrl: string, to: string, https: boolean): string {
   return url.toString()
 }
 
-/** Bilinmeyen alan adı/anahtar `ChannelError` fırlatır; API'de 404'e eşlenir (varsayılana düşülmez). */
+/** Unknown domain/key throws `ChannelError`; mapped to 404 in the API (no fallback to default). */
 function resolveOrNull(input: {
   snapshot: ChannelSnapshot
   host: string
@@ -54,26 +54,26 @@ function resolveOrNull(input: {
 }
 
 /**
- * Hono kabuğu (`02-api-ve-istek-baglami` §6, §8): güvenlik başlıkları en dışta, sonra CSRF `Origin`,
- * kanal çözümleme ve hız sınırı; `/api/*` OpenAPI, `/rpc/*` RPC işleyicisine devredilir. Hono yalnız yönlendirme
- * kabuğudur, `hc` istemcisi kullanılmaz.
+ * Hono shell (`02-api-ve-istek-baglami` §6, §8): security headers outermost, then CSRF `Origin`,
+ * channel resolution and rate limiting; `/api/*` goes to OpenAPI, `/rpc/*` to the RPC handler. Hono is
+ * only the routing shell; the `hc` client is not used.
  */
 export function createApp(opts: AppOptions): Hono<AppEnv> {
   const app = new Hono<AppEnv>()
   const secure = (c: Context<AppEnv>, res: Response) => secureResponse(c, res, opts)
   const adminAuth = createAdminAuth({ db: opts.platform.db, secret: opts.authSecret })
 
-  // 1) En dış ara katman: istek kimliği + güvenlik başlıkları (hata/404 dahil).
+  // 1) Outermost middleware: request id + security headers (including errors/404).
   app.use("*", async (c, next) => {
     c.set("requestId", opts.requestId?.() ?? crypto.randomUUID())
     await next()
     secure(c, c.res)
   })
 
-  // 2) CSRF: form tipli, durum değiştiren istekte `Origin` eşleşmeli.
+  // 2) CSRF: form-typed, state-changing requests must have a matching `Origin`.
   app.use("*", csrfOrigin())
 
-  // 3) Kanal: `x-openmers-channel` Host'tan önce gelir; bilinmeyen alan adı/anahtar 404.
+  // 3) Channel: `x-openmers-channel` takes precedence over Host; unknown domain/key 404.
   app.use("*", async (c, next) => {
     const now = opts.now?.() ?? Date.now()
     const snapshot: ChannelSnapshot = await opts.channels.get(now)
@@ -101,7 +101,7 @@ export function createApp(opts: AppOptions): Hono<AppEnv> {
     await next()
   })
 
-  // 4) Hız sınırı: kova = kanal + rota grubu + istemci; sınırlayıcı çökerse geçer.
+  // 4) Rate limit: bucket = channel + route group + client; passes if the limiter crashes.
   app.use("*", rateLimit({ platform: opts.platform, log: opts.log }))
 
   app.all("/api/openapi.json", async (c) => c.json(await openApiDocument()))
@@ -122,7 +122,7 @@ export function createApp(opts: AppOptions): Hono<AppEnv> {
     return matched ? response : apiError(c, 404, "NOT_FOUND")
   })
 
-  // Hata ve 404 yanıtları da güvenlik başlıklarını taşır; iç ileti sızdırılmaz.
+  // Error and 404 responses also carry security headers; internal messages are not leaked.
   app.notFound((c) => secure(c, apiError(c, 404, "NOT_FOUND")))
   app.onError((_error, c) => secure(c, apiError(c, 500, "INTERNAL")))
 

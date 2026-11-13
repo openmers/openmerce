@@ -8,8 +8,8 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest"
 import { nodeAtomic } from "../../../apps/api/src/platform/node/atomic"
 import { openNodeSqlite } from "../../../apps/api/src/platform/node/sqlite"
 
-// Platform `atomic()` sözleşmesi (01-platform-arayuzu §1). Hedef: SQLite; D1 (Miniflare) sonra.
-// İfadeler Drizzle `toSQL()` ile üretilir: kararlaştırılan AtomicStatement biçimi.
+// Platform `atomic()` contract (01-platform-arayuzu §1). Target: SQLite; D1 (Miniflare) later.
+// Statements are built with Drizzle `toSQL()`: the agreed AtomicStatement shape.
 
 const qb = (conn: Database.Database) => drizzle(conn)
 
@@ -19,7 +19,7 @@ const insertSetting = (conn: Database.Database, key: string, value: unknown): At
     .values({ scope: "global", key, value, createdAt: 0, updatedAt: 0 })
     .toSQL()
 
-/** Değer `from` ise `to` yap: koşullu yazma, "kazandım mı" satır sayısından okunur. */
+/** If the value is `from`, set it to `to`: a conditional write, "did I win" is read from the row count. */
 const swapSetting = (conn: Database.Database, key: string, from: unknown, to: unknown) =>
   qb(conn)
     .update(settings)
@@ -37,16 +37,16 @@ describe("[sqlite] platform atomic()", () => {
   })
   afterEach(() => conn.close())
 
-  it("ikinci ifade hata verince ilk ifadenin yazdığı satır kalmaz", async () => {
+  it("when the second statement fails, the row written by the first does not remain", async () => {
     const atomic = nodeAtomic(conn)
-    // boş anahtar settings_key_ck'yi bozar
+    // an empty key violates settings_key_ck
     await expect(
       atomic([insertSetting(conn, "a", 1), insertSetting(conn, "", 2)]),
     ).rejects.toThrow()
     expect(settingValue(conn, "a")).toBeUndefined()
   })
 
-  it("koşulu tutmayan ifade 0 döner; dönüş uzunluğu ifade sayısına eşit", async () => {
+  it("a statement whose condition does not hold returns 0; result length equals statement count", async () => {
     const atomic = nodeAtomic(conn)
     const result = await atomic([
       insertSetting(conn, "k", "a"),
@@ -57,19 +57,19 @@ describe("[sqlite] platform atomic()", () => {
     expect(settingValue(conn, "k")).toBe("b")
   })
 
-  it("boş ifade dizisi boş sonuç döner", async () => {
+  it("an empty statement array returns an empty result", async () => {
     expect(await nodeAtomic(conn)([])).toEqual([])
   })
 })
 
-describe("[sqlite] platform atomic() iki bağlantı yarışı", () => {
+describe("[sqlite] platform atomic() race between two connections", () => {
   let file: TestDbFile
   beforeEach(() => {
     file = openTestDb({ file: true })
   })
   afterEach(() => file.close())
 
-  it("aynı koşullu UPDATE'te tam bir kazanan", async () => {
+  it("exactly one winner on the same conditional UPDATE", async () => {
     const [c1, c2] = [file.connect(), file.connect()]
     await nodeAtomic(c1)([insertSetting(c1, "token", "t0")])
 
@@ -87,7 +87,7 @@ describe("[sqlite] platform atomic() iki bağlantı yarışı", () => {
 })
 
 describe("[sqlite] openNodeSqlite", () => {
-  it("WAL + pragmalar; salt-okunur bağlantı yazılanı görür, yazamaz", async () => {
+  it("WAL + pragmas; the read-only connection sees writes but cannot write", async () => {
     const file = openTestDb({ file: true })
     const sqlite = openNodeSqlite(file.path)
     try {

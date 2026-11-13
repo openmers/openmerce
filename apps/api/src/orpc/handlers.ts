@@ -9,14 +9,14 @@ import { errorStatusMap } from "./base"
 
 const converters = [new ZodToJsonSchemaConverter()]
 
-/** RPC: yalnız yazma/kişiye özel çağrılar; GET varsayılan olarak reddedilir (CSRF). */
+/** RPC: only write/user-specific calls; GET is rejected by default (CSRF). */
 export const rpcHandler = new RPCHandler(router, {
   errorStatusMap,
-  // Oturum çerezi (`Set-Cookie`) `context.resHeaders` üzerinden yazılır.
+  // The session cookie (`Set-Cookie`) is written via `context.resHeaders`.
   plugins: [new ResponseHeadersHandlerPlugin()],
 })
 
-/** OpenAPI: önbelleklenebilir GET uçları; Smart Coercion yalnız burada açık. */
+/** OpenAPI: cacheable GET endpoints; Smart Coercion is enabled only here. */
 export const openApiHandler = new OpenAPIHandler(router, {
   errorStatusMap,
   plugins: [new SmartCoercionHandlerPlugin({ converters }), new ResponseHeadersHandlerPlugin()],
@@ -24,7 +24,7 @@ export const openApiHandler = new OpenAPIHandler(router, {
 
 let document: Promise<unknown> | undefined
 
-/** `/api/openapi.json`: sözleşmeden üretilir, bir kez hesaplanır; üretim düşerse yeniden denenir. */
+/** `/api/openapi.json`: generated from the contract and computed once; retried if generation fails. */
 export function openApiDocument(): Promise<unknown> {
   document ??= new OpenAPIGenerator({ converters })
     .generate(router, {

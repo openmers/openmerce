@@ -9,9 +9,9 @@ export type SetSettingInput = { scope: SettingScope; scopeId: number; key: strin
 const target = [settings.scope, settings.scopeId, settings.key]
 
 /**
- * Zod doğrulama → tek `atomic()`: upsert + global `settings.version` +1 + denetim satırı.
- * Geçersiz değer, izinsiz kapsam, bilinmeyen ya da sır gibi görünen anahtar `SettingError` atar.
- * Denetim aynı birimde olduğu için ayar yazılmadıysa denetim satırı da yoktur.
+ * Zod validation → one `atomic()`: upsert + global `settings.version` +1 + audit row.
+ * An invalid value, unauthorized scope, unknown or secret-looking key throws `SettingError`.
+ * Since the audit is in the same unit, if the setting was not written there is no audit row either.
  */
 export async function setSetting(
   p: Pick<Platform, "db" | "atomic">,

@@ -15,8 +15,8 @@ function need<T>(value: T | undefined, what: string): T {
   return value
 }
 
-describe("audit zinciri (saf)", () => {
-  it("canonicalJson anahtarları sıralar, dizi sırasını korur", () => {
+describe("audit chain (pure)", () => {
+  it("canonicalJson sorts keys and keeps array order", () => {
     expect(canonicalJson({ b: 1, a: { d: 2, c: [3, { f: 4, e: 5 }] } })).toBe(
       '{"a":{"c":[3,{"e":5,"f":4}],"d":2},"b":1}',
     )
@@ -24,13 +24,13 @@ describe("audit zinciri (saf)", () => {
     expect(canonicalJson([null, 1])).toBe("[null,1]")
   })
 
-  it("public_id aud_ önekli 10 karakter Crockford base32", () => {
+  it("public_id is 10 characters of Crockford base32 with the aud_ prefix", () => {
     expect(newAuditPublicId()).toMatch(/^aud_[0-9A-HJKMNP-TV-Z]{10}$/)
     expect(newAuditPublicId()).not.toBe(newAuditPublicId())
   })
 })
 
-describeOnTargets("audit sorguları", (getDb) => {
+describeOnTargets("audit queries", (getDb) => {
   const platform = () => sqlitePlatform(getDb())
   const entry = (publicId: string, action = "settings:write") => ({
     publicId,
@@ -41,7 +41,7 @@ describeOnTargets("audit sorguları", (getDb) => {
     after: { b: 1, a: 2 },
   })
 
-  it("auditStatement tek başına yazmaz; geri alınırsa satır kalmaz", async () => {
+  it("auditStatement does not write on its own; if rolled back, no row remains", async () => {
     const p = platform()
     expect(await p.db.select().from(auditLog)).toHaveLength(0)
     await expect(
@@ -53,7 +53,7 @@ describeOnTargets("audit sorguları", (getDb) => {
     expect(await p.db.select().from(auditLog)).toHaveLength(0)
   })
 
-  it("satır aktör, eylem ve önce/sonra özetini yazar; zincir alanları boş kalır", async () => {
+  it("the row stores actor, action and before/after summary; chain fields stay empty", async () => {
     const p = platform()
     await p.atomic([auditStatement(p.db, entry("aud_a"), NOW)])
     const row = need((await p.db.select().from(auditLog))[0], "audit satırı")
@@ -71,7 +71,7 @@ describeOnTargets("audit sorguları", (getDb) => {
     })
   })
 
-  it("zincir özeti SHA-256(prev ‖ kanonik satır); satır veya prev değişince değişir", async () => {
+  it("chain hash is SHA-256(prev ‖ canonical row); changes when the row or prev changes", async () => {
     const p = platform()
     await p.atomic([auditStatement(p.db, entry("aud_a"), NOW)])
     const row = need((await p.db.select().from(auditLog))[0], "audit satırı")
@@ -87,7 +87,7 @@ describeOnTargets("audit sorguları", (getDb) => {
     expect(await auditRowHash(null, { ...row, action: "other" })).not.toBe(hash)
   })
 
-  it("listAudit imleçle azalan sırada sayfalar ve süzgeçleri uygular", async () => {
+  it("listAudit paginates in descending order with a cursor and applies filters", async () => {
     const p = platform()
     await p.atomic([
       auditStatement(p.db, entry("aud_1", "a:write"), NOW),
@@ -110,7 +110,7 @@ describeOnTargets("audit sorguları", (getDb) => {
     })
   })
 
-  it("listAudit tek satırlık ayrıntıyı public_id ile getirir", async () => {
+  it("listAudit fetches a single row's detail by public_id", async () => {
     const p = platform()
     await p.atomic([auditStatement(p.db, entry("aud_one"), NOW)])
     const rows = await p.db.select().from(auditLog).where(eq(auditLog.publicId, "aud_one"))

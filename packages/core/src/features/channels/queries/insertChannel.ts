@@ -8,16 +8,16 @@ export type NewChannel = Omit<
   typeof channels.$inferInsert,
   "id" | "publicId" | "settingsVersion" | "createdAt" | "updatedAt"
 > & {
-  /** Verilmezse `chn_` önekli kimlik üretilir ve çakışmada yeniden denenir (madde 6.6). */
+  /** If not given, an id with the `chn_` prefix is generated and retried on collision (item 6.6). */
   publicId?: string
 }
 
-/** Aynı `atomic()` içinde yeni eklenen kanala başvurmak için (id henüz bilinmiyor). */
+/** To reference a channel newly inserted in the same `atomic()` (id not known yet). */
 export function channelIdByPublicId(publicId: string): SQL {
   return sql`(SELECT ${channels.id} FROM ${channels} WHERE ${channels.publicId} = ${publicId})`
 }
 
-/** Kodda doğrulanan kurallar (§3.2): varsayılan para birimi ve dil izinli listelerde olmalı. */
+/** Rules validated in code (§3.2): the default currency and language must be in the allowed lists. */
 export function insertChannelStatement(
   db: Db,
   input: NewChannel & { publicId: string },
@@ -36,14 +36,14 @@ export function insertChannelStatement(
     .toSQL()
 }
 
-/** Kanalı yazar; üretilen/kullanılan `public_id`'yi döner. */
+/** Writes the channel; returns the generated/used `public_id`. */
 export async function insertChannel(
   p: Pick<Platform, "db" | "atomic">,
   input: NewChannel,
   now: number,
 ): Promise<string> {
   const { publicId, ...rest } = input
-  // Çağıran kimliği verdiyse yeniden üretilmez: aynı satırı ikinci kez yazmak onun hatasıdır.
+  // If the caller provided the id it is not regenerated: writing the same row twice is the caller's bug.
   if (publicId) {
     await p.atomic([insertChannelStatement(p.db, { ...rest, publicId }, now)])
     return publicId

@@ -1,6 +1,6 @@
 /**
- * Better Auth'un ürettiği `Set-Cookie` başlıklarını oRPC yanıtına taşır. Örnek tek ve `Secure`
- * kapalı kurulur; HTTPS isteğinde bayrak burada eklenir (`08-kimlik-dogrulama` §7: `HttpOnly`,
+ * Copies the `Set-Cookie` headers produced by Better Auth onto the oRPC response. There is a single
+ * instance built with `Secure` off; on HTTPS requests the flag is added here (`08-kimlik-dogrulama` §7: `HttpOnly`,
  * `Secure`, `SameSite=Lax`).
  */
 export function forwardSetCookies(from: Headers, to: Headers | undefined, https: boolean): void {

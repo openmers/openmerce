@@ -15,7 +15,7 @@ export const productFilterArgs = z.object({
   collectionIds: ids,
 })
 
-/** Satır süzgece uyuyor mu; süzgeç boşsa her satır uyar. */
+/** Whether the line matches the filter; with an empty filter every line matches. */
 export function matchesFilter(line: PromoLine, f: ProductFilter): boolean {
   if (!f.productIds && !f.variantIds && !f.collectionIds) return true
   return (
@@ -25,7 +25,7 @@ export function matchesFilter(line: PromoLine, f: ProductFilter): boolean {
   )
 }
 
-/** Ürün, varyant ya da koleksiyondan en az `minQuantity` (varsayılan 1) adet. */
+/** At least `minQuantity` (default 1) units of the product, variant or collection. */
 export const containsProducts: ConditionDef<ProductFilter & { minQuantity?: number }> = {
   code: "containsProducts",
   args: productFilterArgs.extend({ minQuantity: z.number().int().positive().optional() }),

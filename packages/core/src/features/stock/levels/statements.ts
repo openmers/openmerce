@@ -9,7 +9,7 @@ export function locationIdByPublicId(publicId: string): SQL {
   return sql`(SELECT ${stockLocations.id} FROM ${stockLocations} WHERE ${stockLocations.publicId} = ${publicId})`
 }
 
-/** Stok satırı taşıyabilen varyant: silinmemiş ve paket değil (04-stok §8: paketin satırı yok). */
+/** A variant that can carry a stock row: not deleted and not a bundle (04-stok §8: bundles have no row). */
 function stockVariantGuard(variantPublicId: string): SQL {
   return sql`EXISTS (SELECT 1 FROM ${productVariants}
     WHERE ${productVariants.publicId} = ${variantPublicId}
@@ -17,7 +17,7 @@ function stockVariantGuard(variantPublicId: string): SQL {
       AND ${productVariants.baseVariantId} IS NULL)`
 }
 
-/** Seviye satırı yoksa sıfırla açar (varyant ve depo geçerliyse); varsa dokunmaz. */
+/** Opens the level row at zero if missing (when the variant and warehouse are valid); leaves it alone otherwise. */
 export function ensureLevelStatement(
   variantPublicId: string,
   locationPublicId: string,
@@ -37,13 +37,13 @@ export function ensureLevelStatement(
   return { ...stmt, sql: `${stmt.sql} on conflict do nothing` }
 }
 
-/** Seviye satırının koşulu (`s` takma adıyla); `cond` satır koşuludur (ör. `s.on_hand + ? >= 0`). */
+/** Condition on the level row (alias `s`); `cond` is the row condition (e.g. `s.on_hand + ? >= 0`). */
 export function levelGuard(variantId: SQL, locationId: SQL, cond: SQL): SQL {
   return sql`EXISTS (SELECT 1 FROM "stock_levels" s
     WHERE s."variant_id" = ${variantId} AND s."location_id" = ${locationId} AND ${cond})`
 }
 
-/** Varyantın bütün depolardaki satılabiliri (`on_hand − reserved − safety`); PK önekinden yürür. */
+/** The variant's sellable across all warehouses (`on_hand − reserved − safety`); walks the PK prefix. */
 function availableSql(variantId: SQL): SQL {
   return sql`(SELECT coalesce(sum("on_hand" - "reserved" - "safety"), 0)
     FROM "stock_levels" WHERE "variant_id" = ${variantId})`
@@ -55,15 +55,15 @@ function bucketSql(available: SQL, t: BucketThresholds): SQL {
 }
 
 /**
- * `stockBucket` ile aynı kural, SQL'de: yazımdan **önce** okunan satılabilir ile `+ delta`
- * sonrası kovası farklıysa doğru. `reindex` ifadesi güncellemeden önce gelir.
+ * The same rule as `stockBucket`, in SQL: true if the bucket of the sellable read **before** the write differs from
+ * the bucket after `+ delta`. The `reindex` statement comes before the update.
  */
 export function bucketChangeGuard(variantId: SQL, delta: SQL, t: BucketThresholds): SQL {
   const before = availableSql(variantId)
   return sql`${bucketSql(before, t)} <> ${bucketSql(sql`(${before} + ${delta})`, t)}`
 }
 
-/** 0 satır: varyant/depo yoksa `NOT_FOUND`, paket varyantıysa `INVALID_INPUT`; yoksa döner. */
+/** 0 rows: `NOT_FOUND` if the variant/warehouse is missing, `INVALID_INPUT` for a bundle variant; returns otherwise. */
 export async function classifyLevelMiss(
   db: Db,
   variantPublicId: string,

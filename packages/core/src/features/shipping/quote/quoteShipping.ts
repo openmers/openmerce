@@ -26,7 +26,7 @@ export type QuoteInput = {
 
 export type Quote = { needsShipping: boolean; parcel: Parcel; options: ShippingOption[] }
 
-/** Birim değer × adet toplamı; bir kalem bilinmiyorsa `null`. */
+/** Sum of unit value × quantity; `null` if any item is unknown. */
 function total(lines: readonly ShipLine[], unit: (l: ShipLine) => number | null): number | null {
   let sum = 0
   for (const l of lines) {
@@ -42,11 +42,11 @@ const volume = (l: ShipLine) =>
   l.length === null || l.width === null || l.height === null ? null : l.length * l.width * l.height
 
 /**
- * Kargo seçenekleri (10-kargo §1, saf, sorgu yok). Yalnız fiziksel kalemler tartılır (karma
- * sepette dijital kalem kargoya girmez); fiziksel kalem yoksa kargo gerekmez. Kanala bağlı
- * yöntemlerden bölge (mağazadan teslimde depo stoku) uygun olanlar ve hesaplayıcısı sonuç
- * verenler, ücrete göre sıralı. `checker_code` dolu ya da hesaplayıcısı yerleşik olmayan
- * (canlı oran app'i) yöntem burada sunulmaz; kanca portu ayrı iştir.
+ * Shipping options (10-kargo §1, pure, no queries). Only physical items are weighed (in a mixed
+ * cart digital items do not count toward shipping); with no physical item no shipping is needed. Of the
+ * channel-linked methods, those eligible by zone (warehouse stock for store pickup) and whose calculator returns
+ * a result, sorted by fee. A method with `checker_code` set or a non-built-in calculator
+ * (live rate app) is not offered here; the hook port is separate work.
  */
 export function quoteShipping(input: QuoteInput): Quote {
   const physical = input.lines.filter((l) => l.physical)

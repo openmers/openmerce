@@ -24,7 +24,7 @@ const count = (conn: ReturnType<typeof twoConnections>[2], table: string) =>
   conn.prepare(`SELECT count(*) FROM ${table}`).pluck().get()
 
 describe("createFirstAdmin", () => {
-  it("yönetici + SuperAdmin ataması + kurulum kilidi + denetim tek seferde; ikinci çağrı reddedilir", async () => {
+  it("admin + SuperAdmin assignment + setup lock + audit in one go; a second call is rejected", async () => {
     const [p, , conn] = twoConnections()
     const first = await createFirstAdmin(p, input("Sahip@Example.com"), NOW)
     expect(first).toMatchObject({ ok: true })
@@ -42,7 +42,7 @@ describe("createFirstAdmin", () => {
     expect(actor?.permissions.has("settings:write")).toBe(true)
   })
 
-  it("yarış: iki bağlantıdan eşzamanlı iki kurulum, tam bir kazanan", async () => {
+  it("race: two concurrent setups from two connections, exactly one winner", async () => {
     const [a, b, conn] = twoConnections()
     const results = await Promise.all([
       createFirstAdmin(a, input("a@example.com"), NOW),
@@ -54,7 +54,7 @@ describe("createFirstAdmin", () => {
     expect(count(conn, "admin_role_assignments")).toBe(1)
   })
 
-  it("askıdaki ya da sürümü eskimiş oturumun aktörü yok", async () => {
+  it("a suspended admin or a session with a stale version has no actor", async () => {
     const [p] = twoConnections()
     await createFirstAdmin(p, input("x@example.com"), NOW)
     expect(await loadAdminActor(p, { adminUserId: 1, sessionVersion: 1, channelId: 1 })).toBeNull()

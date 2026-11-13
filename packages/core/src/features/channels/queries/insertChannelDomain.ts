@@ -4,16 +4,16 @@ import type { AtomicStatement, Db, Platform } from "../../../platform"
 import { normalizeHost } from "../resolveChannel"
 
 export type NewChannelDomain = {
-  /** Kanal id'si ya da aynı `atomic()`'te eklenen kanal için `channelIdByPublicId`. */
+  /** Channel id, or `channelIdByPublicId` for a channel inserted in the same `atomic()`. */
   channelId: number | SQL
   domain: string
   defaultLang?: string | null
   isPrimary?: boolean
-  /** Yalnız ikincilde; verilmezse `serve`. Birincilde yok sayılır (NULL). */
+  /** Only for secondaries; defaults to `serve`. Ignored for the primary (NULL). */
   secondaryMode?: "redirect" | "serve"
 }
 
-/** Alan adı küçük harfe, portsuz, sonda noktasız çevrilir (DB `check` yalnız küçük harfi zorlar). */
+/** The domain is lowercased, port removed, trailing dot removed (the DB `check` only enforces lowercase). */
 export function insertChannelDomainStatement(
   db: Db,
   input: NewChannelDomain,

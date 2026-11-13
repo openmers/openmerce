@@ -18,17 +18,17 @@ import {
 export type SetStockInput = {
   variantPublicId: string
   locationPublicId: string
-  /** Mutlak eldeki miktar (sayım / ERP); `reserved`'e dokunulmaz (04-stok §4). */
+  /** Absolute on-hand quantity (count / ERP); `reserved` is left untouched (04-stok §4). */
   onHand: number
   safety?: number
-  /** Verilirse yazım bu sürüme koşulludur (`version` korumalı); uymazsa `CONFLICT`. */
+  /** If given, the write is conditional on this version (`version` protected); `CONFLICT` on mismatch. */
   version?: number
   thresholds?: BucketThresholds
 }
 
 /**
- * Mutlak stok yazımı: seviye + hareket (`units` = yeni − eski, güncellemeden önce okunur) +
- * denetim (+ kova değiştiyse `reindex`) tek `atomic()`. Satır yoksa sıfırla açılır.
+ * Absolute stock write: level + movement (`units` = new − old, read before the update) +
+ * audit (+ `reindex` if the bucket changed) in one `atomic()`. If the row is missing it is opened at zero.
  */
 export async function setStock(
   ctx: StockCtx,
@@ -47,7 +47,7 @@ export async function setStock(
   const currentSafety = sql`(SELECT "safety" FROM "stock_levels"
     WHERE "variant_id" = ${variantId} AND "location_id" = ${locationId})`
   const safety = input.safety ?? null
-  // Satılabilir farkı: on_hand farkı − safety farkı (kova bunun üzerinden hesaplanır).
+  // Sellable delta: on_hand delta − safety delta (the bucket is computed from this).
   const delta = sql`(${input.onHand} - ${current} - coalesce(${safety} - ${currentSafety}, 0))`
   const thresholds = input.thresholds ?? DEFAULT_BUCKET_THRESHOLDS
 

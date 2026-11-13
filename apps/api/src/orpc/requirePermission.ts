@@ -17,16 +17,16 @@ export type AdminGuardResult = { actor: CtxActor; admin?: AdminActor }
 type GuardInput = {
   context: ApiInitialContext
   ctx: Ctx
-  /** Router yolu; ilk eleman `admin`. */
+  /** Router path; the first element is `admin`. */
   path: readonly string[]
   procedure: { "~orpc": { meta: Record<PropertyKey, unknown> } }
 }
 
 /**
- * Admin yüzeyinin tek kapısı (kök ara katmandan, istek başına bir kez):
- * 1) kurulum kapısı (`setupGate`), 2) prosedürün erişim meta'sı (yoksa kapalı, 403),
- * 3) `om_a` oturumu → `loadAdminActor` (yönetici + kanal izinleri; yoksa 401),
- * 4) meta'daki izin aktörde yoksa 403.
+ * The single gate of the Admin surface (from the root middleware, once per request):
+ * 1) setup gate (`setupGate`), 2) the procedure's access meta (closed if missing, 403),
+ * 3) `om_a` session → `loadAdminActor` (admin + channel permissions; 401 if missing),
+ * 4) 403 if the actor lacks the permission in the meta.
  */
 export async function requirePermission(input: GuardInput): Promise<AdminGuardResult> {
   const { context, ctx } = input
@@ -45,7 +45,7 @@ export async function requirePermission(input: GuardInput): Promise<AdminGuardRe
     headers: context.reqHeaders,
     returnHeaders: true,
   })
-  // Kayan oturum: süre uzadıysa yenilenen çerez yanıta taşınır.
+  // Sliding session: if the expiry was extended, the renewed cookie is carried onto the response.
   forwardSetCookies(result.headers, context.resHeaders, context.https)
   const session = result.response
   if (!session) throw new ORPCError("UNAUTHENTICATED")

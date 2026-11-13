@@ -9,8 +9,8 @@ function procedures(node: Node, path: string[] = []): [string, Node][] {
   return Object.entries(node).flatMap(([k, v]) => procedures(v as Node, [...path, k]))
 }
 
-describe("admin sözleşmesi", () => {
-  it("her Admin prosedürü erişim meta'sı bildirir", () => {
+describe("admin contract", () => {
+  it("every Admin procedure declares access meta", () => {
     const all = procedures(admin)
     expect(all.length).toBeGreaterThan(0)
     for (const [path, proc] of all) {
@@ -18,7 +18,7 @@ describe("admin sözleşmesi", () => {
     }
   })
 
-  it("meta değerleri: setup/login/logout açık, me oturum ister", () => {
+  it("meta values: setup/login/logout are public, me requires a session", () => {
     expect(getAdminAccess(admin.setup.create)).toBe("public")
     expect(getAdminAccess(admin.me)).toBe("session")
   })

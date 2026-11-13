@@ -3,9 +3,9 @@ import type { CalculatorDef } from "../types"
 import { fallbackArg, pickTier, type Tier, tierArgs } from "./tiers"
 
 /**
- * Desi kademesi: desi = hacim (cm³) / `divisor`. Bölen taşıyıcıya göre değişir, kodda sabit yok
- * (zorunlu argüman). Karşılaştırma tamsayıda: `hacimMm3 <= upTo × divisor × 1000`. Ölçüsü
- * bilinmeyen kalemde `fallbackAmount` varsa o, yoksa uygun değil.
+ * Desi tier: desi = volume (cm³) / `divisor`. The divisor varies by carrier, no constant in code
+ * (required argument). Comparison in integers: `volumeMm3 <= upTo × divisor × 1000`. For an item
+ * with unknown dimensions, `fallbackAmount` if present, otherwise not eligible.
  */
 export const desi: CalculatorDef<{ divisor: number; tiers: Tier[]; fallbackAmount?: number }> = {
   code: "desi",

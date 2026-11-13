@@ -4,19 +4,19 @@ import type { Channel } from "../types"
 export type ChannelSnapshot = { channels: Channel[]; byDomain: DomainIndex; version: number }
 
 export type ChannelRegistry = {
-  /** Bellekteki tablo; `checkEveryMs` dolduysa sürümü okur, değiştiyse yeniden yükler. */
+  /** In-memory table; reads the version once `checkEveryMs` has elapsed and reloads if it changed. */
   get(now: number): Promise<ChannelSnapshot>
 }
 
 /**
- * Kanal + alan adı tablosu bellekte (05-ticaret/01-kanallar §6). `load` tek tur (`loadChannels`),
- * `version` ucuz nokta okuma (ör. kanalların `settings_version` toplamı). Saat dışarıdan; LRU yok.
- * Varsayılan `checkEveryMs = 0`: her çağrıda sürüm okunur, değiştiyse yeniden yüklenir.
+ * Channel + domain table in memory (05-ticaret/01-kanallar §6). `load` is one round trip (`loadChannels`),
+ * `version` is a cheap point read (e.g. the sum of the channels' `settings_version`). Clock is injected; no LRU.
+ * Default `checkEveryMs = 0`: the version is read on every call and reloaded if it changed.
  */
 export function createChannelRegistry(opts: {
   load: () => Promise<Channel[]>
   version: () => Promise<number>
-  /** Sürüm okumasını bu aralıkta bir yap (05-onbellek: 30 sn). 0 = her çağrıda. */
+  /** Read the version at this interval (05-onbellek: 30 s). 0 = on every call. */
   checkEveryMs?: number
 }): ChannelRegistry {
   const checkEveryMs = opts.checkEveryMs ?? 0
@@ -36,7 +36,7 @@ export function createChannelRegistry(opts: {
   return {
     get(now) {
       if (snapshot && now - checkedAt < checkEveryMs) return Promise.resolve(snapshot)
-      // eşzamanlı istekler aynı yenilemeyi bekler
+      // concurrent requests wait for the same refresh
       pending ??= refresh(now).finally(() => {
         pending = undefined
       })

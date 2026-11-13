@@ -13,7 +13,7 @@ export type StockLevelItem = {
   version: number
 }
 
-/** Varyantın depo satırları; `stock_levels` PK öneki `(variant_id, …)` ile (`assertNoFullScan`). */
+/** The variant's warehouse rows; via the `stock_levels` PK prefix `(variant_id, …)` (`assertNoFullScan`). */
 export function getStockLevelsQuery(db: Db, variantPublicId: string) {
   const variantId = sql`(SELECT ${productVariants.id} FROM ${productVariants}
     WHERE ${productVariants.publicId} = ${variantPublicId} AND ${productVariants.deletedAt} IS NULL)`

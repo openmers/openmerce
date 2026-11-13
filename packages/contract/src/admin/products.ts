@@ -2,8 +2,8 @@ import { z } from "zod"
 import { adminProcedure } from "../shared/adminProcedure"
 import { cursorInputSchema, pageSchema } from "../shared/pagination"
 
-// Admin katalog yüzeyi (yol haritası 15.3, 15.11): ürün + varyant yazımı ve normalize okuma.
-// Okuma modeli (`catalog_index`, `product_view`) ve shop uçları bu dosyanın kapsamı dışında.
+// Admin catalog surface (roadmap 15.3, 15.11): product + variant writes and normalized reads.
+// The read model (`catalog_index`, `product_view`) and shop endpoints are out of scope for this file.
 
 const langSchema = z.string().trim().min(2).max(10)
 const codeSchema = z.string().trim().min(1).max(100)
@@ -141,17 +141,17 @@ const writeResultSchema = z.object({
   version: z.number().int(),
 })
 
-/** `admin.products.list`: imleçli, `updated_at` azalan; yalnız `public_id` dışa çıkar. */
+/** `admin.products.list`: cursor-paginated, `updated_at` descending; only `public_id` is exposed. */
 export const adminProductsList = adminProcedure("products:read")
   .input(cursorInputSchema)
   .output(pageSchema(productListItemSchema))
 
-/** `admin.products.get`: normalize okuma (yazma tabloları), yoksa 404. */
+/** `admin.products.get`: normalized read (write tables), 404 if missing. */
 export const adminProductsGet = adminProcedure("products:read")
   .input(z.object({ publicId: z.string().min(1).max(64) }))
   .output(productDetailSchema)
 
-/** `admin.products.create`: ürün + çeviri + seçenek + varyant tek `atomic()`; fiyat/stok yok. */
+/** `admin.products.create`: product + translations + options + variants in one `atomic()`; no price/stock. */
 export const adminProductsCreate = adminProcedure("products:write")
   .input(
     z.object({
@@ -164,7 +164,7 @@ export const adminProductsCreate = adminProcedure("products:write")
   )
   .output(writeResultSchema)
 
-/** `admin.products.update`: `version` koşullu; çakışmada 409 `CONFLICT`. */
+/** `admin.products.update`: conditional on `version`; 409 `CONFLICT` on conflict. */
 export const adminProductsUpdate = adminProcedure("products:write")
   .input(
     z.object({
@@ -176,7 +176,7 @@ export const adminProductsUpdate = adminProcedure("products:write")
   )
   .output(writeResultSchema)
 
-/** `admin.products.delete`: yumuşak silme; `version` koşullu. */
+/** `admin.products.delete`: soft delete; conditional on `version`. */
 export const adminProductsDelete = adminProcedure("products:delete")
   .input(z.object({ publicId: z.string().min(1).max(64), version: z.number().int().min(0) }))
   .output(writeResultSchema)

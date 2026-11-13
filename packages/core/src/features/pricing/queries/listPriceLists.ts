@@ -17,7 +17,7 @@ export type PriceListItem = {
   updatedAt: number
 }
 
-/** Kanalın listeleri; `(channel_id, type)` indeksinden yürür. Kanal başına liste sayısı küçüktür. */
+/** The channel's lists; walks the `(channel_id, type)` index. The number of lists per channel is small. */
 export function listPriceListsQuery(db: Db, channelId: number) {
   return db
     .select({

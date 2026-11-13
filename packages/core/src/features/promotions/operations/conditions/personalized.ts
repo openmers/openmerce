@@ -1,7 +1,7 @@
 import { z } from "zod"
 import type { ConditionDef } from "../../types"
 
-/** Sepette kişiselleştirilmiş satır var (`required: false` ile tersi: hiç yok). */
+/** The cart has a personalized line (inverted with `required: false`: none at all). */
 export const personalized: ConditionDef<{ required: boolean }> = {
   code: "personalized",
   args: z.object({ required: z.boolean().default(true) }),

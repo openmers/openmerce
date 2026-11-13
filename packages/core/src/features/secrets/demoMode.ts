@@ -13,13 +13,13 @@ export class SecretError extends Error {
   }
 }
 
-/** KEK yoksa (ya da boşsa) kasa uykuda: mağaza demo kipte çalışır, sır yazılmaz/okunmaz. */
+/** Without a KEK (or with an empty one) the vault is dormant: the store runs in demo mode, no secrets are written/read. */
 export function isDemoMode(p: Pick<Platform, "secrets">): boolean {
   const kek = p.secrets.kek
   return kek === undefined || kek === ""
 }
 
-/** Kasa uyanıksa KEK'i döner, uykudaysa açık hata. */
+/** Returns the KEK if the vault is awake, an explicit error if dormant. */
 export function requireKek(p: Pick<Platform, "secrets">): Kek {
   const kek = p.secrets.kek
   if (kek === undefined || isDemoMode(p)) {

@@ -1,7 +1,7 @@
 import type { Ctx } from "../../../ctx"
 import type { AuditActor } from "../../audit"
 
-/** Beklenen katalog hataları değer olarak değil, `code` taşıyan tipli hata olarak döner. */
+/** Expected catalog errors are returned as typed errors carrying a `code`, not as values. */
 export type CatalogErrorCode = "INVALID_INPUT" | "NOT_FOUND" | "CONFLICT"
 
 export class CatalogError extends Error {
@@ -24,8 +24,8 @@ export type ProductTranslationInput = {
 }
 
 /**
- * Seçenek ve seçenek değeri ürüne özeldir (`product_options.product_id`). `name` bütün ürün
- * dilleri için aynı yazılır: seçenek adı için ayrı çeviri girdisi v1'de alınmıyor (sapma).
+ * Options and option values belong to the product (`product_options.product_id`). `name` is written the same
+ * for all product languages: no separate translation input for option names in v1 (deviation).
  */
 export type ProductOptionInput = {
   code: string
@@ -34,10 +34,10 @@ export type ProductOptionInput = {
   values: Array<{ code: string; name: string; position?: number }>
 }
 
-/** Satılan birim; fiyat ve stok bu uçların kapsamı dışında (varyant fiyatsız/stoksuz doğar). */
+/** The sold unit; price and stock are out of scope for these endpoints (the variant is born without price/stock). */
 export type ProductVariantInput = {
   sku: string
-  /** `tax_categories.code`; iç kimlik dışarıya çıkmaz, kod alt sorguyla çözülür. */
+  /** `tax_categories.code`; the internal id is never exposed, the code is resolved via a subquery. */
   taxCategoryCode: string
   barcode?: string | null
   weight?: number | null
@@ -51,11 +51,11 @@ export type ProductVariantInput = {
   orderMultiple?: number | null
   fulfillmentType?: "physical" | "digital"
   leadTimeDays?: number | null
-  /** Seçenek **kodları**; kombinasyon tam olmalı ve tekrarlanmamalı (02-katalog §1). */
+  /** Option **codes**; the combination must be complete and not repeated (02-katalog §1). */
   optionValues?: Array<{ option: string; value: string }>
 }
 
-/** Yazma alanları; çeviri ve varyantlarda `patch` anlamı (verilmeyen alan değişmez). */
+/** Write fields; `patch` semantics for translations and variants (fields not given stay unchanged). */
 export type ProductPatch = {
   robots?: string | null
   personalization?: Record<string, unknown> | null
@@ -66,7 +66,7 @@ export type ProductPatch = {
 }
 
 export type CreateProductInput = ProductPatch & {
-  /** Verilmezse `prod_` önekli kimlik üretilir ve çakışmada yeniden denenir (madde 6.6). */
+  /** If not given, an id with the `prod_` prefix is generated and retried on collision (item 6.6). */
   publicId?: string
   translations: ProductTranslationInput[]
   options?: ProductOptionInput[]
@@ -75,7 +75,7 @@ export type CreateProductInput = ProductPatch & {
 
 export type UpdateProductInput = {
   publicId: string
-  /** İstemcinin gördüğü sürüm; eşzamanlı yazmada çakışma `CONFLICT` döner. */
+  /** The version the client saw; a concurrent write returns a `CONFLICT`. */
   version: number
   translations?: ProductTranslationInput[]
   patch: ProductPatch
@@ -97,10 +97,10 @@ export type UpdateVariantInput = {
 
 export type AddVariantInput = { productPublicId: string; variant: ProductVariantInput }
 
-/** Katalog yazımlarının ihtiyaç duyduğu `Ctx` parçası; denetim aktörü buradan türetilir. */
+/** The part of `Ctx` catalog writes need; the audit actor is derived from it. */
 export type CatalogCtx = Pick<Ctx, "platform" | "channel" | "actor" | "now" | "requestId" | "lang">
 
-/** `audit_log` aktör türleri; anonim/müşteri katalog yazamaz, sistem olarak kaydedilir. */
+/** `audit_log` actor types; anonymous/customer cannot write the catalog, recorded as system. */
 export function auditActorOf(ctx: CatalogCtx): AuditActor {
   const { actor } = ctx
   if (actor.type === "admin" || actor.type === "app" || actor.type === "apiKey") {

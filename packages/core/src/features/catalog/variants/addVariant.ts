@@ -25,12 +25,12 @@ import {
 } from "../products/types"
 
 /**
- * Mevcut ürüne varyant ekler: varyant + `variant_option_values` + kanal atamaları + denetim +
- * `reindex` işi tek `atomic()`. Ürün yoksa hiçbir ifade yazmaz (`NOT_FOUND`). Seçenek değeri
- * ürünün seçeneğine ait olmalıdır; bileşik FK son kapıdır.
+ * Adds a variant to an existing product: variant + `variant_option_values` + channel assignments + audit +
+ * `reindex` job in one `atomic()`. If the product is missing, no statement writes (`NOT_FOUND`). Option values
+ * must belong to the product's options; the composite FK is the last gate.
  *
- * Not: mevcut varyantlarla **kombinasyon tekilliği** okuma gerektirdiği için burada doğrulanmaz;
- * yalnız paket içi tekrar reddedilir (sapma: `createProduct` tam doğrular).
+ * Note: **combination uniqueness** against existing variants needs a read, so it is not validated here;
+ * only duplicates within the payload are rejected (deviation: `createProduct` validates fully).
  */
 export async function addVariant(
   ctx: CatalogCtx,

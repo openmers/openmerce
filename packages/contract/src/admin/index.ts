@@ -3,8 +3,8 @@ import { adminPriceLists, adminPrices } from "./pricing"
 import { adminProducts } from "./products"
 import { adminStock } from "./stock"
 
-// Admin API sözleşmesi: her uç `adminProcedure(erişim)` ile başlar (izin meta'sı zorunlu).
-// Kurulum prosedürleri `setup.` altındadır (`setupGate` bu öneke bakar).
+// Admin API contract: every endpoint starts with `adminProcedure(access)` (permission meta is required).
+// Setup procedures live under `setup.` (`setupGate` checks this prefix).
 export const admin = {
   setup: { create: adminSetupCreate },
   auth: { login: adminAuthLogin, logout: adminAuthLogout },

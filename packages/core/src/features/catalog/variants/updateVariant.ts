@@ -17,7 +17,7 @@ import {
   type VariantPatch,
 } from "../products/types"
 
-/** Tanımlı alanlar; `optionValues` değişmez (kombinasyon satırı sil+ekle, bu uç kapsamı dışında). */
+/** Defined fields; `optionValues` does not change (combination rows are delete+insert, out of scope for this endpoint). */
 function variantPatch(input: VariantPatch): Record<string, unknown> {
   const patch: Record<string, unknown> = {}
   if (input.sku !== undefined) patch.sku = input.sku.trim()
@@ -40,9 +40,9 @@ function variantPatch(input: VariantPatch): Record<string, unknown> {
 }
 
 /**
- * Varyant güncellemesi: `version` koşullu tek `atomic()`; varyant ürünün altında olmalı.
- * Denetim/outbox **eski sürüme** bağlı koşullu yazımdır, sürümü artıran `UPDATE` son ifadedir
- * (bkz. `updateProduct`): çakışmada hiçbir satır yazılmaz ve `CONFLICT` döner.
+ * Variant update: a single `version`-conditional `atomic()`; the variant must be under the product.
+ * Audit/outbox are conditional writes bound to the **old version**, the version-bumping `UPDATE` is the last statement
+ * (see `updateProduct`): on conflict no row is written and `CONFLICT` is returned.
  */
 export async function updateVariant(
   ctx: CatalogCtx,

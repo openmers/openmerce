@@ -23,8 +23,8 @@ export function productPageSize(limit: number | undefined): number {
 }
 
 /**
- * Anahtar kümesi (keyset) sayfası: `(updated_at, public_id)` azalan; `(deleted_at, updated_at)`
- * indeksi üzerinden yürür (`assertNoFullScan` testi). İmleç son satırın `updated_at`+`public_id`'si.
+ * Keyset page: `(updated_at, public_id)` descending; walks the `(deleted_at, updated_at)`
+ * index (`assertNoFullScan` test). The cursor is the last row's `updated_at`+`public_id`.
  */
 export function listProductsQuery(db: Db, input: ListProductsInput = {}) {
   const filters: SQL[] = [isNull(products.deletedAt)]
@@ -51,7 +51,7 @@ export function listProductsQuery(db: Db, input: ListProductsInput = {}) {
     .limit(productPageSize(input.limit) + 1)
 }
 
-/** Admin listesi: imleçli `{ items, nextCursor }`; ad/slug istenen dilden, yoksa ilk çeviriden. */
+/** Admin list: cursor-paginated `{ items, nextCursor }`; name/slug in the requested language, else the first translation. */
 export async function listProducts(
   ctx: Pick<CatalogCtx, "platform" | "lang">,
   input: ListProductsInput = {},

@@ -7,7 +7,7 @@ import { createVariantRoute } from "./variants/create"
 import { removeVariantRoute } from "./variants/remove"
 import { updateVariantRoute } from "./variants/update"
 
-/** Admin katalog router'ı: sözleşmeyle aynı biçim (`contract.admin.products`). */
+/** Admin catalog router: same shape as the contract (`contract.admin.products`). */
 export const productsRouter = {
   list: listProductsRoute,
   get: getProductRoute,

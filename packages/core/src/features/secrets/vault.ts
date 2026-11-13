@@ -9,17 +9,17 @@ export type SecretScope = (typeof secretScopes)[number]
 export type SecretRef = SecretAddress & { scope: SecretScope }
 
 type Blob = typeof secrets.$inferInsert.ciphertext
-// Sürücüler (better-sqlite3, D1) Uint8Array'i blob olarak bağlar; Drizzle tipi Node `Buffer` der.
+// Drivers (better-sqlite3, D1) bind Uint8Array as a blob; the Drizzle type says Node `Buffer`.
 const asBlob = (u: Uint8Array) => u as unknown as Blob
-// Okumada Buffer (Node) / ArrayBuffer ya da sayı dizisi (D1) gelebilir.
+// On read, a Buffer (Node) / ArrayBuffer or a number array (D1) may come back.
 const toBytes = (v: unknown) => new Uint8Array(v as ArrayLike<number>)
 
 const where = (ref: SecretRef) =>
   and(eq(secrets.scope, ref.scope), eq(secrets.scopeId, ref.scopeId), eq(secrets.key, ref.key))
 
 /**
- * Sırrı şifreleyip yazar: upsert + denetim satırı tek `atomic()`. Denetimde değer yok, yalnız adres.
- * KEK yoksa `VAULT_ASLEEP`. Değer hiçbir zaman geri döndürülmez.
+ * Encrypts and writes the secret: upsert + audit row in one `atomic()`. No value in the audit, only the address.
+ * `VAULT_ASLEEP` without a KEK. The value is never returned.
  */
 export async function setSecret(
   p: Pick<Platform, "db" | "atomic" | "secrets">,
@@ -59,7 +59,7 @@ export async function setSecret(
   await p.atomic([upsert, audit])
 }
 
-/** Sır tanımlı mı (arayüzde "ayarlandı" göstergesi). Kasa uykudaysa `false`: sır kullanılamaz. */
+/** Whether the secret is set (the "set" indicator in the UI). `false` if the vault is dormant: the secret cannot be used. */
 export async function hasSecret(p: Pick<Platform, "db" | "secrets">, ref: SecretRef) {
   if (isDemoMode(p)) return false
   const rows = await p.db.select({ id: secrets.id }).from(secrets).where(where(ref)).limit(1)
@@ -67,8 +67,8 @@ export async function hasSecret(p: Pick<Platform, "db" | "secrets">, ref: Secret
 }
 
 /**
- * Yalnız sunucu içi: çözülen değer yalnız `use` geri çağrısına verilir (okuma ucu yok). Çağıran
- * değeri yanıt, log ya da denetim satırına koymaz.
+ * Server-side only: the decrypted value is only passed to the `use` callback (no read endpoint). The caller
+ * never puts the value in a response, log or audit row.
  */
 export async function useSecret<T>(
   p: Pick<Platform, "db" | "secrets">,

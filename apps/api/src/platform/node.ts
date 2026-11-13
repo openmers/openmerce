@@ -12,15 +12,15 @@ import { nodeAtomic, nodeBatch } from "./node/atomic"
 import type { NodeSqlite } from "./node/sqlite"
 
 export type NodePlatformOptions = {
-  /** Yazma + salt-okunur bağlantı çifti (`openNodeSqlite`); açan taraf kapatır (`close`). */
+  /** Write + read-only connection pair (`openNodeSqlite`); whoever opens it closes it (`close`). */
   sqlite: NodeSqlite
-  /** KEK yoksa kasa uykuda (madde 11). */
+  /** Without a KEK the vault is dormant (item 11). */
   kek?: string
-  /** Saat dışarıdan (testte sahtelenebilir). */
+  /** Clock is injected (can be faked in tests). */
   now?: () => number
   cacheMax?: number
   rateLimit?: { limit: number; windowMs: number }
-  /** Yerel disk / S3 adaptörü gelene kadar verilmez (madde 5.8). */
+  /** Not provided until the local disk / S3 adapter arrives (item 5.8). */
   storage?: Storage
 }
 
@@ -28,7 +28,7 @@ export type NodePlatform = Platform & { close(): void }
 
 const CACHE_TTL_SECONDS = 60
 
-/** `storage` yer tutucusu: adaptör yokken sessizce yutmak yerine açık hata (madde 5.8). */
+/** `storage` placeholder: an explicit error instead of silently swallowing while there is no adapter (item 5.8). */
 function missingStorage(): Storage {
   const fail = async (): Promise<never> => {
     throw new Error("storage adaptörü yok: yerel disk/S3 madde 5.8'de gelir")
@@ -37,8 +37,8 @@ function missingStorage(): Storage {
 }
 
 /**
- * Node (self-host) `Platform`'u birleştirir (`01-platform-arayuzu` §9): sqlite + atomic + batch,
- * LRU cache, bellek hız sınırı. `purge` ve `enqueue` no-op'tur; doğruluk outbox tablosundadır.
+ * Assembles the Node (self-host) `Platform` (`01-platform-arayuzu` §9): sqlite + atomic + batch,
+ * LRU cache, in-memory rate limiting. `purge` and `enqueue` are no-ops; the outbox table is the source of truth.
  */
 export function createNodePlatform(opts: NodePlatformOptions): NodePlatform {
   const { sqlite } = opts
@@ -60,7 +60,7 @@ export function createNodePlatform(opts: NodePlatformOptions): NodePlatform {
 
   const purge: Purge = async (_tags) => undefined
 
-  // shortcut: outbox madde 9 — dürtme kaybolsa da iş poller'da işlenir (04-olaylar-isler-outbox).
+  // shortcut: outbox item 9 — even if the nudge is lost, the poller processes the job (04-olaylar-isler-outbox).
   const enqueue: Enqueue = async (_job) => undefined
 
   const window = createFixedWindow({

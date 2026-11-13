@@ -1,6 +1,6 @@
 import { z } from "zod"
 
-/** Kademe: `upTo` dahil üst sınır; `null` = sınırsız (yalnız son kademe). */
+/** Tier: `upTo` is an inclusive upper bound; `null` = unbounded (last tier only). */
 export type Tier = { upTo: number | null; amount: number }
 
 const money = z.number().int().min(0)
@@ -18,12 +18,12 @@ export const tierArgs = z
     "kademeler artan sırada, sınırsız kademe yalnız sonda",
   )
 
-/** Bilinmeyen ağırlık/ölçüde yedek ücret; yoksa yöntem uygun sayılmaz. */
+/** Fallback fee for unknown weight/dimensions; without it the method is not eligible. */
 export const fallbackArg = { fallbackAmount: money.optional() }
 
 /**
- * Değer tek kademeye düşer (kademeler birikmez): `value <= upTo` olan ilk kademe. Son kademe
- * sonluysa üstü hizmet dışıdır (`undefined`). `scale` kademe sınırını değerin birimine çevirir.
+ * A value falls into a single tier (tiers do not accumulate): the first tier with `value <= upTo`. If the last tier
+ * is finite, anything above it is out of service (`undefined`). `scale` converts the tier bound to the value's unit.
  */
 export function pickTier(tiers: readonly Tier[], value: number, scale = 1): Tier | undefined {
   return tiers.find((t) => t.upTo === null || value <= t.upTo * scale)

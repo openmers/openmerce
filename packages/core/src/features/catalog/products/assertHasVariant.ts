@@ -1,9 +1,9 @@
 import { CatalogError } from "./types"
 
 /**
- * Katalog kuralı (02-katalog-ve-arama §1): her ürünün **en az bir** varyantı vardır ve SKU
- * katalogda benzersizdir (kısmi benzersiz indeks `product_variants_sku_uq`, silinmişler hariç).
- * Paket içi yinelenen SKU veritabanına gitmeden, aynı iletide reddedilir.
+ * Catalog rule (02-katalog-ve-arama §1): every product has **at least one** variant and the SKU
+ * is unique in the catalog (partial unique index `product_variants_sku_uq`, excluding deleted ones).
+ * A duplicate SKU within the payload is rejected in the same message, before reaching the database.
  */
 export function assertHasVariant(
   variants: ReadonlyArray<{ sku: string }>,

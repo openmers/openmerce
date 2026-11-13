@@ -13,34 +13,34 @@ import type { AdminAuth } from "../auth/adminAuth"
 import { type AdminGuardResult, requirePermission } from "./requirePermission"
 
 /**
- * oRPC kökü (`02-api-ve-istek-baglami` §6). `Ctx` kuran ara katman **yalnız burada** eklenir
- * (`ctxLoaded` bayrağı); prosedürler yalnızca izin ara katmanı ekler, böylece ara katman istek
- * başına bir kez çalışır.
+ * oRPC root (`02-api-ve-istek-baglami` §6). The middleware that builds `Ctx` is added **only here**
+ * (`ctxLoaded` flag); procedures only add the permission middleware, so the middleware runs once
+ * per request.
  */
 export type ApiInitialContext = {
   platform: Platform
-  /** Bellekteki kanal tablosu; anonim yolda sorgu yok. */
+  /** In-memory channel table; no query on the anonymous path. */
   snapshot: ChannelSnapshot
   api: ApiSurface
   host: string | null
   channelHeader: string | null
   now: number
   requestId: string
-  /** Better Auth yönetici örneği (uygulama başına bir kez kurulur). */
+  /** Better Auth admin instance (built once per app). */
   adminAuth: AdminAuth
   reqHeaders: Headers
-  /** İstek HTTPS mi; oturum çerezine `Secure` buna göre eklenir. */
+  /** Whether the request is HTTPS; `Secure` is added to the session cookie accordingly. */
   https: boolean
 } & ResponseHeadersHandlerPluginContext
 
 export type ApiContext = ApiInitialContext & {
   ctx: Ctx
   ctxLoaded: true
-  /** Yalnız oturumlu Admin prosedürlerinde dolu. */
+  /** Set only in session-authenticated Admin procedures. */
   admin?: AdminGuardResult["admin"]
 }
 
-/** Beklenen hata kodu → HTTP durumu; hem işleyicilere hem OpenAPI üreticisine verilir. */
+/** Expected error code → HTTP status; given to both the handlers and the OpenAPI generator. */
 export const errorStatusMap: Record<string, number> = {
   INVALID_INPUT: 400,
   UNAUTHENTICATED: 401,
@@ -77,7 +77,7 @@ function buildRequestCtx(context: ApiInitialContext): Ctx {
     throw error
   }
   if (built.kind === "redirect") {
-    // Yönlendirme Hono katmanında yapılır; buraya düşmesi kanal tablosunun tutarsızlığıdır.
+    // Routing happens in the Hono layer; reaching here means the channel table is inconsistent.
     throw new ORPCError("CHANNEL_UNKNOWN", { message: "kanal yönlendirmesi" })
   }
   return built.ctx
@@ -86,9 +86,9 @@ function buildRequestCtx(context: ApiInitialContext): Ctx {
 export const base = implement(contract)
   .$context<ApiInitialContext>()
   .use(async ({ context, next, path, procedure }) => {
-    // Ctx yalnız kökte kurulur; `ctxLoaded` bu işin yapıldığını işaretler (ara katman bir kez çalışır).
-    // Admin yüzeyinde kurulum kapısı + oturum + izin de burada, aynı tek geçişte denetlenir.
-    // Yüzey router yolundan gelir (URL'den değil).
+    // Ctx is only built at the root; `ctxLoaded` marks that this was done (the middleware runs once).
+    // On the Admin surface the setup gate + session + permission are checked here too, in the same single pass.
+    // The surface comes from the router path (not from the URL).
     const isAdmin = path[0] === "admin"
     const ctx = buildRequestCtx({ ...context, api: isAdmin ? "admin" : "shop" })
     if (!isAdmin) return next({ context: { ctx, ctxLoaded: true as const, admin: undefined } })

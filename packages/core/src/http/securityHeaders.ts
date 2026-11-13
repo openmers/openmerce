@@ -1,23 +1,23 @@
 /**
- * Güvenlik başlıkları: tek saf fonksiyon (`06-guvenlik-ve-yetki`). Hono bağlaması `api/app.ts`
- * işidir; burada nonce üretilmez, dışarıdan verilir. Kökenler doğrulanır: başlık enjeksiyonu
- * (`;`, boşluk, satır sonu) ve CSP'den kaçış (`'`, parantez, virgül) reddedilir.
+ * Security headers: a single pure function (`06-guvenlik-ve-yetki`). Wiring into Hono is `api/app.ts`'s
+ * job; no nonce is generated here, it is passed in. Origins are validated: header injection
+ * (`;`, whitespace, newline) and CSP escapes (`'`, parentheses, comma) are rejected.
  */
 export type Surface = "shop" | "admin" | "api"
 
 export type SecurityHeadersInput = {
   surface: Surface
-  /** Yalnız HTTPS yanıtında HSTS yazılır. */
+  /** HSTS is only written on HTTPS responses. */
   https: boolean
-  /** Vitrin/admin `script-src` nonce'u; CSP `'nonce-…'` içinde kullanılır. */
+  /** Storefront/admin `script-src` nonce; used inside CSP `'nonce-…'`. */
   nonce?: string
-  /** Admin'e kurulu app'lerin kökenleri; admin CSP `frame-src` yalnız bunlardır. */
+  /** Origins of apps installed in admin; the admin CSP `frame-src` is only these. */
   appOrigins?: readonly string[]
-  /** Etkin ödeme yönteminin kökenleri; `script-src`/`frame-src`/`connect-src`'e eklenir. */
+  /** Origins of the active payment method; added to `script-src`/`frame-src`/`connect-src`. */
   paymentOrigins?: readonly string[]
-  /** Kanal CDN'inin kökeni; `img-src`'e eklenir. */
+  /** Origin of the channel CDN; added to `img-src`. */
   cdnOrigin?: string
-  /** Başlık adı `Content-Security-Policy-Report-Only` olur (önce gözlem modu). */
+  /** The header name becomes `Content-Security-Policy-Report-Only` (observe mode first). */
   reportOnly?: boolean
 }
 
@@ -33,16 +33,16 @@ export class SecurityHeaderError extends Error {
   }
 }
 
-// Köken: şema://host[:port]. Yol, sorgu, kimlik bilgisi ve boşluk kabul edilmez.
+// Origin: scheme://host[:port]. Paths, queries, credentials and whitespace are not accepted.
 const ORIGIN = /^[a-z][a-z0-9+.-]*:\/\/[^\s/?#;,'"()\\]+$/i
-// CSP nonce: base64 benzeri, tırnak/boşluk içeremez.
+// CSP nonce: base64-like, cannot contain quotes/spaces.
 const NONCE = /^[A-Za-z0-9+/=_-]{8,256}$/
 
 function fail(code: SecurityHeaderErrorCode, message: string): never {
   throw new SecurityHeaderError(code, message)
 }
 
-/** Tek köken doğrular; kuyruk eğik çizgisi (yaygın yapılandırma) kırpılır. */
+/** Validates a single origin; a trailing slash (common configuration) is trimmed. */
 export function assertOrigin(value: string, field: string): string {
   const candidate = value.endsWith("/") ? value.slice(0, -1) : value
   if (!ORIGIN.test(candidate)) fail("INVALID_ORIGIN", `${field}: geçersiz köken`)
@@ -85,7 +85,7 @@ function assertNonce(nonce: string): string {
   return nonce
 }
 
-/** Yüzeye göre başlık kümesi. Aynı fonksiyon storefront, admin ve API yanıtlarına uygulanır. */
+/** Header set per surface. The same function applies to storefront, admin and API responses. */
 export function securityHeaders(input: SecurityHeadersInput): Record<string, string> {
   const payment = originList(input.paymentOrigins, "paymentOrigins")
   const headers: Record<string, string> = {

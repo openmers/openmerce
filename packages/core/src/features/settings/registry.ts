@@ -5,9 +5,9 @@ export type SettingScope = (typeof settingScopes)[number]
 
 export type SettingDefinition<T = unknown> = {
   schema: z.ZodType<T>
-  /** Satır yoksa kullanılan kod varsayılanı. */
+  /** Code default used when there is no row. */
   default: T
-  /** `setSetting`'in yazabileceği kapsamlar; boş = iç anahtar, dışarıdan yazılamaz. */
+  /** Scopes `setSetting` may write; empty = internal key, not writable from outside. */
   scopes: readonly SettingScope[]
 }
 
@@ -28,7 +28,7 @@ export class SettingError extends Error {
   }
 }
 
-// Sırlar kasada durur (07-yapilandirma "Ayar deposu"); bu adları taşıyan anahtar ayar olamaz.
+// Secrets live in the vault (07-yapilandirma "Settings store"); a key carrying these names cannot be a setting.
 const SECRET_LIKE = /(secret|password|passwd|token|api[_-]?key|private[_-]?key|credential)/i
 
 export function looksLikeSecret(key: string): boolean {
@@ -37,7 +37,7 @@ export function looksLikeSecret(key: string): boolean {
 
 const registry = new Map<string, SettingDefinition>()
 
-/** Anahtarı kaydeder; tekrar ya da sır gibi görünen anahtar hatadır. */
+/** Registers the key; a duplicate or secret-looking key is an error. */
 export function registerSetting<T>(key: string, def: SettingDefinition<T>): void {
   if (looksLikeSecret(key)) throw new SettingError("SECRET_KEY", `sır gibi görünen anahtar: ${key}`)
   if (registry.has(key))
@@ -45,7 +45,7 @@ export function registerSetting<T>(key: string, def: SettingDefinition<T>): void
   registry.set(key, def as SettingDefinition)
 }
 
-/** Built-in app anahtarı: `<appId>.<key>` önekiyle kaydedilir (katalog 01 `built_in_app`). */
+/** Built-in app key: registered with the `<appId>.<key>` prefix (catalog 01 `built_in_app`). */
 export function registerAppSetting<T>(appId: string, key: string, def: SettingDefinition<T>): void {
   registerSetting(`${appId}.${key}`, def)
 }
@@ -56,7 +56,7 @@ export function getSettingDefinition(key: string): SettingDefinition {
   return def
 }
 
-/** Yazımdan önce: anahtar kayıtlı, kapsam izinli, değer şemaya uygun. Ayrıştırılmış değeri döner. */
+/** Before writing: the key is registered, the scope allowed, the value matches the schema. Returns the parsed value. */
 export function parseSettingValue(key: string, scope: SettingScope, value: unknown): unknown {
   if (looksLikeSecret(key)) throw new SettingError("SECRET_KEY", `sır gibi görünen anahtar: ${key}`)
   const def = getSettingDefinition(key)
@@ -71,9 +71,9 @@ export function parseSettingValue(key: string, scope: SettingScope, value: unkno
 export const SETTINGS_VERSION_KEY = "settings.version"
 export const SETUP_COMPLETED_KEY = "setup.completed_at"
 
-// Başlangıç anahtarları. `settings.version` iç sayaçtır (setSetting artırır, kimse yazmaz).
+// Initial keys. `settings.version` is an internal counter (setSetting increments it, nobody writes it).
 registerSetting(SETTINGS_VERSION_KEY, { schema: z.number().int().min(0), default: 0, scopes: [] })
-// Kurulum zamanı yalnız `markSetupCompleted` ile yazılır; setSetting'e kapalı.
+// The setup time is only written by `markSetupCompleted`; closed to setSetting.
 registerSetting(SETUP_COMPLETED_KEY, {
   schema: z.number().int().min(0),
   default: 0,

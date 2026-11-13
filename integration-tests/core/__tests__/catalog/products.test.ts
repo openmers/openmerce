@@ -20,7 +20,7 @@ import {
 const count = (conn: Database.Database, table: string) =>
   scalar<number>(conn, `SELECT count(*) FROM ${table}`) ?? 0
 
-describeOnTargets("catalog ürün yazımı", (getDb) => {
+describeOnTargets("catalog product writes", (getDb) => {
   const prepare = async () => {
     const p = sqlitePlatform(getDb())
     const channel = await seedChannel(p)
@@ -28,7 +28,7 @@ describeOnTargets("catalog ürün yazımı", (getDb) => {
     return { ctx: catalogCtx(p, channel) }
   }
 
-  it("ürün + 2 seçenek + 4 varyant tek çağrıda; denetim ve reindex aynı atomic'te", async () => {
+  it("product + 2 options + 4 variants in one call; audit and reindex in the same atomic", async () => {
     const { ctx } = await prepare()
     const created = await createProduct(ctx, productWithFourVariants())
     expect(created).toEqual({ publicId: expect.stringMatching(/^prod_/), version: 0 })
@@ -58,11 +58,11 @@ describeOnTargets("catalog ürün yazımı", (getDb) => {
     expect(detail?.variants[0]?.taxCategoryCode).toBe("standard")
     expect(detail?.channels).toEqual(["chn_main"])
     expect(detail?.variants.every((v) => v.channels.length === 1)).toBe(true)
-    // Dışarıya yalnız `public_id`: iç `id` alanı yok.
+    // Only `public_id` is exposed: no internal `id` field.
     expect(JSON.stringify(detail)).not.toMatch(/"id":\d/)
   })
 
-  it("bir ifade hata verirse ürün, seçenek, varyant, denetim ve outbox satırı kalmaz", async () => {
+  it("if one statement fails, no product, option, variant, audit or outbox row remains", async () => {
     const { ctx } = await prepare()
     const first = productWithFourVariants({ skuPrefix: "A" })
     await createProduct(ctx, first)
@@ -74,7 +74,7 @@ describeOnTargets("catalog ürün yazımı", (getDb) => {
       outbox: count(getDb(), "outbox"),
     }
 
-    // İkinci ürünün ikinci varyantı birincinin SKU'sunu tekrar eder: benzersiz indeks patlar.
+    // The second product's second variant repeats the first one's SKU: the unique index fails.
     const clash: CreateProductInput = {
       translations: [{ lang: "en", name: "Clash", slug: "clash" }],
       variants: [
@@ -90,7 +90,7 @@ describeOnTargets("catalog ürün yazımı", (getDb) => {
     expect(count(getDb(), "outbox")).toBe(before.outbox)
   })
 
-  it("eksik ve tekrarlı kombinasyon veritabanına gitmeden reddedilir", async () => {
+  it("missing and duplicate combinations are rejected before reaching the database", async () => {
     const { ctx } = await prepare()
     const base = productWithFourVariants()
     const missing = {
@@ -115,7 +115,7 @@ describeOnTargets("catalog ürün yazımı", (getDb) => {
     expect(count(getDb(), "outbox")).toBe(0)
   })
 
-  it("bilinmeyen vergi kategorisi INVALID_INPUT; yarım yazım kalmaz", async () => {
+  it("unknown tax category INVALID_INPUT; no partial write remains", async () => {
     const { ctx } = await prepare()
     const input = {
       translations: [{ lang: "en", name: "T", slug: "t" }],
@@ -126,7 +126,7 @@ describeOnTargets("catalog ürün yazımı", (getDb) => {
     expect(count(getDb(), "product_variants")).toBe(0)
   })
 
-  it("updateProduct sürümü artırır, çeviriyi değiştirir, denetim/outbox yazar", async () => {
+  it("updateProduct bumps the version, changes the translation, writes audit/outbox", async () => {
     const { ctx } = await prepare()
     const created = await createProduct(ctx, productWithFourVariants())
     const updated = await updateProduct(ctx, {
@@ -141,10 +141,10 @@ describeOnTargets("catalog ürün yazımı", (getDb) => {
     expect(detail?.translations).toHaveLength(1)
     expect(detail?.translations[0]?.name).toBe("Yeni ad")
     expect(count(getDb(), "audit_log")).toBe(2)
-    expect(count(getDb(), "outbox")).toBe(1) // bekleyen reindex tekilleşir (dedupeKey)
+    expect(count(getDb(), "outbox")).toBe(1) // the pending reindex is deduplicated (dedupeKey)
   })
 
-  it("olmayan ürün NOT_FOUND, eski sürüm CONFLICT", async () => {
+  it("unknown product NOT_FOUND, stale version CONFLICT", async () => {
     const { ctx } = await prepare()
     await expect(
       updateProduct(ctx, { publicId: "prod_yok", version: 0, patch: {} }),
@@ -157,14 +157,14 @@ describeOnTargets("catalog ürün yazımı", (getDb) => {
   })
 })
 
-describe("[sqlite] ürün sürüm yarışı (iki bağlantı)", () => {
+describe("[sqlite] product version race (two connections)", () => {
   let file: TestDbFile | undefined
   afterEach(() => {
     file?.close()
     file = undefined
   })
 
-  it("tam bir kazanan; kaybeden CONFLICT alır, denetim/çeviri yazmaz", async () => {
+  it("exactly one winner; the loser gets CONFLICT and writes no audit/translation", async () => {
     file = openTestDb({ file: true })
     const [c1, c2] = [file.connect(), file.connect()]
     c1.pragma("busy_timeout = 5000")
@@ -192,7 +192,7 @@ describe("[sqlite] ürün sürüm yarışı (iki bağlantı)", () => {
     expect(
       scalar<number>(c2, "SELECT count(*) FROM audit_log WHERE action = 'products:write'"),
     ).toBe(
-      2, // 1 oluşturma + 1 kazanan güncelleme
+      2, // 1 create + 1 winning update
     )
     expect(scalar<number>(c2, "SELECT count(*) FROM outbox")).toBe(1)
     expect(final?.translations).toHaveLength(1)

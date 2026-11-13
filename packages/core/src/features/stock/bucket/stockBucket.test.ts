@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest"
 import { bucketChanged, stockBucket } from "./stockBucket"
 
 describe("stockBucket", () => {
-  it("eşikler: <= 0 out, <= low low, aksi in_stock", () => {
+  it("thresholds: <= 0 out, <= low low, otherwise in_stock", () => {
     expect(stockBucket(-3)).toBe("out")
     expect(stockBucket(0)).toBe("out")
     expect(stockBucket(1)).toBe("low")
@@ -12,7 +12,7 @@ describe("stockBucket", () => {
     expect(stockBucket(1, { low: 0 })).toBe("in_stock")
   })
 
-  it("bucketChanged yalnız kova değişince doğru", () => {
+  it("bucketChanged is true only when the bucket changes", () => {
     expect(bucketChanged(100, 50)).toBe(false)
     expect(bucketChanged(6, 5)).toBe(true)
     expect(bucketChanged(3, 2)).toBe(false)

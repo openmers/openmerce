@@ -1,11 +1,11 @@
 import { TaxError } from "../types"
 
 /**
- * Sipariş indirimini satırlara oransal dağıtır (09-vergi §2.6, saf; promosyon da kullanır).
- * Kalan kuruş kuralı tek yerde: her satır `floor(indirim × tutar / toplam)` alır; artan kuruşlar
- * kesirli kalanı büyük olandan başlayarak birer birer verilir, eşitlikte önceki satır. Böylece
- * toplam korunur ve sonuç girdi sırasına göre belirlenimcidir. İndirim toplamı aşarsa toplama
- * kırpılır (satır eksiye düşmez); toplam 0 ise hepsi 0.
+ * Distributes an order discount proportionally across lines (09-vergi §2.6, pure; promotions use it too).
+ * The remainder cent rule lives in one place: each line gets `floor(discount × amount / total)`; leftover cents
+ * are handed out one by one starting from the largest fractional remainder, ties go to the earlier line. So
+ * the total is preserved and the result is deterministic by input order. If the discount exceeds the total it is
+ * clipped to the total (no line goes negative); if the total is 0, all are 0.
  */
 export function allocateOrderDiscount(discount: number, amounts: readonly number[]): number[] {
   for (const value of [discount, ...amounts]) {

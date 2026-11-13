@@ -5,15 +5,15 @@ import { IDEMPOTENCY_TTL_MS, type IdempotencyActorType } from "../types"
 
 export type ReserveKeyInput = {
   actorType: IdempotencyActorType
-  /** Anonimde 0 (şema varsayılanı). */
+  /** 0 for anonymous (schema default). */
   actorId?: number
   key: string
-  /** Gövde + rota özeti; aynı anahtarla farklı gövde çağıranda 422'ye eşlenir. */
+  /** Body + route hash; mapped to 422 when the same key is called with a different body. */
   requestHash: string
   ttlMs?: number
 }
 
-/** İlk istek: `in_progress` sahiplenir. Anahtar varsa 0 satır döner. */
+/** First request: claims `in_progress`. Returns 0 rows if the key exists. */
 export function reserveInsertStatement(db: Db, input: ReserveKeyInput, now: number) {
   return db
     .insert(idempotencyKeys)
@@ -31,7 +31,7 @@ export function reserveInsertStatement(db: Db, input: ReserveKeyInput, now: numb
     .toSQL()
 }
 
-/** Süresi dolmuş satırı aynı anahtar/adresle yeniden sahiplenir (süpürme beklemeden). */
+/** Reclaims an expired row with the same key/address (without waiting for the sweep). */
 export function reserveReclaimStatement(
   db: Db,
   input: ReserveKeyInput,
@@ -59,9 +59,9 @@ export function reserveReclaimStatement(
 }
 
 /**
- * `true` = anahtar bu çağrıda sahiplenildi (yeni ya da süresi dolmuş satırın yeniden kullanımı).
- * `false` = başka bir istek `in_progress`/`done` olarak tutuyor.
- * Koşullu: her iki ifade de tek `atomic()` içinde, kararı yazma verir.
+ * `true` = the key was claimed in this call (new, or reuse of an expired row).
+ * `false` = another request holds it as `in_progress`/`done`.
+ * Conditional: both statements are in one `atomic()`, the write makes the decision.
  */
 export async function reserveKey(
   p: Pick<Platform, "db" | "atomic">,

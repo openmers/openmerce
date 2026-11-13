@@ -5,7 +5,7 @@ import { claimRun } from "../features/scheduled"
 import { finishRun } from "../features/scheduled/queries/finishRun"
 import type { Platform } from "../platform"
 
-/** 04-olaylar-isler-outbox "5 dk süpürme": dönem anahtarı da 5 dakikadır. */
+/** 04-olaylar-isler-outbox "5 min sweep": the period key is also 5 minutes. */
 export const MAINTENANCE_PERIOD_MS = 300_000
 
 export const MAINTENANCE_TASKS = {
@@ -15,7 +15,7 @@ export const MAINTENANCE_TASKS = {
 } as const
 
 export type MaintenanceTaskResult = {
-  /** `false` = dönem başka bir tetik tarafından sahiplenilmişti; iş çalışmadı. */
+  /** `false` = the period was already claimed by another trigger; the job did not run. */
   ran: boolean
   affected: number
   error?: string
@@ -37,9 +37,9 @@ function describeError(error: unknown): string {
 }
 
 /**
- * Süpürme işleri: takılı `sending` satırları geri al, eski `sent` satırları sil, süresi dolan
- * idempotency anahtarlarını sil. Her iş `claimRun` ile **dönem başına bir kez** çalışır; iki
- * tüketici aynı anda tetiklese bile satırı yalnız biri alır. Bir işin hatası diğerlerini durdurmaz.
+ * Sweep jobs: requeue stuck `sending` rows, delete old `sent` rows, delete expired
+ * idempotency keys. Each job runs **once per period** via `claimRun`; even if two
+ * consumers trigger at the same time only one takes the row. One job's failure does not stop the others.
  */
 export async function runMaintenanceOnce(
   platform: Platform,

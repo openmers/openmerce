@@ -49,19 +49,19 @@ const channel: Channel = {
 const index = indexDomains([channel])
 
 describe("resolveChannel", () => {
-  it("birincil alan adı: kanalın dili; port ve büyük harf normalleşir", () => {
+  it("primary domain: the channel's language; port and uppercase are normalized", () => {
     expect(resolveChannel("SHOP.com:443", index)).toEqual({ kind: "serve", channel, lang: "en" })
   })
 
-  it("ikincil redirect: birincile yönlendirir", () => {
+  it("secondary redirect: redirects to the primary", () => {
     expect(resolveChannel("shop.net", index)).toEqual({ kind: "redirect", channel, to: "shop.com" })
   })
 
-  it("ikincil serve: kendi diliyle sunar", () => {
+  it("secondary serve: served in its own language", () => {
     expect(resolveChannel("shop.com.tr.", index)).toEqual({ kind: "serve", channel, lang: "tr" })
   })
 
-  it("bilinmeyen alan adı UNKNOWN_DOMAIN, varsayılana düşmez", () => {
+  it("unknown domain UNKNOWN_DOMAIN, no fallback to default", () => {
     expect(() => resolveChannel("evil.com", index)).toThrow(
       expect.objectContaining({ code: "UNKNOWN_DOMAIN" }),
     )
@@ -69,7 +69,7 @@ describe("resolveChannel", () => {
 })
 
 describe("assertChannelDeletable", () => {
-  it("varsayılan kanal DEFAULT_CHANNEL, diğeri geçer", () => {
+  it("default channel DEFAULT_CHANNEL, the other one passes", () => {
     expect(() => assertChannelDeletable(channel)).toThrow(
       expect.objectContaining({ code: "DEFAULT_CHANNEL" }),
     )

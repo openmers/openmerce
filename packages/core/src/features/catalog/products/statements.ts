@@ -11,8 +11,8 @@ import { type AtomicStatement, type Db, guardedInsertStatement } from "../../../
 import type { OutboxJobInput } from "../../outbox"
 import { CatalogError } from "./types"
 
-// Yeni satırın iç `id`'si: çok ifadeli `atomic()` içinde `public_id`/kod üzerinden alt sorgu.
-// İnteraktif transaction yok; satırlar aynı transaction'da sırayla yazıldığı için alt sorgu görür.
+// Internal `id` of a new row: a subquery via `public_id`/code inside a multi-statement `atomic()`.
+// No interactive transaction; rows are written in order in the same transaction, so the subquery sees them.
 
 export function productIdByPublicId(publicId: string): SQL {
   return sql`(SELECT ${products.id} FROM ${products} WHERE ${products.publicId} = ${publicId})`
@@ -42,7 +42,7 @@ export function optionValueIdByCode(
       AND ${optionValues.code} = ${valueCode})`
 }
 
-/** Ürünün beklenen sürümde ve silinmemiş olduğu koşulu; koşullu yazımların tek kapısı. */
+/** Condition that the product is at the expected version and not deleted; the single gate for conditional writes. */
 export function productVersionGuard(publicId: string, version: number): SQL {
   return sql`EXISTS (SELECT 1 FROM ${products}
     WHERE ${products.publicId} = ${publicId}
@@ -50,19 +50,19 @@ export function productVersionGuard(publicId: string, version: number): SQL {
       AND ${products.deletedAt} IS NULL)`
 }
 
-/** Ürünün var olduğu koşul (yeni varyant eklerken). */
+/** Condition that the product exists (when adding a new variant). */
 export function productExistsGuard(publicId: string): SQL {
   return sql`EXISTS (SELECT 1 FROM ${products}
     WHERE ${products.publicId} = ${publicId} AND ${products.deletedAt} IS NULL)`
 }
 
-/** Varyantın var olduğu koşul (yeni varyantın alt satırları için). */
+/** Condition that the variant exists (for a new variant's child rows). */
 export function variantExistsGuard(publicId: string): SQL {
   return sql`EXISTS (SELECT 1 FROM ${productVariants}
     WHERE ${productVariants.publicId} = ${publicId} AND ${productVariants.deletedAt} IS NULL)`
 }
 
-/** Varyant ürünün altında, beklenen sürümde ve silinmemiş. */
+/** The variant is under the product, at the expected version and not deleted. */
 export function variantOfProductGuard(
   productPublicId: string,
   variantPublicId: string,
@@ -76,7 +76,7 @@ export function variantOfProductGuard(
       AND ${productVariants.deletedAt} IS NULL)`
 }
 
-/** Kanaldan bağımsız: seçili kanal + silinemeyen varsayılan kanal (01-kanallar §2). */
+/** Channel-independent: the selected channel + the undeletable default channel (01-kanallar §2). */
 const DEFAULT_CHANNEL = sql`EXISTS (SELECT 1 FROM "channels" WHERE "is_default" = 1)`
 
 function ignoreConflict(stmt: AtomicStatement): AtomicStatement {
@@ -84,9 +84,9 @@ function ignoreConflict(stmt: AtomicStatement): AtomicStatement {
 }
 
 /**
- * Ürün kanal atamaları: seçili kanal ve varsayılan kanal (varsa). İki ifade de `guard` altındadır;
- * `guard` yeni satırın varlığına bağlanınca (ör. yeni varyant) hiç yazmaz. Ürün atanınca tüm
- * varyantlar da atanır (01-kanallar §2).
+ * Product channel assignments: the selected channel and the default channel (if any). Both statements are under `guard`;
+ * when `guard` is tied to a new row's existence (e.g. a new variant) nothing is written. When the product is assigned,
+ * all its variants are assigned too (01-kanallar §2).
  */
 export function productChannelStatements(
   productPublicId: string,
@@ -128,7 +128,7 @@ export function variantChannelStatements(
   ]
 }
 
-/** Ürün değişti: `reindex(product)` işi; bekleyen aynı iş yenisi eklenmez (02-katalog §3). */
+/** The product changed: `reindex(product)` job; no new one if the same job is pending (02-katalog §3). */
 export function reindexJob(productPublicId: string, requestId?: string): OutboxJobInput {
   return {
     kind: "reindex",
@@ -139,7 +139,7 @@ export function reindexJob(productPublicId: string, requestId?: string): OutboxJ
   }
 }
 
-/** Koşullu yazım 0 satıra dokundu: ürün yoksa `NOT_FOUND`, varsa sürüm çakışması `CONFLICT`. */
+/** A conditional write touched 0 rows: `NOT_FOUND` if the product is missing, otherwise a version conflict `CONFLICT`. */
 export async function classifyProductMiss(db: Db, publicId: string): Promise<never> {
   const row = (
     await db
@@ -152,7 +152,7 @@ export async function classifyProductMiss(db: Db, publicId: string): Promise<nev
   throw new CatalogError("CONFLICT", "sürüm çakışması: ürün başka bir yazımla değişti")
 }
 
-/** Koşullu yazım 0 satıra dokundu: varyant yoksa `NOT_FOUND`, varsa sürüm çakışması `CONFLICT`. */
+/** A conditional write touched 0 rows: `NOT_FOUND` if the variant is missing, otherwise a version conflict `CONFLICT`. */
 export async function classifyVariantMiss(db: Db, publicId: string): Promise<never> {
   const row = (
     await db
@@ -165,7 +165,7 @@ export async function classifyVariantMiss(db: Db, publicId: string): Promise<nev
   throw new CatalogError("CONFLICT", "sürüm çakışması: varyant başka bir yazımla değişti")
 }
 
-/** Paket içi yinelenen çeviri dili (DB benzersiz indeksi son kapıdır). */
+/** Duplicate translation language within the payload (the DB unique index is the last gate). */
 export function assertUniqueLangs(translations: ReadonlyArray<{ lang: string }>): void {
   const seen = new Set<string>()
   for (const { lang } of translations) {
@@ -176,7 +176,7 @@ export function assertUniqueLangs(translations: ReadonlyArray<{ lang: string }>)
   }
 }
 
-/** Varyant seçenek değerlerinde aynı seçenekten iki değer (DB benzersiz indeksi son kapıdır). */
+/** Two values from the same option in variant option values (the DB unique index is the last gate). */
 export function assertUniqueOptionValues(
   entries: ReadonlyArray<{ option: string }> | undefined,
 ): void {
@@ -190,8 +190,8 @@ export function assertUniqueOptionValues(
 }
 
 /**
- * SQLite hatalarını beklenen katalog hatalarına çevirir; başka hata olduğu gibi yükselir.
- * Benzersiz indeksler son kapıdır: paket içi kontroller yarışı yakalayamaz.
+ * Maps SQLite errors to expected catalog errors; any other error is rethrown as is.
+ * Unique indexes are the last gate: in-payload checks cannot catch races.
  */
 export function mapWriteError(error: unknown): never {
   const message = error instanceof Error ? error.message : String(error)

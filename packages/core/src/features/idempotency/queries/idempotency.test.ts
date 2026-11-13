@@ -9,10 +9,10 @@ import { saveResponse } from "./saveResponse"
 const NOW = 1_700_000_000_000
 const base = { actorType: "customer", actorId: 7, key: "k-1", requestHash: "h-1" } as const
 
-describeOnTargets("idempotency sorguları", (getDb) => {
+describeOnTargets("idempotency queries", (getDb) => {
   const platform = () => sqlitePlatform(getDb())
 
-  it("aynı anahtar ikinci kez sahiplenilemez; yanıt yazılınca aynı yanıt döner", async () => {
+  it("the same key cannot be claimed twice; once the response is written the same response is returned", async () => {
     const p = platform()
     expect(await reserveKey(p, base, NOW)).toBe(true)
     expect(await reserveKey(p, base, NOW)).toBe(false)
@@ -37,7 +37,7 @@ describeOnTargets("idempotency sorguları", (getDb) => {
       responseStatus: 201,
       response: { id: "ord_1" },
     })
-    // yanıt bir kez yazılır
+    // the response is written once
     expect(
       await saveResponse(
         p,
@@ -53,7 +53,7 @@ describeOnTargets("idempotency sorguları", (getDb) => {
     ).toBe(false)
   })
 
-  it("farklı aktör aynı anahtarı ayrı sahiplenir; anonim 0 kullanır", async () => {
+  it("a different actor claims the same key separately; anonymous uses 0", async () => {
     const p = platform()
     expect(await reserveKey(p, base, NOW)).toBe(true)
     expect(await reserveKey(p, { ...base, actorId: 8 }, NOW)).toBe(true)
@@ -66,7 +66,7 @@ describeOnTargets("idempotency sorguları", (getDb) => {
     })
   })
 
-  it("süresi dolan anahtar yeniden sahiplenilir, süpürme siler", async () => {
+  it("an expired key can be claimed again, the sweep deletes it", async () => {
     const p = platform()
     expect(await reserveKey(p, { ...base, ttlMs: 1000 }, NOW)).toBe(true)
     expect(await getResponse(p, base, NOW + 1001)).toBeNull()
@@ -77,12 +77,12 @@ describeOnTargets("idempotency sorguları", (getDb) => {
     expect(await getResponse(p, base, NOW + 4000)).toBeNull()
   })
 
-  it("süpürme sorgusu tam tarama yapmaz", () => {
+  it("the sweep query does not do a full scan", () => {
     const p = platform()
     assertNoFullScan(getDb(), purgeExpiredStatement(p.db, NOW))
   })
 
-  it("süpürme yalnız süresi dolanı siler", async () => {
+  it("the sweep deletes only expired keys", async () => {
     const p = platform()
     await reserveKey(p, { ...base, key: "k-short", ttlMs: 1000 }, NOW)
     await reserveKey(p, { ...base, key: "k-long" }, NOW)

@@ -7,8 +7,8 @@ import { mapPricingWriteError, type PricingCtx, PricingError } from "../types"
 import { findPriceList, priceListGuard, priceListIdByPublicId } from "./statements"
 
 /**
- * `base` olmayan listeyi fiyatları ve hedefleriyle tek `atomic()`'te siler (hepsi aynı koşula
- * bağlı). `base` liste silinemez (`CONFLICT`): kanalın satış yapabilmesi ona bağlıdır.
+ * Deletes a non-`base` list together with its prices and targets in one `atomic()` (all bound to the same
+ * condition). A `base` list cannot be deleted (`CONFLICT`): the channel's ability to sell depends on it.
  */
 export async function deletePriceList(
   ctx: PricingCtx,

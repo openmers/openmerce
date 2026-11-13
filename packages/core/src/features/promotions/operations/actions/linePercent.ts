@@ -6,7 +6,7 @@ import {
   productFilterArgs,
 } from "../conditions/containsProducts"
 
-/** Süzgece uyan satırlara kalan tutarın `bp` baz puanı kadar indirim (10000 = %100). */
+/** A discount of `bp` basis points of the remaining amount on lines matching the filter (10000 = 100%). */
 export const linePercent: ActionDef<ProductFilter & { bp: number }> = {
   code: "linePercent",
   args: productFilterArgs.extend({ bp: z.number().int().min(1).max(10_000) }),

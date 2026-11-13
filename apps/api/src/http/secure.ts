@@ -3,20 +3,20 @@ import type { Context } from "hono"
 import type { AppEnv } from "./env"
 
 export type SecureOptions = {
-  /** Verilmezse istek URL'i ve `x-forwarded-proto` okunur (ters vekil arkasında TLS). */
+  /** If not given, the request URL and `x-forwarded-proto` are read (TLS behind a reverse proxy). */
   https?: boolean
   appOrigins?: readonly string[]
 }
 
-/** HTTPS mi: açık ayar → istek URL'i → `x-forwarded-proto`. HSTS yalnız HTTPS yanıtında yazılır. */
+/** Is it HTTPS: explicit setting → request URL → `x-forwarded-proto`. HSTS is only written on HTTPS responses. */
 export function isHttps(c: Context<AppEnv>, forced?: boolean): boolean {
   if (forced !== undefined) return forced
   return c.req.url.startsWith("https:") || c.req.header("x-forwarded-proto") === "https"
 }
 
 /**
- * API yüzeyinin güvenlik başlıkları (`06-guvenlik-ve-yetki`). Hata ve 404 yanıtları da bu yoldan
- * geçer: ara katman en dıştadır.
+ * Security headers of the API surface (`06-guvenlik-ve-yetki`). Error and 404 responses also go
+ * through here: the middleware is outermost.
  */
 export function secureResponse(
   c: Context<AppEnv>,

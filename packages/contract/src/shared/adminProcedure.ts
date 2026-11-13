@@ -1,10 +1,10 @@
 import { defineMeta, oc } from "@orpc/contract"
 
 /**
- * Admin prosedürünün erişim bildirimi (`06-guvenlik-ve-yetki`: her handler gereken izni bildirir).
- * - `<varlık>:<eylem>`: oturum + bu izin.
- * - `"session"`: yalnız geçerli yönetici oturumu (ör. `admin.me`).
- * - `"public"`: oturumsuz (kurulum, giriş, çıkış); kurulum kapısı yine uygulanır.
+ * Access declaration of an Admin procedure (`06-guvenlik-ve-yetki`: every handler declares the permission it needs).
+ * - `<entity>:<action>`: session + this permission.
+ * - `"session"`: only a valid admin session (e.g. `admin.me`).
+ * - `"public"`: no session (setup, login, logout); the setup gate still applies.
  */
 export type AdminAccess = `${string}:${string}` | "session" | "public"
 
@@ -14,12 +14,12 @@ const [adminAccessMeta, readAdminAccess] = defineMeta(
 )
 
 /**
- * Admin sözleşmesi yalnız bununla başlar; meta'sız Admin prosedürü sunucuda kapalı kalır
- * (`requirePermission` 403) ve `admin-access.test.ts` sözleşmede meta'sız uç bulursa kırılır.
+ * The Admin contract starts only with this; an Admin procedure without meta stays closed on the server
+ * (`requirePermission` 403) and `admin-access.test.ts` breaks if it finds an endpoint without meta in the contract.
  */
 export function adminProcedure(access: AdminAccess) {
   return oc.meta(adminAccessMeta(access))
 }
 
-/** Prosedürün erişim bildirimi; yoksa `undefined` (kapalı say). */
+/** The procedure's access declaration; `undefined` if missing (treat as closed). */
 export const getAdminAccess = readAdminAccess

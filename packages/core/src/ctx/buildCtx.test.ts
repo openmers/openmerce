@@ -52,7 +52,7 @@ const channel: Channel = {
 
 const snapshot = { channels: [channel], byDomain: indexDomains([channel]), version: 1 }
 
-/** Herhangi bir alan okunursa patlar: anonim yolda platforma dokunulmadığının kanıtı. */
+/** Throws if any field is read: proof that the anonymous path does not touch the platform. */
 function untouchablePlatform(): { platform: Platform; reads: () => string[] } {
   const reads: string[] = []
   const platform = new Proxy({} as Platform, {
@@ -67,7 +67,7 @@ function untouchablePlatform(): { platform: Platform; reads: () => string[] } {
 const NOW = 1_700_000_000_000
 
 describe("buildCtx", () => {
-  it("anonim yolda platforma hiç dokunmaz (sıfır okuma, sıfır tur)", () => {
+  it("the anonymous path never touches the platform (zero reads, zero round trips)", () => {
     const { platform, reads } = untouchablePlatform()
     const result = buildCtx({
       platform,
@@ -81,7 +81,7 @@ describe("buildCtx", () => {
     expect(reads()).toEqual([])
   })
 
-  it("gerçek platformda da batch/atomic çağırmaz; kanal bellekten gelir", () => {
+  it("does not call batch/atomic on a real platform either; the channel comes from memory", () => {
     const p = sqlitePlatform(openTestDb())
     const platform = p as unknown as Platform
     const result = buildCtx({
@@ -109,7 +109,7 @@ describe("buildCtx", () => {
     expect(result.ctx.company).toBeUndefined()
   })
 
-  it("segment kanal + dil + para birimi + fiyat listesi kümesinden gelir", () => {
+  it("segment comes from channel + language + currency + price list set", () => {
     const { platform } = untouchablePlatform()
     const build = (priceListIds: number[]) =>
       buildCtx({
@@ -135,7 +135,7 @@ describe("buildCtx", () => {
     expect(a.ctx.priceListIds).toEqual([7, 2])
   })
 
-  it("kanalda olmayan dil/para birimi kanal varsayılanına düşer", () => {
+  it("a language/currency not in the channel falls back to the channel default", () => {
     const { platform } = untouchablePlatform()
     const result = buildCtx({
       platform,
@@ -152,7 +152,7 @@ describe("buildCtx", () => {
     expect(result.ctx.currency).toBe("USD")
   })
 
-  it("x-openmers-channel Host'u ezer; bilinmeyen kanal INVALID_CHANNEL", () => {
+  it("x-openmers-channel overrides Host; unknown channel INVALID_CHANNEL", () => {
     const { platform } = untouchablePlatform()
     const result = buildCtx({
       platform,
@@ -176,7 +176,7 @@ describe("buildCtx", () => {
     ).toThrow(expect.objectContaining({ code: "INVALID_CHANNEL" }))
   })
 
-  it("bilinmeyen alan adı ve ikincil yönlendirme Ctx üretmez", () => {
+  it("unknown domain and secondary redirect produce no Ctx", () => {
     const { platform } = untouchablePlatform()
     expect(() =>
       buildCtx({ platform, api: "shop", snapshot, host: "evil.com", now: NOW, requestId: "r" }),
@@ -186,7 +186,7 @@ describe("buildCtx", () => {
     ).toEqual({ kind: "redirect", to: "shop.com" })
   })
 
-  it("verilen aktör korunur (oturum yolu dışarıdan besler)", () => {
+  it("the given actor is kept (the session path supplies it from outside)", () => {
     const { platform } = untouchablePlatform()
     const actor = { type: "admin", id: 4, permissions: new Set(["orders:read"]) } as const
     const result = buildCtx({
@@ -203,7 +203,7 @@ describe("buildCtx", () => {
     expect(result.ctx.api).toBe("admin")
   })
 
-  it("now ve requestId doğrulanır", () => {
+  it("now and requestId are validated", () => {
     const { platform } = untouchablePlatform()
     const input = { platform, api: "shop" as const, snapshot, host: "shop.com", now: NOW }
     expect(() => buildCtx({ ...input, requestId: "  " })).toThrow(RangeError)

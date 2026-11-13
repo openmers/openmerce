@@ -7,12 +7,12 @@ import {
   runOutboxOnce,
 } from "@openmers/core"
 
-// Self-host iş tüketicisi (yol haritası 9.12): aralıklı tur + 5 dk bakım. Kuyruk yalnız
-// tetikleyicidir; doğruluk kaynağı `outbox` tablosudur (04-olaylar-isler-outbox).
+// Self-host job consumer (roadmap 9.12): periodic ticks + 5 min maintenance. The queue is only a
+// trigger; the source of truth is the `outbox` table (04-olaylar-isler-outbox).
 
-/** Zamanlayıcı portu; test sahte bir uygulamayla gerçek saati beklemez. */
+/** Scheduler port; tests use a fake implementation and do not wait for the real clock. */
 export type Scheduler = {
-  /** Geri çağrı bir sonraki turu başlatır; dönen söz turun bitişidir. */
+  /** The callback starts the next tick; the returned promise is the end of the tick. */
   set(callback: () => void | Promise<void>, ms: number): unknown
   clear(handle: unknown): void
 }
@@ -25,30 +25,30 @@ export const systemScheduler: Scheduler = {
 export type PollerOptions = {
   platform: Platform
   handlers: JobHandlers
-  /** Turlar arası bekleme (varsayılan 1 sn). */
+  /** Wait between ticks (default 1 s). */
   intervalMs?: number
-  /** Bakım aralığı (varsayılan 5 dk). */
+  /** Maintenance interval (default 5 min). */
   maintenanceEveryMs?: number
-  /** Tur başına satır (varsayılan 20). */
+  /** Rows per tick (default 20). */
   limit?: number
   now?: () => number
   scheduler?: Scheduler
-  /** Tur hatası süreci düşürmez; raporlanır ve sonraki tur beklenir. */
+  /** A tick error does not crash the process; it is reported and the next tick is awaited. */
   onError?: (error: unknown) => void
 }
 
 export type Poller = {
-  /** Tek tur: iş partisi, zamanı geldiyse bakım. Zamanlayıcıyı kurmaz (testte doğrudan çağrılır). */
+  /** A single tick: job batch, plus maintenance if due. Does not install the timer (called directly in tests). */
   tick(): Promise<OutboxRunCounters>
   start(): void
-  /** Süren turu bekler, sonra döner (SIGTERM: yarım parti bırakılmaz). */
+  /** Waits for the running tick, then returns (SIGTERM: no half-processed batch is left). */
   stop(): Promise<void>
   isRunning(): boolean
 }
 
 /**
- * Tek uçuş kuralı: tur bitmeden yenisi kurulmaz, bu yüzden yavaş bir tur kuyruğu şişirmez.
- * `stop()` bayrağı kaldırır, zamanlayıcıyı iptal eder ve süren turu bekler.
+ * Single-flight rule: no new tick is scheduled before the current one ends, so a slow tick does not bloat the queue.
+ * `stop()` clears the flag, cancels the timer and waits for the running tick.
  */
 export function createPoller(opts: PollerOptions): Poller {
   const now = opts.now ?? Date.now
@@ -97,7 +97,7 @@ export function createPoller(opts: PollerOptions): Poller {
       if (running) return
       running = true
       stopped = false
-      // İlk tur da zamanlayıcıdan gelir: açılış yolu beklemez, test tek noktadan tur atar.
+      // The first tick also comes from the scheduler: startup does not wait, and tests tick from a single place.
       schedule()
     },
     async stop() {

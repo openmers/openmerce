@@ -41,7 +41,7 @@ const channel = (id: number, domain: string): Channel => ({
 })
 
 describe("channelRegistry", () => {
-  it("ilk çağrıda yükler; sürüm değişmedikçe yeniden yüklemez", async () => {
+  it("loads on the first call; does not reload while the version is unchanged", async () => {
     let loads = 0
     const load = async () => {
       loads += 1
@@ -54,7 +54,7 @@ describe("channelRegistry", () => {
     expect(loads).toBe(1)
   })
 
-  it("settings_version değişince yeniler", async () => {
+  it("refreshes when settings_version changes", async () => {
     let loads = 0
     let version = 0
     const registry = createChannelRegistry({
@@ -73,7 +73,7 @@ describe("channelRegistry", () => {
     expect(snapshot.version).toBe(1)
   })
 
-  it("eşzamanlı çağrılar tek yükleme paylaşır", async () => {
+  it("concurrent calls share a single load", async () => {
     let loads = 0
     const registry = createChannelRegistry({
       load: async () => {
@@ -87,7 +87,7 @@ describe("channelRegistry", () => {
     expect(loads).toBe(1)
   })
 
-  it("checkEveryMs sürüm okumasını aralıklar", async () => {
+  it("checkEveryMs spaces out version reads", async () => {
     let versionReads = 0
     let version = 0
     const registry = createChannelRegistry({

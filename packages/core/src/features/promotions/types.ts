@@ -1,7 +1,7 @@
 import type { z } from "zod"
 import type { PriceListType } from "../pricing/types"
 
-/** Sepet satırı (promosyon görünümü). Tutar küçük birim, satır toplamı (birim × adet). */
+/** Cart line (promotion view). Amount in minor units, line total (unit × quantity). */
 export type PromoLine = {
   key: string
   variantId: number
@@ -9,7 +9,7 @@ export type PromoLine = {
   collectionIds?: readonly number[]
   quantity: number
   amount: number
-  /** Seçilen fiyatın liste türü; `contract` satıra varsayılan promosyon uygulanmaz. */
+  /** List type of the selected price; default promotions are not applied to a `contract` line. */
   priceType: PriceListType
   personalized?: boolean
 }
@@ -17,20 +17,20 @@ export type PromoLine = {
 export type PromoCart = {
   channelId: number
   lines: readonly PromoLine[]
-  /** Kargo ücreti (kargo indirimi bunun üstünden). */
+  /** Shipping fee (the shipping discount is computed off this). */
   shipping: number
   customerId: number | null
   customerGroupIds: readonly number[]
   companyId: number | null
   couponCodes: readonly string[]
-  /** `requires` ile sepet verisi turunda toplanan değerler (`collectRequirements`). */
+  /** Values gathered in the cart data round trip via `requires` (`collectRequirements`). */
   data: Readonly<Record<string, unknown>>
 }
 
-/** Koşulun gördüğü sepet: yalnız promosyona açık satırlar (`contract` süzülmüş). */
+/** The cart as seen by a condition: only promotion-eligible lines (`contract` filtered out). */
 export type CartView = { cart: PromoCart; lines: readonly PromoLine[]; subtotal: number }
 
-/** Koşul saf ve senkrondur; veri gerekirse `requires` ile ister, içinde sorgu atılmaz. */
+/** A condition is pure and synchronous; if it needs data it asks via `requires`, it never queries inside. */
 export type ConditionDef<A = unknown> = {
   code: string
   args: z.ZodType<A>
@@ -38,13 +38,13 @@ export type ConditionDef<A = unknown> = {
   check(args: A, view: CartView): boolean
 }
 
-/** Eylemin gördüğü durum: satırların ve kargonun önceki promosyonlardan **kalan** tutarı. */
+/** State seen by an action: the amount of lines and shipping **remaining** from earlier promotions. */
 export type ActionState = {
   lines: readonly { line: PromoLine; remaining: number }[]
   shipping: number
 }
 
-/** İndirim taslağı; tutarlar kalanı aşmaz (eylem kırpar, uygulayıcı yine denetler). */
+/** Discount draft; amounts never exceed the remainder (the action clips, the applier checks again). */
 export type Discount =
   | { target: "line"; lineKey: string; amount: number }
   | { target: "order"; amount: number; allocation: { lineKey: string; amount: number }[] }
@@ -68,7 +68,7 @@ export type CompiledPromotion = {
   couponCode: string | null
   usageLimit: number | null
   perCustomerLimit: number | null
-  /** Derleme anındaki sayaç; yalnız gösterim (doğruluk rezervasyonda). */
+  /** Counter at compile time; display only (correctness lives in the reservation). */
   used: number
   stackable: boolean
   applyToContract: boolean
@@ -78,7 +78,7 @@ export type CompiledPromotion = {
   requires: readonly string[]
 }
 
-/** Yüzde (baz puan) indirimi, yarım yukarı; `bigint` ara çarpım. */
+/** Percentage (basis point) discount, half-up; `bigint` intermediate product. */
 export function percentOf(amount: number, bp: number): number {
   return Number((2n * BigInt(amount) * BigInt(bp) + 10_000n) / 20_000n)
 }

@@ -3,14 +3,14 @@ import type { TaxConfig } from "../types"
 export type TaxSnapshot = TaxConfig & { version: number }
 
 export type TaxRegistry = {
-  /** Bellekteki tablo; `checkEveryMs` dolduysa sürümü okur, değiştiyse yeniden yükler. */
+  /** In-memory table; reads the version once `checkEveryMs` has elapsed and reloads if it changed. */
   get(now: number): Promise<TaxSnapshot>
 }
 
 /**
- * Vergi tablosu bellekte (09-vergi §1), kanal kayıt defteriyle aynı kalıp: `load` tek tur
- * (`loadTaxConfig`), `version` ucuz nokta okuma (ör. `settings.version`). Saat dışarıdan.
- * Varsayılan `checkEveryMs = 0`: her çağrıda sürüm okunur, değiştiyse yeniden yüklenir.
+ * Tax table in memory (09-vergi §1), same pattern as the channel registry: `load` is one round trip
+ * (`loadTaxConfig`), `version` is a cheap point read (e.g. `settings.version`). Clock is injected.
+ * Default `checkEveryMs = 0`: the version is read on every call and reloaded if it changed.
  */
 export function createTaxRegistry(opts: {
   load: () => Promise<TaxConfig>
@@ -33,7 +33,7 @@ export function createTaxRegistry(opts: {
   return {
     get(now) {
       if (snapshot && now - checkedAt < checkEveryMs) return Promise.resolve(snapshot)
-      // eşzamanlı istekler aynı yenilemeyi bekler
+      // concurrent requests wait for the same refresh
       pending ??= refresh(now).finally(() => {
         pending = undefined
       })

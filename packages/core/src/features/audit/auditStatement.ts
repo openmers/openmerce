@@ -4,7 +4,7 @@ import { type AtomicStatement, type Db, guardedInsertStatement } from "../../pla
 import { newAuditPublicId } from "./publicId"
 import type { AuditEntry } from "./types"
 
-/** Denetim satırının değerleri; `auditStatement` ve koşullu yazım aynı eşlemeyi kullanır. */
+/** Values of the audit row; `auditStatement` and the conditional write use the same mapping. */
 export function auditValues(entry: AuditEntry, now: number): typeof auditLog.$inferInsert {
   return {
     publicId: entry.publicId ?? newAuditPublicId(),
@@ -24,13 +24,13 @@ export function auditValues(entry: AuditEntry, now: number): typeof auditLog.$in
 }
 
 /**
- * Başka bir `atomic()`'e eklenecek `INSERT audit_log` ifadesi; kendi başına yazmaz.
- * Değişiklik yazıldıysa denetim satırı da vardır (06-güvenlik "Denetim kaydı").
+ * An `INSERT audit_log` statement to be added to another `atomic()`; it does not write on its own.
+ * If a change was written, there is an audit row too (06-guvenlik-ve-yetki "Audit log").
  *
- * `when` verilirse yazım koşulludur: koşul tutmayan (ör. `version` çakışması) güncellemenin denetim
- * satırı da yazılmaz. `prev_hash`/`row_hash` burada yazılmaz: katalog 01 `audit_log` zinciri
- * **mühürleme işiyle** kurulur (tek tüketici, `seq` sırası), çünkü D1'de eşzamanlı yazma sırası
- * garanti değildir.
+ * If `when` is given the write is conditional: an update whose condition fails (e.g. a `version` conflict)
+ * writes no audit row either. `prev_hash`/`row_hash` are not written here: the catalog 01 `audit_log` chain
+ * is built **by the sealing job** (single consumer, `seq` order), because concurrent write order
+ * is not guaranteed on D1.
  */
 export function auditStatement(
   db: Db,

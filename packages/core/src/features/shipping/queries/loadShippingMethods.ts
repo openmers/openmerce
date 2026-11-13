@@ -3,7 +3,7 @@ import type { Platform } from "../../../platform"
 import { mapRow } from "../../channels/queries/loadChannels"
 import type { ShippingMethod } from "../types"
 
-/** Kargo yöntemleri + kanal bağlantıları, `batch` ile tek tur (bellekte tutulur). */
+/** Shipping methods + channel links, in one round trip via `batch` (kept in memory). */
 export async function loadShippingMethods(
   p: Pick<Platform, "db" | "batch">,
 ): Promise<ShippingMethod[]> {

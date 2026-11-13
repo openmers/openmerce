@@ -1,8 +1,8 @@
 import { z } from "zod"
 import { adminProcedure } from "../shared/adminProcedure"
 
-// Admin stok yüzeyi (yol haritası 17): depo listesi/oluşturma, varyant stoku okuma/düzeltme.
-// Rezervasyon checkout'un `atomic()`'indedir; burada uç yok.
+// Admin stock surface (roadmap 17): warehouse list/create, reading/adjusting variant stock.
+// Reservation lives in checkout's `atomic()`; there is no endpoint here.
 
 const publicIdSchema = z.string().min(1).max(64)
 const text = z.string().trim().max(200).nullish()
@@ -21,7 +21,7 @@ export const adminStockLocationsList = adminProcedure("stock:read")
   .input(z.object({}))
   .output(z.array(locationSchema))
 
-/** Depo oluşturur; `channelPriority` verilirse `ctx.channel`'a da bağlar. */
+/** Creates a warehouse; if `channelPriority` is given, also links it to `ctx.channel`. */
 export const adminStockLocationsCreate = adminProcedure("stock:write")
   .input(
     z.object({
@@ -58,7 +58,7 @@ export const adminStockLevelsGet = adminProcedure("stock:read")
     ),
   )
 
-/** Elle düzeltme: işaretli fark; sonuç negatifse 400. */
+/** Manual adjustment: signed delta; 400 if the result is negative. */
 export const adminStockLevelsAdjust = adminProcedure("stock:write")
   .input(
     z.object({

@@ -2,12 +2,12 @@ import { createPriceList, deletePriceList, listPriceLists, updatePriceList } fro
 import { base } from "../../orpc/base"
 import { rethrowCommerce } from "../errors"
 
-/** `admin.priceLists.list`: `ctx.channel`'ın listeleri. */
+/** `admin.priceLists.list`: lists of `ctx.channel`. */
 const listPriceListsRoute = base.admin.priceLists.list.handler(({ context }) =>
   listPriceLists(context.ctx),
 )
 
-/** `admin.priceLists.create`: kanal × para birimi başına tek `base` (409). */
+/** `admin.priceLists.create`: one `base` per channel × currency (409). */
 const createPriceListRoute = base.admin.priceLists.create.handler(async ({ input, context }) => {
   try {
     return { ok: true as const, ...(await createPriceList(context.ctx, input)) }
@@ -24,7 +24,7 @@ const updatePriceListRoute = base.admin.priceLists.update.handler(async ({ input
   }
 })
 
-/** `admin.priceLists.delete`: `base` liste 409. */
+/** `admin.priceLists.delete`: a `base` list returns 409. */
 const deletePriceListRoute = base.admin.priceLists.delete.handler(async ({ input, context }) => {
   try {
     return { ok: true as const, ...(await deletePriceList(context.ctx, input)) }
@@ -33,7 +33,7 @@ const deletePriceListRoute = base.admin.priceLists.delete.handler(async ({ input
   }
 })
 
-/** Admin fiyat listesi router'ı: sözleşmeyle aynı biçim (`contract.admin.priceLists`). */
+/** Admin price list router: same shape as the contract (`contract.admin.priceLists`). */
 export const priceListsRouter = {
   list: listPriceListsRoute,
   create: createPriceListRoute,

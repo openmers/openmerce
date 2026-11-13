@@ -2,17 +2,17 @@ import type { outboxKinds } from "@openmers/db"
 
 export type OutboxKind = (typeof outboxKinds)[number]
 
-/** 00-genel karar 8 ve katalog 01 `settings` maddesi; değerler `settings` ile değiştirilebilir. */
+/** 00-genel decision 8 and the catalog 01 `settings` item; values can be changed via `settings`. */
 export type OutboxLimits = {
-  /** Bu sayıya ulaşan deneme satırı `dead` olur (varsayılan 10). */
+  /** An attempted row reaching this count becomes `dead` (default 10). */
   maxAttempts: number
-  /** İlk hatanın taban beklemesi (varsayılan 30 sn). */
+  /** Base wait after the first error (default 30 s). */
   baseBackoffMs: number
-  /** Üstel geri çekilmenin üst sınırı (varsayılan 1 sa). */
+  /** Upper bound of the exponential backoff (default 1 h). */
   maxBackoffMs: number
-  /** Bu süreden uzun `sending` satır geri alınır (varsayılan 5 dk). */
+  /** A `sending` row older than this is requeued (default 5 min). */
   claimTimeoutMs: number
-  /** `sent` satırın yaşı (varsayılan 7 gün). */
+  /** Age of a `sent` row (default 7 days). */
   sentRetentionMs: number
 }
 
@@ -24,7 +24,7 @@ export const OUTBOX_LIMITS: OutboxLimits = {
   sentRetentionMs: 604_800_000,
 }
 
-// Katalog 01 `outbox` "priority" kararı: küçük önce.
+// Catalog 01 `outbox` "priority" decision: lower first.
 const PRIORITY: Record<OutboxKind, number> = {
   notify: 0,
   webhook: 0,
@@ -41,7 +41,7 @@ export function priorityFor(kind: OutboxKind): number {
   return PRIORITY[kind]
 }
 
-/** Komutun `atomic()`'ine eklenecek iş/olay satırı; `publicId` verilmezse `evt_` üretilir (ids, madde 6.6). */
+/** Job/event row to be added to the command's `atomic()`; `evt_` is generated if `publicId` is not given (ids, item 6.6). */
 export type OutboxJobInput = {
   publicId?: string
   kind: OutboxKind
@@ -49,9 +49,9 @@ export type OutboxJobInput = {
   event?: string
   appInstallationId?: number
   priority?: number
-  /** `reindex` birleştirmesi; doluysa bekleyen aynı anahtar yeni satır üretmez. */
+  /** `reindex` merging; if set, a pending row with the same key does not produce a new row. */
   dedupeKey?: string
   requestId?: string
-  /** Varsayılan `now`; ileri tarihli iş için. */
+  /** Defaults to `now`; for jobs scheduled in the future. */
   availableAt?: number
 }

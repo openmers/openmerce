@@ -9,8 +9,8 @@ import { assertNoFullScan, describeOnTargets } from "@openmers/test-utils"
 import { expect, it } from "vitest"
 import { count, level, seedStock } from "./helpers"
 
-describeOnTargets("stok seviyeleri", (getDb) => {
-  it("düzeltme seviyeyi ve hareketi aynı atomic()'te yazar; satır yoksa açılır", async () => {
+describeOnTargets("stock levels", (getDb) => {
+  it("an adjustment writes the level and the movement in the same atomic(); opens the row if missing", async () => {
     const s = await seedStock(getDb())
     const input = { variantPublicId: s.variants.a, locationPublicId: s.location }
     await adjustStock(s.ctx, { ...input, delta: 10 })
@@ -28,7 +28,7 @@ describeOnTargets("stok seviyeleri", (getDb) => {
     ).toBe(2)
   })
 
-  it("negatif sonuç reddedilir: seviye, hareket ve denetim yazılmaz", async () => {
+  it("a negative result is rejected: no level, movement or audit is written", async () => {
     const s = await seedStock(getDb())
     const input = { variantPublicId: s.variants.a, locationPublicId: s.location }
     await adjustStock(s.ctx, { ...input, delta: 2 })
@@ -43,7 +43,7 @@ describeOnTargets("stok seviyeleri", (getDb) => {
     })
   })
 
-  it("olmayan varyant/depo NOT_FOUND; paket varyantına yazılamaz", async () => {
+  it("unknown variant/warehouse NOT_FOUND; cannot write to a bundle variant", async () => {
     const s = await seedStock(getDb())
     await expect(
       adjustStock(s.ctx, { variantPublicId: "var_yok", locationPublicId: s.location, delta: 1 }),
@@ -61,7 +61,7 @@ describeOnTargets("stok seviyeleri", (getDb) => {
     expect(count(getDb(), "stock_movements")).toBe(0)
   })
 
-  it("setStock mutlak yazar, units = yeni − eski; sürüm uymazsa CONFLICT", async () => {
+  it("setStock writes an absolute value, units = new − old; CONFLICT on version mismatch", async () => {
     const s = await seedStock(getDb())
     const input = { variantPublicId: s.variants.a, locationPublicId: s.location }
     expect(await setStock(s.ctx, { ...input, onHand: 20, safety: 2 })).toEqual({ version: null })
@@ -74,7 +74,7 @@ describeOnTargets("stok seviyeleri", (getDb) => {
     expect(units).toEqual([20, -5])
   })
 
-  it("reindex yalnız kova değişince üretilir", async () => {
+  it("reindex is produced only when the bucket changes", async () => {
     const s = await seedStock(getDb())
     getDb().prepare("DELETE FROM outbox").run()
     const input = { variantPublicId: s.variants.a, locationPublicId: s.location }
@@ -95,7 +95,7 @@ describeOnTargets("stok seviyeleri", (getDb) => {
     expect(reindex()).toBe(1)
   })
 
-  it("stok okuması PK'den yürür; depo listesi kanal önceliğini taşır", async () => {
+  it("stock read walks the PK; the warehouse list carries channel priority", async () => {
     const s = await seedStock(getDb())
     await adjustStock(s.ctx, {
       variantPublicId: s.variants.a,

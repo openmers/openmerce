@@ -2,7 +2,7 @@ import type { auditLog } from "@openmers/db"
 
 export type AuditRow = typeof auditLog.$inferSelect
 
-/** Kanonik JSON: nesne anahtarları sıralı, dizi sırası korunur, `undefined` alan yok sayılır. */
+/** Canonical JSON: object keys sorted, array order kept, `undefined` fields ignored. */
 export function canonicalJson(value: unknown): string {
   if (value === undefined) return "null"
   if (value === null || typeof value !== "object") return JSON.stringify(value)
@@ -14,7 +14,7 @@ export function canonicalJson(value: unknown): string {
   return `{${entries.join(",")}}`
 }
 
-// Zincire giren alanlar ve sırası; mühürleme işi (features/audit seal) aynı sırayı kullanır.
+// Fields in the chain and their order; the sealing job (features/audit seal) uses the same order.
 const CHAIN_FIELDS = [
   "seq",
   "publicId",
@@ -32,7 +32,7 @@ const CHAIN_FIELDS = [
   "createdAt",
 ] as const
 
-/** `SHA-256(prev_hash ‖ kanonik(satır))` girdisi; `prev_hash` yoksa boş dize (zincir başı). */
+/** Input of `SHA-256(prev_hash ‖ canonical(row))`; empty string if there is no `prev_hash` (chain head). */
 export function canonicalAuditRow(row: AuditRow): string {
   const picked: Record<string, unknown> = {}
   for (const field of CHAIN_FIELDS) picked[field] = row[field]
@@ -44,9 +44,9 @@ function toHex(buffer: ArrayBuffer): string {
 }
 
 /**
- * Zincir özeti: önceki satırın özeti + bu satır, Web Crypto SHA-256 (yalnız Web Crypto).
- * Katalog tasarımı gereği yazma anında değil mühürleme işinde çağrılır; eşzamanlı yazmalar bu
- * yüzden zinciri bozamaz (mühür tek tüketici, `seq` sırası). Mühür işi kapsam dışı.
+ * Chain hash: the previous row's hash + this row, Web Crypto SHA-256 (Web Crypto only).
+ * By catalog design it is called in the sealing job, not at write time; so concurrent writes
+ * cannot break the chain (the seal has a single consumer, `seq` order). The sealing job is out of scope.
  */
 export async function auditRowHash(prevHash: string | null, row: AuditRow): Promise<string> {
   const input = `${prevHash ?? ""}${canonicalAuditRow(row)}`

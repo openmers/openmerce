@@ -30,11 +30,11 @@ import {
 import { auditActorOf, type CatalogCtx, type CreateProductInput } from "./types"
 
 /**
- * Yeni ürün: tek `atomic()` içinde ürün + çeviriler + seçenekler + seçenek değerleri + varyantlar +
- * `variant_option_values` + kanal atamaları + denetim + `reindex` işi (02-katalog §1, §3). Fiyat ve
- * stok yazılmaz: varyant fiyatsız/stoksuz doğar (madde 16/17).
+ * New product: in one `atomic()`, product + translations + options + option values + variants +
+ * `variant_option_values` + channel assignments + audit + `reindex` job (02-katalog §1, §3). Price and
+ * stock are not written: the variant is born without price/stock (items 16/17).
  *
- * Yeni satırların `id`'si alt sorguyla çözülür (`public_id`/kod); interaktif transaction yok.
+ * New rows' `id`s are resolved via subqueries (`public_id`/code); no interactive transaction.
  */
 export async function createProduct(
   ctx: CatalogCtx,

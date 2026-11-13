@@ -2,9 +2,9 @@ import { adminRouter } from "./admin"
 import { getHealth } from "./shop/health/get"
 
 /**
- * Uygulanan router: sözleşmeyle aynı biçimde. `createRouterClient(router, { context })` storefront
- * SSR'da aynı süreçte HTTP'ye çıkmadan çağırır (`02-api-ve-istek-baglami` §11); istemci fabrikası
- * bu maddenin kapsamı dışındadır.
+ * The implemented router: same shape as the contract. `createRouterClient(router, { context })` lets the
+ * storefront SSR call it in-process without going over HTTP (`02-api-ve-istek-baglami` §11); the client
+ * factory is out of scope for this item.
  */
 export const router = {
   shop: { health: getHealth },

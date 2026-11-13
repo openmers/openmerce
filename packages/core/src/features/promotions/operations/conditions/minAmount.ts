@@ -1,7 +1,7 @@
 import { z } from "zod"
 import type { ConditionDef } from "../../types"
 
-/** Promosyona açık satırların toplamı en az `amount` (küçük birim). */
+/** The total of promotion-eligible lines is at least `amount` (minor units). */
 export const minAmount: ConditionDef<{ amount: number }> = {
   code: "minAmount",
   args: z.object({ amount: z.number().int().min(0) }),

@@ -3,37 +3,37 @@ import { type AtomicStatement, sqlStatement } from "../../../platform"
 import { StockError, type StockLine, type StockRef } from "../types"
 
 /**
- * Stok işlemi ifadeleri (04-stok §2). Başka bir `atomic()`'e eklenir (checkout rezervasyonu,
- * gönderim); kendi başına yazmaz.
+ * Stock operation statements (04-stok §2). Added to another `atomic()` (checkout reservation,
+ * shipment); they do not write on their own.
  *
- * **Ya hep ya hiç, hata vermeden.** Her işlem iki ifadedir: tek `UPDATE stock_levels` ve tek
- * `INSERT stock_movements ... SELECT ... WHERE G`. `G` bütün kalemlerin koşulunu tek `NOT EXISTS`
- * alt sorgusunda toplar ve dış satıra bağlı değildir: ifade başına, satırlar değişmeden önce bir
- * kez değerlendirilir. Bir kalem bile tutmazsa iki ifade de 0 satır döner, tutarsa ikisi de
- * (toplanmış) kalem sayısı kadar. Kalemler ayrı `UPDATE`'lere bölünseydi ilk kalemin yazımı
- * sonrakilerin koşulunu değiştirirdi; bu yüzden tek ifadedir.
+ * **All or nothing, without throwing.** Each operation is two statements: a single `UPDATE stock_levels` and a single
+ * `INSERT stock_movements ... SELECT ... WHERE G`. `G` combines the condition of all lines in a single `NOT EXISTS`
+ * subquery and is not tied to the outer row: it is evaluated once per statement, before any rows
+ * change. If even one line fails, both statements return 0 rows; if all hold, both return the
+ * (summed) line count. If lines were split into separate `UPDATE`s, the first line's write would
+ * change the condition of the next ones; hence a single statement.
  *
- * İki ifade aynı `G`'yi görmeli: ilk ifade `G`'nin okuduğu tabloya dokunmaz. `reserve`'de `G`
- * yalnız `stock_levels`'ı okur (satılabilir) → önce hareket, sonra `UPDATE`. `release`/`commit`'te
- * `G` yalnız `stock_movements`'ı okur (referansın ayırması var, bırakma/düşüm yok: çifte bırakma
- * imkânsız) → önce `UPDATE`, sonra hareket. Bunlarda `reserved`/`on_hand` eksiye düşerse (tutarsız
- * veri) `stock_levels_counts_ck` hata verir ve batch'in tamamı geri alınır.
- * Çağıran son ifadenin sayısına bakar; kendi satırlarını `stockOpGuard` ile, bu ifadelerden
- * **önce** aynı koşula bağlar.
+ * Both statements must see the same `G`: the first statement does not touch the table `G` reads. In `reserve`, `G`
+ * only reads `stock_levels` (sellable) → movement first, then `UPDATE`. In `release`/`commit`,
+ * `G` only reads `stock_movements` (the reference has a reservation, no release/commit: double release
+ * is impossible) → `UPDATE` first, then movement. In these, if `reserved`/`on_hand` goes negative (inconsistent
+ * data) `stock_levels_counts_ck` fails and the whole batch is rolled back.
+ * The caller checks the count of the last statement; it binds its own rows with `stockOpGuard`, **before**
+ * these statements, to the same condition.
  *
- * Kimlik ve adetler doğrulanmış güvenli tamsayıdır ve SQL'e **sabit** olarak gömülür: D1'in
- * ifade başına bağlı parametre sınırı (100) kalem sayısını kısıtlamasın diye (enjeksiyon yok,
- * yalnız `Number.isSafeInteger` geçen değerler).
+ * Ids and quantities are validated safe integers and are embedded in SQL as **literals**: so that D1's
+ * per-statement bound parameter limit (100) does not cap the line count (no injection,
+ * only values passing `Number.isSafeInteger`).
  */
 export type StockOp = "reserve" | "release" | "commit"
 
 type OpSpec = { kind: string; sign: 1 | -1; set: string; ref: boolean }
 
 const OPS: Record<StockOp, OpSpec> = {
-  // Satılabilir (`on_hand − reserved − safety`) yetiyorsa ayır.
+  // Reserve if sellable (`on_hand − reserved − safety`) suffices.
   reserve: { kind: "reservation", sign: 1, set: `"reserved" = "reserved" + {n}`, ref: false },
   release: { kind: "release", sign: -1, set: `"reserved" = "reserved" - {n}`, ref: true },
-  // Ayrılanı eldekiden düş (gönderim).
+  // Subtract the reserved amount from on-hand (shipment).
   commit: {
     kind: "sale",
     sign: -1,
@@ -42,7 +42,7 @@ const OPS: Record<StockOp, OpSpec> = {
   },
 }
 
-/** Aynı (varyant, depo) kalemleri toplanır; tek satıra iki koşul yazılmaz. */
+/** Lines for the same (variant, warehouse) are summed; two conditions are not written for one row. */
 function aggregate(lines: readonly StockLine[]): StockLine[] {
   if (lines.length === 0) throw new StockError("INVALID_INPUT", "kalem yok")
   const byKey = new Map<string, StockLine>()
@@ -72,7 +72,7 @@ function refMovement(ref: StockRef, kinds: string): SQL {
       AND m."variant_id" = req.variant_id AND m."location_id" = req.location_id)`
 }
 
-/** Bütün kalemler tutuyor mu; dış satıra bağlı değil (bir kez değerlendirilir). */
+/** Whether all lines hold; not tied to the outer row (evaluated once). */
 function allHold(op: StockOp, lines: readonly StockLine[], ref: StockRef): SQL {
   const holds = OPS[op].ref
     ? sql`${refMovement(ref, "'reservation'")} AND NOT ${refMovement(ref, "'release', 'sale'")}`
@@ -88,7 +88,7 @@ function assertRef(ref: StockRef): void {
   }
 }
 
-/** Çağıranın kendi koşullu satırları için aynı "tüm kalemler tutuyor" koşulu. */
+/** The same "all lines hold" condition for the caller's own conditional rows. */
 export function stockOpGuard(op: StockOp, lines: readonly StockLine[], ref: StockRef): SQL {
   assertRef(ref)
   return allHold(op, aggregate(lines), ref)

@@ -54,7 +54,7 @@ const de = channel({
 const snapshot = { channels: [main, de], byDomain: indexDomains([main, de]), version: 1 }
 
 describe("resolveRequestChannel", () => {
-  it("Host ile kanalı ve alan adı dilini çözer", () => {
+  it("resolves the channel and domain language from Host", () => {
     expect(resolveRequestChannel({ snapshot, host: "SHOP.com:443" })).toEqual({
       kind: "serve",
       channel: main,
@@ -67,7 +67,7 @@ describe("resolveRequestChannel", () => {
     })
   })
 
-  it("bilinmeyen alan adı UNKNOWN_DOMAIN (varsayılana düşmez)", () => {
+  it("unknown domain UNKNOWN_DOMAIN (no fallback to default)", () => {
     expect(() => resolveRequestChannel({ snapshot, host: "evil.com" })).toThrow(
       expect.objectContaining({ code: "UNKNOWN_DOMAIN" }),
     )
@@ -76,7 +76,7 @@ describe("resolveRequestChannel", () => {
     )
   })
 
-  it("x-openmers-channel Host'tan önce gelir; code veya public_id kabul eder", () => {
+  it("x-openmers-channel takes precedence over Host; accepts code or public_id", () => {
     expect(
       resolveRequestChannel({ snapshot, host: "shop.com", channelHeader: "DE" }),
     ).toMatchObject({ kind: "serve", channel: de, lang: "en" })
@@ -85,7 +85,7 @@ describe("resolveRequestChannel", () => {
     ).toMatchObject({ kind: "serve", channel: de })
   })
 
-  it("başlık kanalı alan adı yönlendirmesini tetiklemez", () => {
+  it("a header channel does not trigger a domain redirect", () => {
     const redirecting = channel({
       domains: [
         domain("shop.com", { isPrimary: true, secondaryMode: null }),
@@ -107,13 +107,13 @@ describe("resolveRequestChannel", () => {
     ).toMatchObject({ kind: "serve", channel: redirecting })
   })
 
-  it("bilinmeyen başlık INVALID_CHANNEL", () => {
+  it("unknown header INVALID_CHANNEL", () => {
     expect(() =>
       resolveRequestChannel({ snapshot, host: "shop.com", channelHeader: "yok" }),
     ).toThrow(expect.objectContaining({ code: "INVALID_CHANNEL" }))
   })
 
-  it("boş başlık Host'a düşer", () => {
+  it("an empty header falls back to Host", () => {
     expect(
       resolveRequestChannel({ snapshot, host: "shop.com", channelHeader: "   " }),
     ).toMatchObject({ kind: "serve", channel: main })
@@ -121,7 +121,7 @@ describe("resolveRequestChannel", () => {
 })
 
 describe("channelFromHeader", () => {
-  it("boş anahtar undefined", () => {
+  it("an empty key is undefined", () => {
     expect(channelFromHeader(snapshot, null)).toBeUndefined()
     expect(channelFromHeader(snapshot, "  ")).toBeUndefined()
   })

@@ -1,12 +1,12 @@
 import type { Channel } from "../features/channels"
 import type { Platform } from "../platform"
 
-/** İstek yüzeyi: Shop (vitrin/mobil) veya Admin (panel/uygulama/betik). */
+/** Request surface: Shop (storefront/mobile) or Admin (panel/app/script). */
 export type ApiSurface = "shop" | "admin"
 
 export type ActorType = "anonymous" | "customer" | "admin" | "app" | "apiKey"
 
-/** Aktör: iç kimlik (varsa) ve izin kümesi; izin modeli `06-guvenlik-ve-yetki`. */
+/** Actor: internal id (if any) and permission set; permission model in `06-guvenlik-ve-yetki`. */
 export type CtxActor = {
   type: ActorType
   id?: number
@@ -20,8 +20,8 @@ export type CtxCompanyRole = "admin" | "buyer" | "approver"
 export type CtxCompany = { id: number; role: CtxCompanyRole }
 
 /**
- * Her `core` fonksiyonunun ilk parametresi; istek başına bir kez kurulur
- * (`02-api-ve-istek-baglami` §2). `channel` bellektedir, `segment` önbellek anahtarıdır.
+ * The first parameter of every `core` function; built once per request
+ * (`02-api-ve-istek-baglami` §2). `channel` is in memory, `segment` is the cache key.
  */
 export interface Ctx {
   platform: Platform
@@ -31,16 +31,16 @@ export interface Ctx {
   currency: string
   customer?: CtxCustomer
   company?: CtxCompany
-  /** Öncelik sırasıyla; segment anahtarı bu sıradan bağımsızdır. */
+  /** In priority order; the segment key does not depend on this order. */
   priceListIds: number[]
-  /** Önbellek anahtarı: kanal + dil + para birimi + fiyat listesi kümesi. */
+  /** Cache key: channel + language + currency + price list set. */
   segment: string
   actor: CtxActor
   now: number
   requestId: string
 }
 
-/** Oturum yokken (anonim B2C) aktör: izin yok, kimlik yok. */
+/** Actor without a session (anonymous B2C): no permissions, no id. */
 export const ANONYMOUS_ACTOR: CtxActor = Object.freeze({
   type: "anonymous",
   permissions: new Set<string>(),

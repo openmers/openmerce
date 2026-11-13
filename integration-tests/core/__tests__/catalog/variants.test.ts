@@ -24,7 +24,7 @@ const twoVariantProduct = (): CreateProductInput => ({
   ],
 })
 
-describeOnTargets("catalog varyant yazımı", (getDb) => {
+describeOnTargets("catalog variant writes", (getDb) => {
   const prepare = async () => {
     const p = sqlitePlatform(getDb())
     const channel = await seedChannel(p)
@@ -32,7 +32,7 @@ describeOnTargets("catalog varyant yazımı", (getDb) => {
     return { p, channel, ctx: catalogCtx(p, channel) }
   }
 
-  it("addVariant varyantı, kanal atamasını, denetim ve reindex işini yazar", async () => {
+  it("addVariant writes the variant, channel assignment, audit and reindex job", async () => {
     const { ctx } = await prepare()
     const product = await createProduct(ctx, twoVariantProduct())
     const added = await addVariant(ctx, {
@@ -50,10 +50,10 @@ describeOnTargets("catalog varyant yazımı", (getDb) => {
         added.publicId,
       ),
     ).toBe(1)
-    expect(count(getDb(), "outbox")).toBe(1) // bekleyen reindex tekilleşir
+    expect(count(getDb(), "outbox")).toBe(1) // the pending reindex is deduplicated
   })
 
-  it("olmayan ürüne varyant eklenemez: NOT_FOUND, hiçbir satır yazılmaz", async () => {
+  it("cannot add a variant to a missing product: NOT_FOUND, no rows written", async () => {
     const { ctx } = await prepare()
     await expect(
       addVariant(ctx, {
@@ -66,7 +66,7 @@ describeOnTargets("catalog varyant yazımı", (getDb) => {
     expect(count(getDb(), "outbox")).toBe(0)
   })
 
-  it("varyanta seçenek değeri eklenir; bilinmeyen seçenek INVALID_INPUT", async () => {
+  it("an option value is added to the variant; unknown option INVALID_INPUT", async () => {
     const { ctx } = await prepare()
     const product = await createProduct(ctx, productWithFourVariants())
     const added = await addVariant(ctx, {
@@ -93,7 +93,7 @@ describeOnTargets("catalog varyant yazımı", (getDb) => {
     ).rejects.toMatchObject({ code: "INVALID_INPUT" })
   })
 
-  it("updateVariant sürümü artırır, SKU değişir; eski sürüm CONFLICT ve denetim yazmaz", async () => {
+  it("updateVariant bumps the version, SKU changes; stale version CONFLICT and no audit", async () => {
     const { ctx } = await prepare()
     const product = await createProduct(ctx, twoVariantProduct())
     const variant = (await getProduct(ctx, product.publicId))?.variants[0]
@@ -122,7 +122,7 @@ describeOnTargets("catalog varyant yazımı", (getDb) => {
     expect((await getProduct(ctx, product.publicId))?.variants[0]?.sku).toBe("K-1-YENI")
   })
 
-  it("son varyant silinemez; ilki silinince SKU yeniden kullanılabilir", async () => {
+  it("the last variant cannot be deleted; after deleting the first, its SKU can be reused", async () => {
     const { ctx } = await prepare()
     const product = await createProduct(ctx, twoVariantProduct())
     const variants = (await getProduct(ctx, product.publicId))?.variants ?? []
@@ -147,7 +147,7 @@ describeOnTargets("catalog varyant yazımı", (getDb) => {
     ).rejects.toMatchObject({ code: "INVALID_INPUT" })
     expect((await getProduct(ctx, product.publicId))?.variants).toHaveLength(1)
 
-    // Silinen varyantın SKU'su kısmi benzersiz indeks sayesinde yeniden kullanılabilir.
+    // A deleted variant's SKU can be reused thanks to the partial unique index.
     await addVariant(ctx, {
       productPublicId: product.publicId,
       variant: { sku: first.sku, taxCategoryCode: "standard" },
@@ -155,7 +155,7 @@ describeOnTargets("catalog varyant yazımı", (getDb) => {
     expect((await getProduct(ctx, product.publicId))?.variants).toHaveLength(2)
   })
 
-  it("silmede eski sürüm CONFLICT, olmayan varyant NOT_FOUND", async () => {
+  it("delete with a stale version CONFLICT, unknown variant NOT_FOUND", async () => {
     const { ctx } = await prepare()
     const product = await createProduct(ctx, twoVariantProduct())
     const first = (await getProduct(ctx, product.publicId))?.variants[0]

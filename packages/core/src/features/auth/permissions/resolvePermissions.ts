@@ -1,17 +1,17 @@
 import { allPermissions, SUPER_ADMIN_ROLE } from "./registry"
 
-/** `admin_role_assignments` + `roles.code` + `role_permissions` birleşiminin bir satırı. */
+/** One row of the `admin_role_assignments` + `roles.code` + `role_permissions` join. */
 export type RoleAssignment = {
   roleCode: string
-  /** `null` = tüm kanallar, sonradan açılanlar dahil. */
+  /** `null` = all channels, including ones opened later. */
   channelId: number | null
   permissions: readonly string[]
 }
 
 /**
- * Saf: yöneticinin `channelId` kanalındaki izinleri. Roller kanal başına atanır; `null` kanallı
- * atama her kanalda geçerlidir. `SuperAdmin` kayıtlı bütün izinleri alır (satırı yazılmaz).
- * Sözlükte olmayan izin (eski/kaldırılmış app) yok sayılır.
+ * Pure: the admin's permissions in channel `channelId`. Roles are assigned per channel; an assignment
+ * with a `null` channel applies to every channel. `SuperAdmin` gets all registered permissions (no rows written).
+ * A permission not in the dictionary (old/removed app) is ignored.
  */
 export function resolvePermissions(
   assignments: readonly RoleAssignment[],

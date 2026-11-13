@@ -2,21 +2,21 @@ import { type SQL, sql } from "drizzle-orm"
 import { type AtomicStatement, sqlStatement } from "../../../platform"
 
 export type UsageInput = {
-  /** `applyPromotions` sonuçları; yalnız `effective` olanlar sayaç tüketir. */
+  /** `applyPromotions` results; only `effective` ones consume the counter. */
   results: readonly { promotionId: number; effective: boolean }[]
-  /** Aynı `atomic()`'te yazılan rezervasyon: kimlik ya da kimliği veren alt sorgu. */
+  /** The reservation written in the same `atomic()`: its id or a subquery yielding the id. */
   reservationId: number | SQL
-  /** Bilinmiyorsa müşteri başına sınır uygulanmaz. */
+  /** If unknown, the per-customer limit is not applied. */
   customerId: number | null
   now: number
 }
 
 export type UsageStatements = {
-  /** `[INSERT promotion_usage, UPDATE promotions]`; etkili promosyon yoksa boş. */
+  /** `[INSERT promotion_usage, UPDATE promotions]`; empty if there is no effective promotion. */
   statements: AtomicStatement[]
-  /** İlk ifadenin tutması gereken satır sayısı (etkili promosyon sayısı). */
+  /** Number of rows the first statement must hit (the number of effective promotions). */
   expected: number
-  /** Çağıranın kendi koşullu satırları için aynı "bütün sınırlar tutuyor" koşulu. */
+  /** The same "all limits hold" condition for the caller's own conditional rows. */
   guard: SQL
 }
 
@@ -25,18 +25,18 @@ function assertId(value: number, what: string): void {
 }
 
 /**
- * Rezervasyon `atomic()`'i için kullanım ifadeleri (08-promosyon §3, 02-ticaret `promotion_usage`).
- * **Ya hep ya hiç, hata vermeden** (stok rezervasyonuyla aynı desen): `G` bütün etkili
- * promosyonların koşulunu (rezervasyon `active`, `usage_limit IS NULL OR used < usage_limit`,
- * müşteri başına sınır) tek, dış satıra bağlı olmayan alt sorguda toplar; `INSERT ... SELECT ...
- * WHERE G` bir kez değerlendirilir ve ya her promosyona birer satır ya hiç yazar. Ardından
- * `used + 1` yalnız bu rezervasyonun kullanım satırı olan promosyonlarda artar: ilk ifade 0 satır
- * yazdıysa ikinci de 0. Aynı rezervasyon için ikinci çağrı benzersiz `(promotion_id,
- * reservation_id)` indeksine takılır ve `atomic()`'in tamamı geri alınır (çifte sayım yok).
+ * Usage statements for the reservation `atomic()` (08-promosyon §3, 02-ticaret `promotion_usage`).
+ * **All or nothing, without throwing** (same pattern as stock reservation): `G` combines the condition of all
+ * effective promotions (reservation `active`, `usage_limit IS NULL OR used < usage_limit`,
+ * per-customer limit) into a single subquery not tied to the outer row; `INSERT ... SELECT ...
+ * WHERE G` is evaluated once and writes either one row per promotion or none. Then
+ * `used + 1` only increments on promotions that have a usage row for this reservation: if the first statement wrote 0 rows
+ * the second writes 0 too. A second call for the same reservation hits the unique `(promotion_id,
+ * reservation_id)` index and the whole `atomic()` is rolled back (no double counting).
  *
- * Müşteri başına sınır: `count(promotion_usage WHERE customer_id) < per_customer_limit`, aynı
- * `G` içinde (02-ticaret kararı). Sayılan satırlar açık rezervasyonlar + siparişe dönmüşlerdir;
- * bırakılan rezervasyonun satırı silindiği için sayılmaz.
+ * Per-customer limit: `count(promotion_usage WHERE customer_id) < per_customer_limit`, inside the same
+ * `G` (02-ticaret decision). Counted rows are open reservations + those turned into orders;
+ * a released reservation's row is deleted, so it is not counted.
  */
 export function buildUsageStatements(input: UsageInput): UsageStatements {
   const ids = [...new Set(input.results.filter((r) => r.effective).map((r) => r.promotionId))]
@@ -74,8 +74,8 @@ export function buildUsageStatements(input: UsageInput): UsageStatements {
 }
 
 /**
- * Bırakmada ters ifadeler: `used − 1` yalnız bu rezervasyonun (siparişe dönmemiş) kullanım satırı
- * olan promosyonlarda, sonra satırlar silinir. İkinci bırakma etkisizdir (satır kalmadı).
+ * Inverse statements on release: `used − 1` only on promotions with a usage row for this reservation (not
+ * turned into an order), then the rows are deleted. A second release has no effect (no rows left).
  */
 export function buildReleaseUsageStatements(reservationId: number | SQL): AtomicStatement[] {
   if (typeof reservationId === "number") assertId(reservationId, "rezervasyon kimliği")

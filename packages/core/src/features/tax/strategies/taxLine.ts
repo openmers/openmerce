@@ -4,17 +4,17 @@ export type TaxLineInput = {
   rates: readonly TaxRate[]
   zoneId: number | null
   taxCategoryId: number
-  /** Oturumun müşteri grupları (şirket de bir gruba konur). */
+  /** The session's customer groups (a company is also placed in a group). */
   customerGroupIds?: readonly number[]
 }
 
 export type TaxLineRate = { taxRateId: number; rateBp: number }
 
 /**
- * Varsayılan `taxLine` stratejisi (09-vergi §2.2, saf): bölge + kategori oranı. Müşterinin bir
- * grubuna özel oran varsa genel (`customer_group_id IS NULL`) oranın yerine geçer (muafiyet:
- * grup oranı 0). Birden çok grup oranı uyarsa en düşük oran, eşitlikte küçük `id`. Oran yoksa
- * boş dizi (vergisiz satır). Dizi döner: ters yükleme gibi stratejiler birden çok satır ekler.
+ * Default `taxLine` strategy (09-vergi §2.2, pure): zone + category rate. If one of the customer's
+ * groups has a specific rate, it replaces the general (`customer_group_id IS NULL`) rate (exemption:
+ * group rate 0). If several group rates match, the lowest wins, ties by smaller `id`. Without a rate
+ * an empty array (untaxed line). Returns an array: strategies like reverse charge add multiple lines.
  */
 export function taxLine(input: TaxLineInput): TaxLineRate[] {
   if (input.zoneId === null) return []

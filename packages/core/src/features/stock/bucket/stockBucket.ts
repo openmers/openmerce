@@ -1,14 +1,14 @@
-/** Vitrin kesin adet görmez; kova `catalog_index.stock_bucket`'ta durur (04-stok §5). */
+/** The storefront never sees exact quantities; the bucket lives in `catalog_index.stock_bucket` (04-stok §5). */
 export type StockBucket = "in_stock" | "low" | "out"
 
 export type BucketThresholds = {
-  /** Satılabilir bu sayıya eşit ya da küçükse (ve > 0) `low`. */
+  /** `low` if sellable is equal to or less than this number (and > 0). */
   low: number
 }
 
 export const DEFAULT_BUCKET_THRESHOLDS: BucketThresholds = { low: 5 }
 
-/** Satılabilir adet → kova (saf): `<= 0` → `out`, `<= low` → `low`, aksi `in_stock`. */
+/** Sellable quantity → bucket (pure): `<= 0` → `out`, `<= low` → `low`, otherwise `in_stock`. */
 export function stockBucket(
   available: number,
   thresholds: BucketThresholds = DEFAULT_BUCKET_THRESHOLDS,
@@ -18,7 +18,7 @@ export function stockBucket(
   return "in_stock"
 }
 
-/** Kova değişti mi; `reindex` yalnız o zaman üretilir (yoğun satışta önbellek çalkalanmaz). */
+/** Whether the bucket changed; `reindex` is only produced then (no cache churn under heavy sales). */
 export function bucketChanged(
   before: number,
   after: number,

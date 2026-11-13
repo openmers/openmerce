@@ -5,14 +5,14 @@ import type { AuditActorType } from "../types"
 
 export type ListAuditInput = {
   limit?: number
-  /** Önceki sayfanın son `seq` değeri; imleç (azalan sıra). */
+  /** The last `seq` value of the previous page; the cursor (descending order). */
   cursor?: number
   actorType?: AuditActorType
   actorId?: number
   entityType?: string
   entityPublicId?: string
   action?: string
-  /** `created_at` aralığı, epoch ms. */
+  /** `created_at` range, epoch ms. */
   from?: number
   to?: number
 }
@@ -33,7 +33,7 @@ export type AuditListItem = {
   rowHash: string | null
 }
 
-/** `audit:read` listesi: `seq` azalan, imleçli; `(seq)` PK taraması. */
+/** `audit:read` list: `seq` descending, cursor-paginated; `(seq)` PK scan. */
 export async function listAudit(
   db: Db,
   input: ListAuditInput = {},

@@ -100,6 +100,7 @@ describe("sqlite_master", () => {
       "0015_orders.sql",
       "0016_fulfillment.sql",
       "0017_commerce-links.sql",
+      "0018_read-model.sql",
     ])
   })
 })

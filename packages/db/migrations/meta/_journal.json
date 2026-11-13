@@ -127,6 +127,13 @@
       "when": 1794602693553,
       "tag": "0017_commerce-links",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "6",
+      "when": 1794609957833,
+      "tag": "0018_read-model",
+      "breakpoints": true
     }
   ]
 }

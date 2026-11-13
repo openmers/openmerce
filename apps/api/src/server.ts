@@ -1,5 +1,6 @@
 import { serve } from "@hono/node-server"
 import {
+  catalogIndexHandlers,
   createChannelRegistry,
   defineHandlers,
   getSettingsVersion,
@@ -19,10 +20,10 @@ const workerOnly = process.argv.includes("--worker")
 const sqlite = openNodeSqlite(env.OPENMERS_DB)
 const platform = createNodePlatform({ sqlite, kek: env.OPENMERS_KEK })
 
-// Real handlers arrive with their own features (out of scope); unregistered topics become `failed`.
+// Handlers arrive with their own features; unregistered topics become `failed`.
 const poller = createPoller({
   platform,
-  handlers: defineHandlers({}),
+  handlers: defineHandlers({ ...catalogIndexHandlers }),
   onError: (error) => console.error("iş turu hatası:", error),
 })
 poller.start()

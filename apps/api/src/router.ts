@@ -1,5 +1,6 @@
 import { adminRouter } from "./admin"
 import { accountRouter } from "./shop/account"
+import { catalogRouter } from "./shop/catalog"
 import { getHealth } from "./shop/health/get"
 
 /**
@@ -8,7 +9,7 @@ import { getHealth } from "./shop/health/get"
  * factory is out of scope for this item.
  */
 export const router = {
-  shop: { health: getHealth, account: accountRouter },
+  shop: { health: getHealth, account: accountRouter, catalog: catalogRouter },
   admin: adminRouter,
 }
 

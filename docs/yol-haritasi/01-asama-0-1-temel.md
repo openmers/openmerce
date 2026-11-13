@@ -272,18 +272,18 @@ Kısaltma: `core` = `packages/core/src`, `api` = `apps/api/src`. Her yeni dosya 
   - oRPC: `/api` OpenAPIHandler (önbelleklenecek GET'ler, Smart Coercion yalnız burada), `/rpc` RPCHandler (yalnız POST, GET kapalı); her prosedür `.output`; hatalar `.errors()` + `errorStatusMap`; `Ctx` ara katmanı yalnız kökte (`ctxLoaded`); SSR'de `createRouterClient`; Hono yalnız kabuk, `hc` kullanılmaz.
 - **Bağımlılık:** madde 5, 6, 7; oturum kısmı için madde 10.8 ve 12 (önce anonim yol yazılır).
 - **Yapılacaklar:**
-  1. `-` `core/ctx/types.ts`: `Ctx` arayüzü belgedeki gibi; `core/ctx/index.ts`.
-  2. `-` `core/ctx/segment.ts`: saf; `kanal + dil + para birimi + sıralı fiyat listesi kümesi` → kararlı anahtar.
-  3. `-` `core/ctx/resolveChannel.ts`: saf; ana bilgisayar adı veya `x-openmers-channel` → bellekteki kanal tablosu (kanal modelinin ayrıntısı madde 14).
-  4. `-` `core/ctx/buildCtx.ts`: kanal (bellek) + oturum (madde 10.8; çerez/bearer yoksa atlanır) + segment; `now` ve `requestId` dışarıdan enjekte edilir (testte sahtelenebilir).
-  5. `-` `packages/contract/src/shared/`: `errors.ts` (ortak hata kodları), `pagination.ts` (imleç girdisi, `{ items, nextCursor }`, `withTotal`), `bulk.ts` (`bulkInput(schema, max = 500)` + kayıt başına sonuç şeması).
+  1. `+` `core/ctx/types.ts`: `Ctx` arayüzü belgedeki gibi; `core/ctx/index.ts`.
+  2. `+` `core/ctx/segment.ts`: saf; `kanal + dil + para birimi + sıralı fiyat listesi kümesi` → kararlı anahtar.
+  3. `+` `core/ctx/resolveChannel.ts`: saf; ana bilgisayar adı veya `x-openmers-channel` → bellekteki kanal tablosu (kanal modelinin ayrıntısı madde 14).
+  4. `+` `core/ctx/buildCtx.ts`: kanal (bellek) + oturum (madde 10.8; çerez/bearer yoksa atlanır) + segment; `now` ve `requestId` dışarıdan enjekte edilir (testte sahtelenebilir).
+  5. `+` `packages/contract/src/shared/`: `errors.ts` (ortak hata kodları), `pagination.ts` (imleç girdisi, `{ items, nextCursor }`, `withTotal`), `bulk.ts` (`bulkInput(schema, max = 500)` + kayıt başına sonuç şeması).
   6. `-` `packages/contract/src/shop/index.ts`, `admin/index.ts`, `src/index.ts` (`contract = { shop, admin }`); kaynak başına bir dosya (`shop/<kaynak>.ts`); önbelleklenecek her uç `openapi({ method: "GET", path })`, düz ve sıralı sorgu parametresi.
   7. `-` `api/orpc/base.ts`: `implement(contract)`, kök `Ctx` ara katmanı (`ctxLoaded` bayrağı), `errorStatusMap`.
   8. `-` `api/app.ts`: Hono kabuğu; güvenlik başlıkları, kanal çözümleme, hız sınırı (madde 11), `/api/*` → OpenAPIHandler (+ Smart Coercion), `/rpc/*` → RPCHandler, `hooks/` webhook rotaları; `/api/openapi.json` (OpenAPI üretici).
-  8b. `-` Güvenlik başlıkları (`docs/03-cekirdek/06-guvenlik-ve-yetki.md`): `core/http/securityHeaders.ts` saf fonksiyon (`surface` → başlık kümesi, nonce üretimi dışarıdan); `api/app.ts`'te en dış ara katman olarak bağlanır; storefront ve admin yanıtlarına aynı fonksiyon uygulanır.
-      - `-` Birim test: her yüzey için HSTS, nosniff, Referrer-Policy, Permissions-Policy, `frame-ancestors`, CSP bulunur; 4xx/5xx ve yönlendirme yanıtlarında da bulunur; HTTP'de HSTS yok.
-      - `-` Admin CSP'sinde `frame-src` yalnız kurulu app kökenleridir; kurulu app yokken `'none'`.
-      - `-` `Report-Only` ile başlar; ihlal logu temizlenince zorlayıcıya geçiş ayrı iş.
+  8b. `±` Güvenlik başlıkları (`docs/03-cekirdek/06-guvenlik-ve-yetki.md`): `core/http/securityHeaders.ts` saf fonksiyon (`surface` → başlık kümesi, nonce üretimi dışarıdan); `api/app.ts`'te en dış ara katman olarak bağlanır; storefront ve admin yanıtlarına aynı fonksiyon uygulanır.
+      - `±` Birim test: her yüzey için HSTS, nosniff, Referrer-Policy, Permissions-Policy, `frame-ancestors`, CSP bulunur; 4xx/5xx ve yönlendirme yanıtlarında da bulunur; HTTP'de HSTS yok.
+      - `+` Admin CSP'sinde `frame-src` yalnız kurulu app kökenleridir; kurulu app yokken `'none'`.
+      - `±` `Report-Only` ile başlar; ihlal logu temizlenince zorlayıcıya geçiş ayrı iş.
   9. `-` `api/shop/<kaynak>/<uç>.ts` ve `api/admin/<kaynak>/<uç>.ts`: uç başına dosya, klasör `index.ts` router'ı birleştirir; ilk uçlar `shop.health` ve `admin.me` (iskeleti uçtan uca kanıtlar).
   10. `-` Idempotency: `packages/db/src/schema/idempotency.ts` (`key, actor, response, expires_at`, 24 saat) + `api/orpc/idempotency.ts` ara katmanı + temizleme zamanlanmış görevi (madde 9). Belge 04'teki `features/` listesinde yeri yok; `core/features/idempotency/` açılması belge güncellemesi ister.
   11. `-` `api/router.ts`: router ve `createRouterClient` fabrikasını dışa açar (storefront SSR aynı süreçte HTTP'ye çıkmaz).

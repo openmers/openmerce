@@ -54,8 +54,7 @@ $effect(() => {
     >
       <Table class="relative isolate w-full">
         <TableHeader
-          class="sticky inset-x-0 top-0 z-[1] w-full border-b-0 border-t-0 shadow-[0_1px_1px_0] shadow-border"
-          style="transform: translate3d(0,0,0)"
+          class="sticky inset-x-0 top-0 z-[1] w-full border-b-0 border-t-0 shadow-[0_1px_1px_0] shadow-border transform-gpu"
         >
           {#each headerGroups as headerGroup (headerGroup.id)}
             <TableRow

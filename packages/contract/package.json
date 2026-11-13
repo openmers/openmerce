@@ -8,6 +8,8 @@
     ".": "./src/index.ts"
   },
   "dependencies": {
+    "@orpc/contract": "2.0.0-beta.50",
+    "@orpc/openapi": "2.0.0-beta.50",
     "zod": "4.6.7"
   }
 }

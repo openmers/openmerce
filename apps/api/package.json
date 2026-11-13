@@ -5,12 +5,25 @@
   "type": "module",
   "license": "MIT",
   "dependencies": {
+    "@hono/node-server": "2.1.8",
+    "@openmers/contract": "workspace:*",
     "@openmers/core": "workspace:*",
     "@openmers/db": "workspace:*",
+    "@orpc/json-schema": "2.0.0-beta.50",
+    "@orpc/openapi": "2.0.0-beta.50",
+    "@orpc/server": "2.0.0-beta.50",
+    "@orpc/zod": "2.0.0-beta.50",
     "better-sqlite3": "13.1.1",
-    "drizzle-orm": "0.45.4"
+    "drizzle-orm": "0.45.4",
+    "hono": "4.13.18",
+    "zod": "4.6.7"
   },
   "devDependencies": {
-    "@types/better-sqlite3": "9.6.0"
+    "@openmers/test-utils": "workspace:*",
+    "@types/better-sqlite3": "9.6.0",
+    "tsx": "4.23.15"
+  },
+  "scripts": {
+    "dev": "tsx src/server.ts"
   }
 }

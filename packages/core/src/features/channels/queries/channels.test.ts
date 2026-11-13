@@ -70,6 +70,16 @@ describeOnTargets("channels sorguları", (getDb) => {
     expect(await p.db.select().from(channelDomains)).toHaveLength(1)
   })
 
+  it("public_id verilmezse üretilir (insertChannel ve createDefaultChannel)", async () => {
+    const p = platform()
+    const generated = await insertChannel(p, input({ publicId: undefined, code: "auto" }), NOW)
+    expect(generated).toMatch(/^chn_[0-9A-HJKMNP-TV-Z]{10}$/)
+
+    const defaultId = await createDefaultChannel(p, { code: "default" }, NOW)
+    expect(defaultId).toMatch(/^chn_[0-9A-HJKMNP-TV-Z]{10}$/)
+    expect(await loadChannels(p)).toHaveLength(2)
+  })
+
   it("insertChannel: code tekrarı reddedilir, büyük harfli code küçük harfe çevrilir", async () => {
     const p = platform()
     await insertChannel(p, input(), NOW)

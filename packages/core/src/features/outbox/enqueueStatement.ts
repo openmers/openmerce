@@ -1,5 +1,6 @@
 import { outbox } from "@openmers/db"
 import type { AtomicStatement, Db } from "../../platform"
+import { newPublicId } from "../ids/publicId"
 import { type OutboxJobInput, priorityFor } from "./types"
 
 /**
@@ -9,7 +10,7 @@ import { type OutboxJobInput, priorityFor } from "./types"
  */
 export function enqueueStatement(db: Db, job: OutboxJobInput, now: number): AtomicStatement {
   const insert = db.insert(outbox).values({
-    publicId: job.publicId,
+    publicId: job.publicId ?? newPublicId("evt_"),
     kind: job.kind,
     event: job.event,
     payload: job.payload,

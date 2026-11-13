@@ -41,9 +41,9 @@ export function priorityFor(kind: OutboxKind): number {
   return PRIORITY[kind]
 }
 
-/** Komutun `atomic()`'ine eklenecek iş/olay satırı; `publicId` çağırandan gelir (ids, madde 6.6). */
+/** Komutun `atomic()`'ine eklenecek iş/olay satırı; `publicId` verilmezse `evt_` üretilir (ids, madde 6.6). */
 export type OutboxJobInput = {
-  publicId: string
+  publicId?: string
   kind: OutboxKind
   payload: Record<string, unknown>
   event?: string

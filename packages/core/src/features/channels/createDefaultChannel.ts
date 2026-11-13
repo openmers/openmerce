@@ -1,10 +1,12 @@
+import { PUBLIC_ID_PREFIXES } from "@openmers/db"
 import type { Platform } from "../../platform"
+import { insertWithPublicId } from "../ids"
 import { channelIdByPublicId, insertChannelStatement } from "./queries/insertChannel"
 import { insertChannelDomainStatement } from "./queries/insertChannelDomain"
 
 export type DefaultChannelInput = {
-  /** `chn_` önekli; `newPublicId` gelene kadar çağıran üretir. */
-  publicId: string
+  /** Verilmezse `chn_` önekli kimlik üretilir (madde 6.6). */
+  publicId?: string
   code?: string
   currency?: string
   lang?: string
@@ -18,33 +20,42 @@ export async function createDefaultChannel(
   p: Pick<Platform, "db" | "atomic">,
   input: DefaultChannelInput,
   now: number,
-): Promise<void> {
+): Promise<string> {
   const currency = input.currency ?? "USD"
   const lang = input.lang ?? "en"
-  const stmts = [
-    insertChannelStatement(
-      p.db,
-      {
-        publicId: input.publicId,
-        code: input.code ?? "default",
-        defaultCurrency: currency,
-        currencies: [currency],
-        defaultLang: lang,
-        langs: [lang],
-        timezone: input.timezone ?? "UTC",
-        isDefault: true,
-      },
-      now,
-    ),
-  ]
-  if (input.domain) {
-    stmts.push(
-      insertChannelDomainStatement(
+
+  const build = (publicId: string) => {
+    const stmts = [
+      insertChannelStatement(
         p.db,
-        { channelId: channelIdByPublicId(input.publicId), domain: input.domain, isPrimary: true },
+        {
+          publicId,
+          code: input.code ?? "default",
+          defaultCurrency: currency,
+          currencies: [currency],
+          defaultLang: lang,
+          langs: [lang],
+          timezone: input.timezone ?? "UTC",
+          isDefault: true,
+        },
         now,
       ),
-    )
+    ]
+    if (input.domain) {
+      stmts.push(
+        insertChannelDomainStatement(
+          p.db,
+          { channelId: channelIdByPublicId(publicId), domain: input.domain, isPrimary: true },
+          now,
+        ),
+      )
+    }
+    return stmts
   }
-  await p.atomic(stmts)
+
+  if (input.publicId) {
+    await p.atomic(build(input.publicId))
+    return input.publicId
+  }
+  return insertWithPublicId(p, build, { prefix: PUBLIC_ID_PREFIXES.channels })
 }

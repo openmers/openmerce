@@ -17,6 +17,7 @@ import { getSettingsQuery } from "../../../packages/core/src/features/settings/q
 import { scalar, testPlatform } from "./helpers"
 
 const NOW = 1_700_000_000_000
+const ACTOR = { type: "admin", id: 1 } as const
 const global = { scope: "global", scopeId: 0 } as const
 
 describeOnTargets("settings sorguları", (getDb) => {
@@ -24,9 +25,19 @@ describeOnTargets("settings sorguları", (getDb) => {
 
   it("getSettings iki kapsamı tek sorguda döner, başka kanalı karıştırmaz", async () => {
     const p = platform()
-    await setSetting(p, { ...global, key: "store.name", value: "G" }, NOW)
-    await setSetting(p, { scope: "channel", scopeId: 5, key: "store.name", value: "K5" }, NOW)
-    await setSetting(p, { scope: "channel", scopeId: 6, key: "store.name", value: "K6" }, NOW)
+    await setSetting(p, { ...global, key: "store.name", value: "G" }, NOW, ACTOR)
+    await setSetting(
+      p,
+      { scope: "channel", scopeId: 5, key: "store.name", value: "K5" },
+      NOW,
+      ACTOR,
+    )
+    await setSetting(
+      p,
+      { scope: "channel", scopeId: 6, key: "store.name", value: "K6" },
+      NOW,
+      ACTOR,
+    )
 
     const rows = await getSettings(p.db, [global, { scope: "channel", scopeId: 5 }])
     expect(
@@ -41,7 +52,7 @@ describeOnTargets("settings sorguları", (getDb) => {
   it("boş kapsam listesi sorgu atmadan boş döner; okuma indeks kullanır", async () => {
     const p = platform()
     expect(await getSettings(p.db, [])).toEqual([])
-    await setSetting(p, { ...global, key: "store.name", value: "G" }, NOW)
+    await setSetting(p, { ...global, key: "store.name", value: "G" }, NOW, ACTOR)
     assertNoFullScan(
       getDb(),
       getSettingsQuery(p.db, [global, { scope: "channel", scopeId: 5 }]).toSQL(),
@@ -54,9 +65,9 @@ describeOnTargets("settings sorguları", (getDb) => {
 
   it("her yazımda sürüm tam 1 artar; aynı anahtar tek satırda kalır", async () => {
     const p = platform()
-    await setSetting(p, { ...global, key: "store.name", value: "A" }, NOW)
+    await setSetting(p, { ...global, key: "store.name", value: "A" }, NOW, ACTOR)
     expect(await getSettingsVersion(p.db)).toBe(1)
-    await setSetting(p, { ...global, key: "store.name", value: "B" }, NOW + 1)
+    await setSetting(p, { ...global, key: "store.name", value: "B" }, NOW + 1, ACTOR)
     expect(await getSettingsVersion(p.db)).toBe(2)
     expect(scalar<number>(getDb(), "SELECT count(*) FROM settings WHERE key = 'store.name'")).toBe(
       1,
@@ -69,28 +80,56 @@ describeOnTargets("settings sorguları", (getDb) => {
   it("geçersiz değer, bilinmeyen anahtar, sır gibi anahtar ve izinsiz kapsam reddedilir", async () => {
     const p = platform()
     await expect(
-      setSetting(p, { ...global, key: "audit.retention_days", value: 0 }, NOW),
+      setSetting(p, { ...global, key: "audit.retention_days", value: 0 }, NOW, ACTOR),
     ).rejects.toMatchObject({ code: "INVALID_SETTING" })
     await expect(
-      setSetting(p, { ...global, key: "nope.key", value: 1 }, NOW),
+      setSetting(p, { ...global, key: "nope.key", value: 1 }, NOW, ACTOR),
     ).rejects.toMatchObject({ code: "UNKNOWN_SETTING" })
     await expect(
-      setSetting(p, { ...global, key: "smtp.password", value: "x" }, NOW),
+      setSetting(p, { ...global, key: "smtp.password", value: "x" }, NOW, ACTOR),
     ).rejects.toMatchObject({ code: "SECRET_KEY" })
     await expect(
-      setSetting(p, { scope: "channel", scopeId: 5, key: "audit.retention_days", value: 30 }, NOW),
+      setSetting(
+        p,
+        { scope: "channel", scopeId: 5, key: "audit.retention_days", value: 30 },
+        NOW,
+        ACTOR,
+      ),
     ).rejects.toMatchObject({ code: "SCOPE_NOT_ALLOWED" })
     // iç sayaç: kimse yazmaz
     await expect(
-      setSetting(p, { ...global, key: "settings.version", value: 9 }, NOW),
+      setSetting(p, { ...global, key: "settings.version", value: 9 }, NOW, ACTOR),
     ).rejects.toMatchObject({ code: "SCOPE_NOT_ALLOWED" })
     expect(await getSettingsVersion(p.db)).toBe(0)
   })
 
   it("global kapsamda scope_id ≠ 0 DB check'iyle reddedilir", async () => {
     await expect(
-      setSetting(platform(), { scope: "global", scopeId: 7, key: "store.name", value: "X" }, NOW),
+      setSetting(
+        platform(),
+        { scope: "global", scopeId: 7, key: "store.name", value: "X" },
+        NOW,
+        ACTOR,
+      ),
     ).rejects.toThrow(/settings_scope_id_ck/)
+  })
+
+  it("denetim satırı aynı atomic'te; ayar yazımı patlarsa denetim satırı yok", async () => {
+    const p = platform()
+    await setSetting(p, { ...global, key: "store.name", value: "G" }, NOW, ACTOR)
+    expect(
+      scalar<number>(getDb(), "SELECT count(*) FROM audit_log WHERE action = 'settings:write'"),
+    ).toBe(1)
+    expect(
+      scalar<string>(getDb(), "SELECT after FROM audit_log WHERE action = 'settings:write'"),
+    ).toBe(JSON.stringify({ scope: "global", scopeId: 0, key: "store.name", value: "G" }))
+
+    await expect(
+      setSetting(p, { scope: "global", scopeId: 7, key: "store.name", value: "X" }, NOW, ACTOR),
+    ).rejects.toThrow(/settings_scope_id_ck/)
+    expect(
+      scalar<number>(getDb(), "SELECT count(*) FROM audit_log WHERE action = 'settings:write'"),
+    ).toBe(1)
   })
 
   it("markSetupCompleted bir kez yazar; ilk değer korunur", async () => {
@@ -142,8 +181,13 @@ describe("[sqlite] iki bağlantılı dosya modu", () => {
   it("iki eşzamanlı setSetting sonrası sürüm 2 artar", async () => {
     const [c1, c2] = twoConnections()
     await Promise.all([
-      setSetting(testPlatform(c1), { ...global, key: "store.name", value: "A" }, NOW),
-      setSetting(testPlatform(c2), { ...global, key: "audit.retention_days", value: 30 }, NOW),
+      setSetting(testPlatform(c1), { ...global, key: "store.name", value: "A" }, NOW, ACTOR),
+      setSetting(
+        testPlatform(c2),
+        { ...global, key: "audit.retention_days", value: 30 },
+        NOW,
+        ACTOR,
+      ),
     ])
     expect(await getSettingsVersion(testPlatform(c1).db)).toBe(2)
   })

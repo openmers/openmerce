@@ -99,15 +99,15 @@ describeOnTargets("channels sorguları", (getDb) => {
     const b = need(loaded[1], "ikinci kanal")
     await insertChannelDomain(p, { channelId: a.id, domain: "a.com", isPrimary: true }, NOW)
 
-    await expect(
-      insertChannelDomain(p, { channelId: a.id, domain: "a.com" }, NOW),
-    ).rejects.toThrow(/UNIQUE/)
+    await expect(insertChannelDomain(p, { channelId: a.id, domain: "a.com" }, NOW)).rejects.toThrow(
+      /UNIQUE/,
+    )
     await expect(
       insertChannelDomain(p, { channelId: a.id, domain: "a2.com", isPrimary: true }, NOW),
     ).rejects.toThrow(/UNIQUE/)
-    await expect(
-      insertChannelDomain(p, { channelId: b.id, domain: "a.com" }, NOW),
-    ).rejects.toThrow(/UNIQUE/)
+    await expect(insertChannelDomain(p, { channelId: b.id, domain: "a.com" }, NOW)).rejects.toThrow(
+      /UNIQUE/,
+    )
   })
 
   it("insertChannelDomain küçük harfe çevirir; ham büyük harf DB check'ine takılır", async () => {

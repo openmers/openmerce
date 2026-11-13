@@ -9,5 +9,8 @@
   },
   "scripts": {
     "build:theme": "node build-theme.mjs"
+  },
+  "devDependencies": {
+    "@types/node": "26.6.6"
   }
 }

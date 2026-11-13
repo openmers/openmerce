@@ -19,6 +19,8 @@ export const CORE_PERMISSIONS = [
   "quotes:write",
   "quotes:offer",
   "approvals:decide",
+  "prices:read",
+  "prices:write",
   "promotions:read",
   "promotions:write",
   "stock:read",

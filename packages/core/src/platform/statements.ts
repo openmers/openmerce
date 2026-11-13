@@ -42,3 +42,9 @@ export function guardedInsertStatement(
     params: [...params, ...where.params],
   }
 }
+
+/** Elle kurulan `sql` parçasını `atomic()` ifadesine çevirir (CTE/`VALUES` gibi kurucuda olmayan biçimler). */
+export function sqlStatement(query: SQL): AtomicStatement {
+  const { sql, params } = dialect.sqlToQuery(query)
+  return { sql, params }
+}

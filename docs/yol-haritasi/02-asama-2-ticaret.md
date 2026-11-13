@@ -86,12 +86,12 @@
 - **Yapılacaklar:**
   1. `+` `packages/db/src/schema/pricing.ts`: üç tablo + `(variant_id, price_list_id)` indeksi; migration. (2026-11-13: `0008_pricing`, `currency_rates` dahil dört tablo + `channels.default_price_list_id`; ayrı `(variant_id, price_list_id)` indeksi yok, katalog gereği PK `(price_list_id, variant_id, min_qty)` karşılar, plan testi var.)
   2. `-` `features/pricing/types.ts`: `PriceCandidate`, `SelectedPrice`, strateji tipleri.
-  3. `-` `features/pricing/strategies/priceSelection.ts` (saf, varsayılan strateji) ve `linePrice.ts` (saf; kişiselleştirme ek ücreti `amount`/`percent`, para birimi başına).
-  4. `-` `features/pricing/queries/loadPrices.ts`: tek `IN` sorgusu (varyantlar × liste kimlikleri).
+  3. `-` `features/pricing/strategies/priceSelection.ts` (saf, varsayılan strateji) ve `linePrice.ts` (saf; kişiselleştirme ek ücreti `amount`/`percent`, para birimi başına). (2026-11-13: seçim `features/pricing/resolve/resolvePrice.ts` olarak bitti: tür → yüksek `priority` → en yüksek uyan `min_qty`, tarih seçimde, yoksa `NO_PRICE`; `linePrice` ve strateji kaydı kalmadı.)
+  4. `+` `features/pricing/queries/loadPrices.ts`: tek `IN` sorgusu (varyantlar × liste kimlikleri). (2026-11-13: `queries/getPrices.ts`, plan testi var.)
   5. `-` `features/pricing/session/resolvePriceListIds.ts`: grup/şirket hedeflerinden öncelikli liste kümesi (giriş anında; anonimde `base` + herkese açık `sale`).
-  6. `-` `features/pricing/write/setMany.ts`: parçalı, idempotent toplu yazma; varsayılan liste ise `reindex` + `pl:<id>` etiketi.
-  7. `-` `features/pricing/jobs/expirePriceLists.ts` ve `jobs/convertCurrency.ts` (kur + yuvarlama kuralıyla hedef listeye yazar).
-  8. `-` `packages/contract/src/admin/priceLists.ts` + `apps/api/src/admin/price-lists/*.ts` ince handler'lar.
+  6. `+` `features/pricing/write/setMany.ts`: parçalı, idempotent toplu yazma; varsayılan liste ise `reindex` + `pl:<id>` etiketi. (2026-11-13: `prices/setPrices.ts`, en çok 500 kayıt, kayıt başına sonuç; `sync_prices` yazımı yok.)
+  7. `-` `features/pricing/jobs/expirePriceLists.ts` ve `jobs/convertCurrency.ts` (kur + yuvarlama kuralıyla hedef listeye yazar). (2026-11-13: görevler yok; `rates/rates.ts` `setRate`/`getRate` ve `rates/convertAmount.ts` (BigInt, yarım yukarı) hazır.)
+  8. `+` `packages/contract/src/admin/priceLists.ts` + `apps/api/src/admin/price-lists/*.ts` ince handler'lar. (2026-11-13: `contract/admin/pricing.ts`; `admin.priceLists.{list,create,update,delete}`, `admin.prices.{get,set}`; izinler `prices:read/write`.)
 - **Testler:**
   - `features/pricing/strategies/priceSelection.test.ts`: tür önceliği, `priority`, kademe seçimi, süresi dolmuş `sale` atlanır.
   - `linePrice.test.ts`: sabit ve yüzde ek ücret, boş alan ek ücret tetiklemez, çok para birimli tutar.
@@ -115,14 +115,14 @@
 - **Yapılacaklar:**
   1. `+` `packages/db/src/schema/stock.ts`: dört tablo + `stock_movements.units`; varyanta `base_variant_id`, `unit_factor`, `allow_backorder`, `lead_time_days` sütunları (katalog migration'ına ek, ayrı migration). (2026-11-13: `0009_stock`; varyant sütunları 0006 `product_variants`'ta.)
   2. `-` `features/stock/available/computeAvailable.ts` (saf): kanal depoları üzerinden toplam, paket için `floor`, backorder alt sınırı.
-  3. `-` `features/stock/strategies/stockDisplay.ts` (saf, kova eşikleri) ve `stockLocation.ts` (saf, öncelik sırası, tek depodan karşılama tercihi).
-  4. `-` `features/stock/reserve/buildReserveStatements.ts`: aynı varyant kalemlerini toplar, paket → taban birim çevirir, koşullu `UPDATE` ifadelerini üretir (checkout `atomic()`'ine verilir).
-  5. `-` `features/stock/release/buildReleaseStatements.ts`: rezervasyon `active`/`payment_pending` koşullu ters ifade.
-  6. `-` `features/stock/sale/buildSaleStatements.ts`: gönderimde `on_hand −`, `reserved −`, `sale` hareketi (madde 20 kullanır).
-  7. `-` `features/stock/write/setMany.ts` (ERP/CSV, `version` korumalı) ve `adjust.ts` (sayım; paket varyantına yazma reddi).
+  3. `-` `features/stock/strategies/stockDisplay.ts` (saf, kova eşikleri) ve `stockLocation.ts` (saf, öncelik sırası, tek depodan karşılama tercihi). (2026-11-13: kova `bucket/stockBucket.ts` olarak bitti; `stockLocation` yok.)
+  4. `-` `features/stock/reserve/buildReserveStatements.ts`: aynı varyant kalemlerini toplar, paket → taban birim çevirir, koşullu `UPDATE` ifadelerini üretir (checkout `atomic()`'ine verilir). (2026-11-13: `reserve/reserveStatements.ts`: toplama + ya hep ya hiç tek `UPDATE`; paket çevirisi ve rezervasyon `EXISTS` koşulu madde 21 ile.)
+  5. `-` `features/stock/release/buildReleaseStatements.ts`: rezervasyon `active`/`payment_pending` koşullu ters ifade. (2026-11-13: `releaseStatements` hareket referansına koşullu, çifte bırakma etkisiz; rezervasyon durumu koşulu madde 21 ile.)
+  6. `+` `features/stock/sale/buildSaleStatements.ts`: gönderimde `on_hand −`, `reserved −`, `sale` hareketi (madde 20 kullanır). (2026-11-13: `commitStatements`.)
+  7. `-` `features/stock/write/setMany.ts` (ERP/CSV, `version` korumalı) ve `adjust.ts` (sayım; paket varyantına yazma reddi). (2026-11-13: `levels/adjustStock.ts` ve tekil `levels/setStock.ts` (`version` korumalı) bitti, paket reddi var; toplu `setMany` ve `erp_sync` hareketi yok. Admin uçları `admin.stock.{locations.{list,create},levels.{get,adjust}}`.)
   8. `-` `features/stock/units/changeUnitFactor.ts`: açık rezervasyon/sipariş varken red; `cli/mergeUnits.ts` (`openmers stock merge-units`).
   9. `-` `features/stock/jobs/auditReserved.ts`: `reserved`'i açık rezervasyon + gönderilmemiş kalemlerden yeniden hesaplar, düzeltmez, raporlar; `stock_movements` toplamı ile `on_hand` karşılaştırması.
-  10. `-` Kova değişimi algılayıcı `features/stock/bucket/bucketChanged.ts` (saf) → yalnız değişince `reindex` olayı.
+  10. `+` Kova değişimi algılayıcı `features/stock/bucket/bucketChanged.ts` (saf) → yalnız değişince `reindex` olayı. (2026-11-13: `bucketChanged` + düzeltme/mutlak yazımda SQL koşulu; rezervasyon ifadeleri kova bakmaz.)
 - **Testler:**
   - `computeAvailable.test.ts`: 25 adet, koli 12 → 2; backorder alt sınırı.
   - `integration-tests/race/__tests__/stock/lastUnit.test.ts`: son ürüne iki alıcı, tam bir kazanan, `reserved` asla `on_hand − safety`'yi aşmaz; son kolilere iki alıcı.

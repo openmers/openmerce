@@ -58,7 +58,7 @@ Ortak kurallar (her tabloya uygulanır, tekrar yazılmadı): iç `id` `integer` 
 
 ## B. Yönetici kimliği, rol, izin, politika
 
-Yönetici tabloları Better Auth'un ikinci örneğidir: `user` → `admin_users`, `session` → `admin_sessions`, `account` → `admin_accounts`, `verification` → `admin_verifications`, `twoFactor` → `admin_two_factors`, `passkey` → `admin_passkeys`. Şema `schema/admin-auth.ts` (0003).
+Yönetici tabloları Better Auth'un ikinci örneğidir: `user` → `admin_users`, `session` → `admin_sessions`, `account` → `admin_accounts`, `verification` → `admin_verifications`, `twoFactor` → `admin_two_factors`, `passkey` → `admin_passkeys`. Şema `schema/admin-auth.ts` + `schema/roles.ts` (`roles`, `role_permissions`, `admin_role_assignments`, `access_policies`; 250 satır sınırı), migration `0003_admin-auth.sql`. (Better Auth 1.7.23 doğrulandı: çekirdek ve eklenti modelleri `modelName` / `fields` ile yeniden adlandırılır (eklentilerde `schema` seçeneği); tamsayı kimlik `advanced.database.generateId: "serial"`; tarih alanlarına `Date` yazar, Drizzle'da bu tablolarda zaman sütunları `integer({ mode: "timestamp_ms" })`, SQL'de yine epoch ms.)
 
 ### `admin_users`
 - **Sahip:** `features/auth`; şema `schema/admin-auth.ts`.
@@ -86,7 +86,7 @@ Yönetici tabloları Better Auth'un ikinci örneğidir: `user` → `admin_users`
   - `schema/admin-auth.ts`, migration.
   - `features/auth/queries/adminByEmail.ts`, `bumpSessionVersion.ts` (çoklu yönetici için `UPDATE ... WHERE id IN (...)`).
   - Test: müşteri çerezi Admin API'de işe yaramaz; sürüm artınca eski oturum reddi; kurulum iki kez gönderilince tek yönetici (yarış testi).
-- **Açık sorular:** Better Auth'un iki ayrı örnekle farklı tablo adlarına yazabildiği sürümde doğrulanmalı (açık 1).
+- **Açık sorular:** iki ayrı örnekle farklı tablo adı: `modelName` ile mümkün (Better Auth 1.7.23 doğrulandı: ); iki örneğin aynı süreçte çalışması kodda doğrulanacak (açık 1).
 
 ### `admin_sessions`
 - **Sahip:** `features/auth`; şema `schema/admin-auth.ts`.
@@ -97,7 +97,7 @@ Yönetici tabloları Better Auth'un ikinci örneğidir: `user` → `admin_users`
 |---|---|---|---|
 | id | integer | hayır | |
 | admin_user_id | integer FK → `admin_users` | hayır | Better Auth `session.userId` |
-| token | text | hayır | (karar: Better Auth `session.token`; çerez `om_a`. Özet olarak saklanması: açık 3) |
+| token | text | hayır | (karar: Better Auth `session.token`; çerez `om_a`. (Better Auth 1.7.23 doğrulandı: özetleme seçeneği yok, düz saklanır; özet gerekiyorsa adaptörde, açık 3) |
 | expires_at | integer | hayır | kısa ve kayan (karar: hareketsizlik = kayan kısa süre, Better Auth `expiresIn` + `updateAge`; ayrı `last_seen_at` yok) |
 | ip_address | text | evet | (karar: Better Auth alanı; kişisel veri, oturumla silinir) |
 | user_agent | text | evet | (karar: Better Auth alanı) |
@@ -125,7 +125,7 @@ Yönetici tabloları Better Auth'un ikinci örneğidir: `user` → `admin_users`
 ### `admin_verifications`
 - **Sahip:** `features/auth`; şema `schema/admin-auth.ts`.
 - **Kaynak:** `08-kimlik-dogrulama.md` bölüm 1 ("yalnızca davet"), bölüm 4. (karar: Better Auth `verification` modeli yönetici örneği için; davet ve parola sıfırlama token'ları burada. Önceki "davet tablosu yok" sorusu böyle kapandı.)
-- **Sütunlar:** `id` integer; `identifier` text hayır (karar: `<amaç>:<hedef>`, ör. `admin-invite:<email>`, `reset-password:<token-özeti>`); `value` text hayır; `expires_at` integer hayır; `created_at`, `updated_at`.
+- **Sütunlar:** `id` integer; `identifier` text hayır (karar: `<amaç>:<hedef>`, ör. `admin-invite:<email>`, `reset-password:<token-özeti>`; (Better Auth 1.7.23 doğrulandı: `verification.storeIdentifier: "hashed"` ile özet saklanır); `value` text hayır ((Better Auth 1.7.23 doğrulandı: özet seçeneği yok); `expires_at` integer hayır; `created_at`, `updated_at`.
 - **Anahtar ve indeksler:** `(identifier)`; `(expires_at)` süpürme.
 - **Kurallar:** tek kullanım, kullanılan satır silinir. Davet süresi (karar: şirket davetiyle aynı 7 gün, `08` bölüm 3 örneği).
 - **İlişkiler:** yok (identifier metni).
@@ -134,15 +134,15 @@ Yönetici tabloları Better Auth'un ikinci örneğidir: `user` → `admin_users`
 ### `admin_two_factors`
 - **Sahip:** `features/auth`; şema `schema/admin-auth.ts`.
 - **Kaynak:** `08-kimlik-dogrulama.md` bölüm 1, 4 (TOTP, kurtarma kodları özetleri). (karar: Better Auth `twoFactor` eklenti tablosu.)
-- **Sütunlar:** `id` integer; `admin_user_id` integer FK hayır; `secret` text hayır (TOTP sırrı, şifreli); `backup_codes` text hayır (kurtarma kodları; belge "özetleri saklanır"); `created_at`, `updated_at`.
+- **Sütunlar:** `id` integer; `admin_user_id` integer FK hayır; `secret` text hayır (TOTP sırrı, şifreli); `backup_codes` text hayır (kurtarma kodları; belge "özetleri saklanır"); `verified` integer bool hayır, varsayılan 1; `failed_verification_count` integer hayır, varsayılan 0; `locked_until` integer evet. (Better Auth 1.7.23 doğrulandı: eklenti `created_at`/`updated_at` yazmaz, bu yüzden sütun yok; `verified`, `failed_verification_count`, `locked_until` eklentinin alanları. `backupCodes` için `storeBackupCodes: "plain" | "encrypted" | özel`; özet seçeneği yok, özel `encrypt`/`decrypt` ile yazılabilir.)
 - **Anahtar ve indeksler:** benzersiz `(admin_user_id)` (karar: kullanıcı başına tek TOTP kaydı).
 - **Kurallar:** kurtarma kodları bir kez gösterilir. TOTP sırrının şifrelenmesi (karar: `SECRETS_KEK`'ten türetilen anahtarla AES-GCM, kasa ile aynı `crypto.ts`; KEK yoksa demo kip, 2FA kurulamaz).
-- **Açık sorular:** Better Auth'un `backup_codes`'u özet olarak mı şifreli olarak mı sakladığı doğrulanmalı (açık 3).
+- **Açık sorular:** `backup_codes` özet mi şifreli mi: Better Auth yalnız düz/şifreli sunar, belge özet ister (açık 3).
 
 ### `admin_passkeys`
 - **Sahip:** `features/auth`; şema `schema/admin-auth.ts`.
 - **Kaynak:** `08-kimlik-dogrulama.md` bölüm 4. (karar: Better Auth `passkey` eklenti tablosu.)
-- **Sütunlar:** `id` integer; `admin_user_id` integer FK hayır; `name` text evet; `public_key` text hayır; `credential_id` text hayır; `counter` integer hayır; `device_type` text hayır; `backed_up` integer bool hayır; `transports` text evet; `aaguid` text evet; `created_at`.
+- **Sütunlar:** (Better Auth 1.7.23 doğrulandı: `@better-auth/passkey` alanları birebir; `credentialID` → `credential_id` `fields` eşlemesiyle.) `id` integer; `admin_user_id` integer FK hayır; `name` text evet; `public_key` text hayır; `credential_id` text hayır; `counter` integer hayır; `device_type` text hayır; `backed_up` integer bool hayır; `transports` text evet; `aaguid` text evet; `created_at`.
 - **Anahtar ve indeksler:** benzersiz `credential_id`; `(admin_user_id)`.
 - **Açık sorular:** eklenti alan listesi ve D1 uyumu sürümde doğrulanmalı (açık 1).
 

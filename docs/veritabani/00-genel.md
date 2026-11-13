@@ -1,6 +1,6 @@
 # Veritabanı: genel dizin
 
-Tasarım belgelerindeki tüm tabloların kataloğu. Kod yazılmadan önce tek kaynak budur; şema bu dosyalardan çıkar, karar değişirse önce burası güncellenir. Durum 2026-11-13: `packages/db` boş, hiçbir tablo yazılmadı (tümü `-`).
+Tasarım belgelerindeki tüm tabloların kataloğu. Kod yazılmadan önce tek kaynak budur; şema bu dosyalardan çıkar, karar değişirse önce burası güncellenir. Durum 2026-11-13: `packages/db` kurulu; yazılan migration'lar `0000`-`0005` (`settings`, `channels`, `channel_domains`, yönetici kimliği/rol/politika, sırlar/anahtarlar/idempotency/denetim, outbox/zamanlanmış görev/`external_refs`: 22 tablo). Kalanlar `-`.
 
 | Dosya | Kapsam | Tablo |
 |---|---|---|
@@ -43,7 +43,7 @@ Sıra bağımlılığa göredir (yabancı anahtarın hedefi önce). Numara `pack
 |---|---|---|---|
 | 0001 | `settings.ts` | `settings` | 01 |
 | 0002 | `channels.ts` | `channels`, `channel_domains` | 02 |
-| 0003 | `admin-auth.ts` | `admin_users`, `admin_sessions`, `admin_accounts`, `admin_verifications`, `admin_two_factors`, `admin_passkeys`, `roles`, `role_permissions`, `admin_role_assignments`, `access_policies` | 01 |
+| 0003 | `admin-auth.ts`, `roles.ts` (dosya `0003_admin-auth.sql`) | `admin_users`, `admin_sessions`, `admin_accounts`, `admin_verifications`, `admin_two_factors`, `admin_passkeys`, `roles`, `role_permissions`, `admin_role_assignments`, `access_policies` | 01 |
 | 0004 | `security.ts` | `secrets`, `api_keys`, `channel_publishable_keys`, `idempotency_keys`, `audit_log`, `audit_anchors` | 01 |
 | 0005 | `events.ts` | `outbox`, `scheduled_runs`, `external_refs` | 01 |
 | 0006 | `catalog.ts` | `products`, `product_variants`, `product_options`, `option_values`, `facets`, `facet_values`, `collections`, `collection_variants`, `*_translations`, `product_assets`, `product_channels`, `variant_channels`, `collection_channels` | 02 |
@@ -87,6 +87,6 @@ Sıra bağımlılığa göredir (yabancı anahtarın hedefi önce). Numara `pack
 
 11. **Tohum veri migration'da değil:** varsayılan kanal kurulum sihirbazında `createDefaultChannel` ile oluşur (EN, USD); migration'lar yalnız şema içerir.
 12. **Migration numarası:** boş `0000_baseline.sql` konur; katalog numaraları (`0001_settings`...) korunur.
-13. **Better Auth iki örnek:** müşteri (`users`, `sessions`, `accounts`, `auth_verifications`, `two_factors`, `passkeys`) ve yönetici (`admin_*`) ayrı tablo takımları. `integer` kimlik ve token'ların özetle saklanması sürümde doğrulanmadı; seçenek yoksa özetleme adaptörde yazılır.
+13. **Better Auth iki örnek:** müşteri (`users`, `sessions`, `accounts`, `auth_verifications`, `two_factors`, `passkeys`) ve yönetici (`admin_*`) ayrı tablo takımları. **Better Auth 1.7.23 doğrulandı (paket kaynağından, 0003):** `integer` kimlik `advanced.database.generateId: "serial"` ile; model/alan adları `modelName`/`fields` ile (eklentilerde `schema` seçeneği); tarih alanları `Date` (Drizzle'da `timestamp_ms`, SQL'de epoch ms). Özetleme: `verification.storeIdentifier: "hashed"` var; `session.token`, `verification.value` için seçenek yok (düz), `twoFactor.backupCodes` yalnız düz/şifreli/özel; özet gerekiyorsa adaptörde yazılır. `twoFactor` tablosu `created_at`/`updated_at` almaz, `verified`/`failed_verification_count`/`locked_until` ister (`01` `admin_two_factors`).
 14. **Yarış testi:** `better-sqlite3` senkron olduğu için gerçek eşzamanlılık testleri D1 (pool-workers) ya da ayrı süreçlerle koşar.
 15. **Politika kapsam sütunları:** `orders.assigned_admin_id`, `customers.assigned_admin_id`, `orders.shipping_region` eklendi; şirket ve teklifte `sales_rep_admin_id` kullanılır. `customers.user_id` INTEGER.

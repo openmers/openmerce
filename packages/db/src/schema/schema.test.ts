@@ -85,7 +85,14 @@ describe("sqlite_master", () => {
 
   it("d1_migrations bütün dosyaları kaydetti", () => {
     const names = db.prepare("SELECT name FROM d1_migrations ORDER BY id").pluck().all()
-    expect(names).toEqual(["0000_baseline.sql", "0001_settings.sql", "0002_channels.sql"])
+    expect(names).toEqual([
+      "0000_baseline.sql",
+      "0001_settings.sql",
+      "0002_channels.sql",
+      "0003_admin-auth.sql",
+      "0004_security.sql",
+      "0005_events.sql",
+    ])
   })
 })
 

@@ -65,6 +65,7 @@ Açık kaynak, self-host edilebilir B2C + B2B ticaret altyapısı. Okuma sıras�
 - [04-tema-sistemi.md](07-istemciler/04-tema-sistemi.md) — tema paketi, GitHub içe aktarma, derleme, yayın
 - [06-admin-genisletme.md](07-istemciler/06-admin-genisletme.md) — admin'e eklenti yazma modeli (Vendure dashboard'dan uyarlandı, Svelte)
 - [07-ui-kutuphanesi.md](07-istemciler/07-ui-kutuphanesi.md) — `@openmers/ui` (Medusa UI karşılığı): bileşenler, tema CSS'i, ikonlar, kurulum
+- [08-ajan-ticareti.md](07-istemciler/08-ajan-ticareti.md) — `llms.txt`, ajan ödeme akışı, MCP (varsayılan kapalı)
 - [05-agentic-builder.md](07-istemciler/05-agentic-builder.md) — sohbetle yönetim (Bloom/Vulpy tarzı), klasik kiple geçiş
 
 ## 08 — İşletme
@@ -89,6 +90,8 @@ Açık kaynak, self-host edilebilir B2C + B2B ticaret altyapısı. Okuma sıras�
 - [02-erp.md](10-tak-calistir-apps/02-erp.md)
 - [03-pazaryeri-entegrasyonu.md](10-tak-calistir-apps/03-pazaryeri-entegrasyonu.md) — Trendyol, Hepsiburada, N11
 
+- [veritabani/00-genel.md](veritabani/00-genel.md) — tüm tablolar, sütunlar, migration sırası, yapılacaklar
+- [YOL-HARITASI.md](YOL-HARITASI.md) — hangi dosyadan başlıyoruz: aşama aşama, yapıldı/yapılacak
 - [ATLANANLAR.md](ATLANANLAR.md) — doğrulanmayanlar, bekleyen kararlar, atlananlar
 
 Yeni özellik: biçim kararı [02-built-in-apps.md](04-genisletme/02-built-in-apps.md) bölüm 3.1'e göredir. Uygulama ise `10-tak-calistir-apps/NN-<ad>.md`, built-in app ise `09-built-in-apps/NN-<ad>.md`.

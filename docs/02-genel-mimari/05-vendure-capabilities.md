@@ -67,7 +67,7 @@ Biçim: [../04-genisletme/02-built-in-apps.md](../04-genisletme/02-built-in-apps
 ## 3. Sonuç: gerek var mı
 
 - **Ana B2B yetenekleri (şirket, hiyerarşi, hızlı sipariş, yeniden sipariş, teklif, onay, sözleşme fiyatı, kredi) zaten tasarlı;** burada eksik bir sütun yok.
-- **Yazılması gereken yeni:** vergi no doğrulama, alışveriş listeleri (genişlemiş), ortak sepet, mağaza kredisi + hediye kartı, ürün tipleri, global arama, arama analitiği; mevcutlara eklemeler (paket dönüşümü, teklif sürümleri ve karşı teklif, çok kademeli onay, denetim saklama/hash zinciri, kayıt düzeyi erişim politikası) **v1'de** ve kendi belgelerine yazıldı.
+- **Yazılması gereken yeni:** vergi no doğrulama (çekirdekte yalnız genel kontrol; ülkeye özgü biçim ilgili modülde), alışveriş listeleri (genişlemiş), ortak sepet, mağaza kredisi + hediye kartı, ürün tipleri, global arama, arama analitiği; mevcutlara eklemeler (paket dönüşümü, teklif sürümleri ve karşı teklif, çok kademeli onay, denetim saklama/hash zinciri, kayıt düzeyi erişim politikası) **v1'de** ve kendi belgelerine yazıldı.
 - **Alınmayan:** PunchOut, CPQ, federe SSO (talep olursa).
 - Vendure'un plan duvarlarını kopyalamıyoruz: özellikler açık kaynak ve kanal bazlı açılır (built-in app) ya da çekirdeğe girer.
 

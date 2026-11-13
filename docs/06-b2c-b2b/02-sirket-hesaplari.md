@@ -4,7 +4,7 @@
 
 | Tablo | İçerik |
 |---|---|
-| `companies` | `public_id` (`com_`), unvan, vergi dairesi, vergi no, e-fatura mükellefiyeti, `status` (`pending · approved · suspended`), `parent_id?`, satış temsilcisi, `payment_terms_days`, `custom_fields`, `version` |
+| `companies` | `public_id` (`com_`), unvan, `tax_id`, `tax_id_type` (ülkeye özgü alanlar `custom_fields`'ta), `status` (`pending · approved · suspended`), `parent_id?`, satış temsilcisi, `payment_terms_days`, `custom_fields`, `version` |
 | `company_members` | `company_id`, `customer_id`, `role`, `spend_limit?`, `status` |
 | `company_addresses` | teslimat ve fatura adres defteri (şube, depo) |
 | `company_channels` | şirket hangi kanallarda satın alabilir |

@@ -32,7 +32,7 @@ Müşterinin seçtiği, varyantla ilgisi olmayan bilgi (Vendure `how-to/configur
                { when: 'artwork',   percent: 5 } ] }      // liste fiyatının yüzdesi
 ```
 
-Ek ücret para birimi başına tutar (`amount` yalnızca `currency` ile birlikte; çok para birimli kanalda `{ TRY: 1000, USD: 300 }`). `label` ve `options` çevrilebilir. En çok 10 alan.
+Ek ücret para birimi başına tutar (`amount` yalnızca `currency` ile birlikte; çok para birimli kanalda `{ USD: 1000, EUR: 900 }`). `label` ve `options` çevrilebilir. En çok 10 alan.
 
 **Doğrulama sunucuda, tek yerde (çekirdek).** Vitrin bayrağına güvenilmez (Vendure örneği bunu vitrine bırakıyor, bu bir açıktır):
 1. Varyantta kişiselleştirme kapalıysa gelen `personalization` **reddedilir** (`PERSONALIZATION_NOT_ALLOWED`), sessizce yok sayılmaz.
@@ -99,8 +99,9 @@ Durum makinesi: `active → payment_pending → settled` veya `active → releas
 
 Aynı desenin tersi; hepsi "rezervasyon hâlâ `active` veya `payment_pending`" koşuluna bağlıdır, iki kez bırakılamaz.
 
-- **Barındırılan ödeme sayfası (iyzico, PayTR, Stripe):** yalnızca doğrulanmış sağlayıcı webhook'u bırakır. Yerel saat dolsa bile bırakılmaz; ödeme tamamlanmış ve webhook gecikmiş olabilir.
+- **Barındırılan ödeme sayfası (Stripe; Türkiye modülleri iyzico, PayTR):** yalnızca doğrulanmış sağlayıcı webhook'u bırakır. Yerel saat dolsa bile bırakılmaz; ödeme tamamlanmış ve webhook gecikmiş olabilir.
 - **Kendi sayfamızda beklenen ödeme (havale/EFT):** yerel `expires_at` yetkilidir; zamanlanmış görev süpürür.
+- **Tembel güvence:** yeni rezervasyon, aynı stok satırı için süresi dolmuş `active`/`payment_pending` rezervasyonları önce serbest bırakır (aynı `atomic()`, aynı "hâlâ aktif" koşulu). Zamanlanmış görev gecikse de stok takılı kalmaz. Barındırılan ödeme sayfasındaki rezervasyona dokunmaz (yukarıdaki webhook kuralı geçerli).
 
 ## 5. Sipariş kaydı (settlement)
 

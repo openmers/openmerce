@@ -55,7 +55,7 @@ Ortak: **Svelte 5 + Tailwind CSS 4 + shadcn-svelte + nanostores**. Vitrin **Astr
 - **API istemcisi:** oRPC client (tipler `packages/contract`'tan)
 - **Formlar:** Zod şemaları backend ile ortak; admin'de **Superforms** (SPA kipi, Zod v4 adaptörü)
 - **Adaptör:** vitrin `@astrojs/cloudflare` veya `@astrojs/node` (hedefe göre); admin statik çıktıdır, adaptör hedefe göre değişmez (aşağıdaki Admin notu)
-- **i18n:** vitrin: Astro i18n yönlendirme + Paraglide JS; admin: Lingui; varsayılan TR, EN
+- **i18n:** vitrin: Astro i18n yönlendirme + Paraglide JS; admin: Lingui; varsayılan EN, TR desteklenir
 - **Tablolar (admin):** shadcn-svelte Data Table
 
 ## Mobil (`apps/mobile`) — iOS + Android
@@ -90,8 +90,8 @@ Klasör yapısı: [../02-genel-mimari/04-monorepo-klasor-yapisi.md](../02-genel-
 |---|---|
 | Lint + format | Biome (TS/TSX), `svelte-check` |
 | Birim/entegrasyon testi | Vitest + `@cloudflare/vitest-pool-workers` (D1/R2 gerçek ortam testi) |
-| E2E | Playwright |
-| Mobil test | Maestro (E2E; iOS simülatör + Android emülatör, CI'da EAS Workflows) |
+| E2E (web) | `e2e` (agentic runner, `@e2e-dev/web`) |
+| Mobil test | `e2e` (`@e2e-dev/mobile`; iOS simülatör + Android emülatör, CI'da EAS Workflows) |
 | CI | GitHub Actions |
 | Mobil dağıtım | EAS Build + EAS Submit (TestFlight + Play Console) |
 | Deploy (CF) | Wrangler |

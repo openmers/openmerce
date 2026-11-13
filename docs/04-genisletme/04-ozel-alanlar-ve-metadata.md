@@ -23,7 +23,7 @@
 
 ## 2. Metadata
 
-- Anahtarlar uygulama kimliğiyle öneklenir (`acme.loyalty:points`); bir uygulama başkasının anahtarını yazamaz.
+- Anahtarlar uygulama kimliğiyle öneklenir (`acme.loyalty.points` (ayırıcı her yerde `.`)); bir uygulama başkasının anahtarını yazamaz.
 - Boyut sınırı: anahtar başına 2 KB, varlık başına 16 KB.
 - Uygulama büyük veya sorgulanacak veriyi kendi veritabanında tutar.
 

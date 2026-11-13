@@ -17,6 +17,14 @@ Medusa UI "Radix'in stilli, görüş sahibi hâli, shadcn'den esinli"; bizde zem
 - **`@openmers/ui` paketi (yeni, bu belge):** admin ve admin eklentileri için **sürümlü, düzenlenmeyen** ortak bileşen kümesi. Eklenti yazarı aynı görünümü paketten alır; admin yükseltilince eklentiler birlikte güncellenir.
 - **Vitrin teması `ui/` klasörü** ([04-tema-sistemi.md](04-tema-sistemi.md)): shadcn-svelte bileşenleri temaya **kopyalanır**, tema serbestçe düzenler. Bu pakete bağlı değildir. Admin görünümü ve vitrin görünümü karıştırılmaz.
 
+## 1.1 Zorunluluk: admin her zaman bu tasarım sistemiyle
+
+- **Klasik admin** (`apps/admin`) ve **AI ile oluşan admin** (agentic builder'ın ürettiği ekran, panel, form, eklenti arayüzü; [05-agentic-builder.md](05-agentic-builder.md)) yalnızca `@openmers/ui` bileşenlerini ve `theme.css` jetonlarını kullanır. İstisna yok.
+- Ajan arayüz üretirken bileşeni paketten alır: `Button`, `DataTable`, `Select`, `Alert`... Yeni ham HTML bileşeni, satır içi renk/gölge değeri, başka bir UI kütüphanesi ya da ayrı CSS yazmaz. Gereken bileşen yoksa önce pakete eklenir (inceleme + test), sonra kullanılır.
+- Klasik ve AI admin aynı bileşenleri paylaştığı için görünüm kip değiştirince bozulmaz (açık/koyu dahil).
+- Kapsam dışı: vitrin teması (`ui/` klasörü, shadcn-svelte kopyaları) bu kurala tabi değildir.
+- Denetim: admin ve builder şablonlarında `@openmers/ui` dışı UI kütüphanesi içe aktarımı ve ham renk değeri lint ile reddedilir (kural henüz yazılmadı, aşağıda "Doğrulanmamış").
+
 ## 2. Paket yapısı
 
 `packages/ui` (mevcut "shadcn-svelte bileşenleri" satırının yerine):
@@ -36,7 +44,7 @@ packages/ui/
 
 ## 2.1 Bileşen kataloğu: Medusa'nın 38 bileşeni bize göre
 
-Kaynak: `components/*.md` sayfalarının 38'i de okundu. **Sayfaların API tabloları boş geldi**; prop, varyant ve boyut adları yalnızca örnek kodlardan bilinir. Karar: shadcn-svelte'te karşılığı varsa onu sarmalarız (yeniden yazmayız); yoksa biz yazarız.
+Kaynak: `components/*.md` sayfalarının 38'i de okundu. **Sayfaların API tabloları boş geldi**; prop, varyant ve boyut adları yalnızca örnek kodlardan bilinir. Karar: shadcn-svelte'te karşılığı varsa onu sarmalarız (yeniden yazmayız); yoksa biz yazarız. Bileşenler Medusa'nın görünümünü bölüm 4'teki jetonlarla verir (Medusa değerleri, shadcn adları; MIT, kök `NOTICE`).
 
 | Durum | Bileşenler |
 |---|---|
@@ -71,12 +79,13 @@ Kaynak: `components/*.md` sayfalarının 38'i de okundu. **Sayfaların API tablo
 
 ## 4. Jetonlar
 
-`packages/tokens` (JSON) tek kaynaktır; `theme.css` ve mobil (NativeWind) ayarı buradan üretilir. Renk sayfası okundu (açık/koyu iki küme, her biri ~85 değişken). Medusa'nın **anlamsal adlandırma** mantığı alınır, adlar taklit edilmez:
+`packages/tokens/src/tokens.json` tek kaynaktır; `packages/ui/src/theme.css` (`pnpm --filter @openmers/tokens build:theme`) ve ileride mobil (NativeWind) ayarı buradan üretilir. Kaynak `@medusajs/ui-preset` 2.22.6 kodu okundu: 90 renk (açık/koyu), 23 gölge, 35 tipografi sınıfı, `radius-xs`, 2 keyframe, `transition-fg`.
 
-- Medusa grupları: `bg-*` (base, subtle, component, field, field-component, highlight, interactive, disabled, overlay, switch-off; çoğunda `-hover`/`-pressed`), `fg-*` (base, subtle, muted, disabled, on-color, on-inverted, error, interactive), `border-*` (base, strong, interactive, error, danger, menu-top/bot), `button-*` (neutral, inverted, danger, transparent; hover/pressed), `tag-*` (6 renk: neutral, red, green, blue, orange, purple; her biri bg, bg-hover, text, icon, border), `contrast-*` (koyu yüzey üzerinde), `alpha-250/400`.
-- **Bizde:** zemin shadcn jetonlarıdır (`--background`, `--foreground`, `--muted`, `--border`, `--primary`, `--destructive`, `--ring`, `--sidebar-*`; [06-admin-genisletme.md](06-admin-genisletme.md) bölüm 2.4). Üstüne yalnızca eksik olan iki katman eklenir: **durum/etiket rengi** (`--tag-{neutral,red,green,blue,orange,purple}-{bg,text,icon,border}`: StatusBadge, Badge, grafik) ve **anlamsal durum** (`--success`, `--warning`, `--info`, ve karşılık `-foreground`). Hover/pressed değerleri bileşenin içinde `color-mix` ile türetilir, ayrı jeton olmaz (Medusa'da jetonların çoğu bu türevlerdir).
-- Medusa'nın koyu kip değerleri alfa tabanlıdır (`rgba(255,255,255,0.08)` gibi kenarlık/alan); bizde de koyu kipte kenarlık ve alan **alfa** ile verilir, katı renk olmaz (arka plan değişince tutarlı kalır).
-- Renk **değerleri** kopyalanmaz: oklch ile kendi paletimiz; kontrast WCAG AA'yı her `tag-*` çifti (bg/text) için testle denetler. Lisans: `@medusajs/ui` `package.json` `"license": "MIT"` (develop dalı, v4.2.13) ve depo MIT (Enterprise materyalleri hariç); `@medusajs/ui-preset` ve npm sayfası okunamadı. MIT kopyalamaya izin verir ama biz değer/kod kopyalamıyoruz, bu yüzden risk yoktur.
+- **Karar (değişti):** Medusa'nın **tüm tasarım değerleri aynen alınır**. Lisans MIT (depo kökü "Copyright (c) 2021 Medusajs", `ui-preset/LICENSE` "Copyright (c) 2023 Medusajs"; `design-system` Enterprise materyallerinde yok). Lisans metni ve türetilen dosyalar kök `NOTICE` dosyasında.
+- **Adlar:** shadcn adları esastır (`--background`, `--foreground`, `--card`, `--popover`, `--muted`, `--muted-foreground`, `--accent`, `--border`, `--input`, `--primary`, `--primary-foreground`, `--secondary`, `--destructive`, `--ring`), değerleri Medusa'nın karşılık gelen jetonudur. `--sidebar-*` ve `*-foreground` takma adları başka jetona `var()` ile bağlanır. Shadcn karşılığı olmayan her jeton (hover/pressed türevleri, `tag-*`, `button-*`, `contrast-*`, `alpha-*`, gölgeler, tipografi) Medusa adını korur; değer kaybı yok. Tam tablo: `packages/tokens/src/mapping.md`.
+- **Tailwind 4:** `bg-background`, `text-muted-foreground`, `bg-tag-blue-bg`, `shadow-buttons-neutral`, `txt-compact-small`, `transition-fg`, `rounded-xs`, `animate-accordion-down`.
+- Hover/pressed türevleri Medusa'daki gibi ayrı jetondur (önceki `color-mix` kararı kaldırıldı). Koyu kip değerleri Medusa'nın alfa tabanlı değerleridir.
+- Önceki plandaki `--success`, `--warning`, `--info` Medusa'da yok; eklenmedi, gerekirse `tag-green/orange/blue` üzerinden ayrı karar.
 
 ## 5. Test ve kalite
 
@@ -92,7 +101,8 @@ Bileşen başına: görsel regresyon (açık/koyu), klavye ve ekran okuyucu rol�
 
 ## 6. Doğrulanmamış
 
-- Lisans: `@medusajs/ui` MIT doğrulandı; `ui-preset` doğrulanmadı (kod alınmıyor, etkisiz).
+- Bölüm 1.1'deki lint kuralı (admin/builder'da `@openmers/ui` dışı UI içe aktarımını ve ham renk değerini reddetme) tasarlanmadı.
+- Lisans: `@medusajs/ui` ve `ui-preset` MIT doğrulandı (yerel kaynak kodu, `LICENSE` dosyaları); değerler alındı, `NOTICE` var.
 - Medusa sayfalarının **API tabloları boş** geldi: varyant/boyut/prop adları, `StatusBadge` renk listesi, `Badge` renkleri, `ProgressTabs` durum değerleri okunamadı. Katkı/Figma sayfaları ve `@medusajs/icons`'un tam listesi okunmadı. `CommandBar` kısayollarının genel mi bar'a bağlı mı olduğu belirsiz (bizde seçim varken ve odak metin alanında değilken çalışır, karar bizim).
 - Medusa UI'nin React `^18.3.1` eşlemesi; bizde Svelte 5 olduğundan sürüm eşlemesi geçersiz.
 - Lucide'in 20 px varsayılanı, shadcn-svelte'in güncel ikon paketi seçimi.

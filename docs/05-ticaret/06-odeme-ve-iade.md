@@ -6,7 +6,7 @@ Vendure modeli: **ödeme yöntemi** = admin'de tanımlanan kayıt (`ad`, kanal, 
 
 | İşleyici | Tür | Kesinleşme |
 |---|---|---|
-| iyzico, PayTR, Stripe, **Polar** (MoR; ilk test işleyicisi) | barındırılan sayfa | doğrulanmış webhook |
+| Stripe, **Polar** (MoR; ilk test işleyicisi); Türkiye modülleri: iyzico, PayTR | barındırılan sayfa | doğrulanmış webhook |
 | Havale / EFT | bekleyen | admin onayı veya banka entegrasyonu |
 | Kapıda ödeme | bekleyen | sipariş onayı; tahsilat teslimatta |
 | Vadeli (B2B) | kredi | kredi kontrolü ([../06-b2c-b2b/05-kredi-ve-odeme-kosullari.md](../06-b2c-b2b/05-kredi-ve-odeme-kosullari.md)) |
@@ -34,6 +34,11 @@ interface PaymentHandler {
 - Webhook güvenilmez bir dürtmedir; `fetchStatus` varsa ödeme durumu sağlayıcıdan yeniden sorgulanır.
 - İade olayları **kümülatif ve mutlak** tutar taşır (delta değil); çift veya sırasız teslimat etkisizdir. Olay kimliği idempotency sınırıdır.
 - Olay kaydedilemediyse 5xx (sağlayıcı tekrar dener); kaydedildiyse 200.
+- İmza karşılaştırması sabit zamanlıdır (Web Crypto `verify` ya da ortak `constantTimeEqual`); düz `===` yok.
+- `paid` olayında **tutar ve para birimi** rezervasyon anlık görüntüsüyle karşılaştırılır; uyuşmazlık siparişi kapatmaz, inceleme kuyruğuna düşer. İmza tek başına yeterli sayılmaz.
+- Hata yanıtı iç hata iletisini taşımaz (genel kod + `requestId`); ayrıntı yalnız logda.
+- Webhook'u olmayan ya da geciken yöntemde ödeme dönüş sayfası `fetchStatus` ile durumu sağlayıcıdan sorgular; aynı `atomic()` yolundan geçtiği için webhook ile yarışması çift kayıt üretmez.
+- Kurulu/etkin olmayan yöntemin webhook adresi 404 döner.
 
 ## 4. Kayıtlar
 
@@ -50,6 +55,13 @@ Siparişin ödeme durumu bu kayıtlardan **türetilir** ([07-siparis.md](07-sipa
 - **Admin'den:** `refund` çağrılır, başarıysa kaydedilir. İşleyici desteklemiyorsa düğme gösterilmez.
 - **Sağlayıcı panelinden:** webhook ile kümülatif tutar olarak senkronize edilir, kısmi iadeler dahil.
 - **Elle kayıt:** havale ile geri ödeme gibi durumlarda sağlayıcıya dokunmadan işaretlenir.
+
+İade defteri değişmezleri (Minshop incelemesinden, 2026-11-13):
+- Her `refunds` satırı **delta** tutar taşır; ödeme başına iki toplam ayrı tutulur: `provider_refunded` (sağlayıcı olaylarından MUTLAK, tekrar/sırasız etkisiz) ve `external_refunded` (elle kayıt, EKLEMELİ). Ödemenin toplam iadesi ikisinin toplamıdır ve `payments.amount`'u aşamaz; aşım veritabanı koşuluyla engellenir (`UPDATE ... WHERE provider_refunded + external_refunded + :yeni <= amount`), uygulama kontrolüyle değil. Aynı koşul yarışan iki yöneticiye karşı da korur.
+- Yönetici iadesi `idempotency_key` taşır (çift tıklama/yeniden gönderim tek iade); sağlayıcıya da aynı anahtar iletilir. Anahtar `refunds`'ta benzersizdir.
+- `(provider, provider_refund_id)` ve `(payment_id, provider_event_id)` benzersizdir.
+- Sağlayıcı iade olayı ödemeyle henüz eşleşemiyorsa (olay ödeme kaydından önce geldi) atılmaz: 5xx dönülür, sağlayıcı yeniden dener (ayrı bekleme tablosu açılmaz); belirli sayıda denemeden sonra hâlâ eşleşmiyorsa olay admin inceleme kuyruğuna düşer. Çelişen olay (ör. tutar toplamı aşıyor) aynı kuyruğa düşer.
+- İptal (ters kayıt) `reverses_refund_id` ile bağlanır ve bir iade yalnız bir kez iptal edilir (benzersiz).
 
 **Sonucu belirsiz iade yeniden denenmez.** Sağlayıcı çağrısı zaman aşımına uğrarsa iade `unknown` kalır; körlemesine tekrar çift iade riskidir. Uzlaştırma görevi gerçek durumu sorgular, çözemezse admin'e düşer.
 

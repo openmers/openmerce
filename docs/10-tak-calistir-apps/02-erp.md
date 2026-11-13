@@ -145,7 +145,7 @@ Bu bölümün doğruluğu **yarış testiyle** kanıtlanmalıdır (bölüm 12). 
 Gönderim sırası: önce müşteri (cari) eşlenir/oluşturulur, sonra sipariş. Cari eşleşmesi vergi numarası, yoksa e-posta ile; belirsizse sipariş yine gider ama "misafir cari"ye bağlanır ve admin'e bildirilir.
 
 ### 7.2 Müşteri
-Yeni müşteri veya fatura bilgisi güncellemesinde, ayardaki kurala göre cari oluşturulur. Türkiye için vergi dairesi, vergi no / TC kimlik, e-fatura mükellefiyeti alanları müşteri şemasında zaten gerekli (bölüm 13 e-fatura).
+Yeni müşteri veya fatura bilgisi güncellemesinde, ayardaki kurala göre cari oluşturulur. Çekirdek müşteri şeması `tax_id` taşır; Türkiye için vergi dairesi, TC kimlik, e-fatura mükellefiyeti alanları e-fatura built-in app'inin özel alanlarıdır (bölüm 13 e-fatura).
 
 ### 7.3 İade ve iptal
 `refund.created` ve `order.cancelled` ERP'ye iade/iptal belgesi olarak gider; aynı idempotency kuralı (`ref_...` referansı).

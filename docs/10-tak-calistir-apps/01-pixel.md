@@ -193,7 +193,7 @@ packages/plugins/pixel/
 - Yarış: aynı sipariş webhook'u iki kez → platformlara birer olay (aynı `event_id`).
 - Onay: kategori yokken ne tarayıcıdan ne sunucudan o platforma olay çıkar; başka platform etkilenmez.
 - Atıf: tarayıcı kapalı simülasyonunda `Purchase`, rezervasyondaki tıklama kimlikleriyle gider.
-- E2E (Playwright): sepete ekle → ödeme → sipariş; sahte platform uçlarına gelen olaylar ve `event_id` eşleşmesi.
+- E2E (`e2e`): sepete ekle → ödeme → sipariş; sahte platform uçlarına gelen olaylar ve `event_id` eşleşmesi.
 - Sandbox: piksel betiği mağaza DOM'una ve çerezlerine erişemez.
 - Gerçek doğrulama: Meta Events Manager, GA4 DebugView, TikTok Events Manager'da test kodlarıyla elle kontrol (otomatikleştirilemez).
 

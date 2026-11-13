@@ -24,7 +24,7 @@
 | Tablo | İçerik |
 |---|---|
 | `customers` | `public_id`, `email`, `email_normalized` (küçük harf, kırpılmış; **benzersiz**), `email_verified_at`, `first_name`, `last_name`, `company_name` (yalnızca görünen metin; B2B şirketi değil), `phone` (E.164), `locale`, `user_id?` (boşsa hesapsız), `source` (`checkout · register · admin · import · marketplace`), `state` (`active · disabled · anonymized`), `default_shipping_address_id?`, `default_billing_address_id?`, `custom_fields`, `metadata`, `private_metadata`, `created_by?` (yönetici), `version`, zaman damgaları |
-| `addresses` | `customer_id`, `label`, ad, firma, il/ilçe/mahalle/adres satırları, posta kodu, ülke, telefon; fatura alanları: vergi dairesi, vergi no / TC kimlik, e-fatura mükellefiyeti ([../09-built-in-apps/01-e-fatura.md](../09-built-in-apps/01-e-fatura.md)) |
+| `addresses` | `customer_id`, `label`, ad, firma, `address_line1`, `address_line2`, `city`, `region` (eyalet/il), `district?` (ilçe vb.), posta kodu, ülke, telefon; fatura alanları: `tax_id` (KDV/VAT numarası), `tax_id_type`; ülkeye özgü alanlar (Türkiye: vergi dairesi, TC kimlik, e-fatura mükellefiyeti) çekirdek şemada değil, ilgili built-in app'in `custom_fields` alanındadır ([../09-built-in-apps/01-e-fatura.md](../09-built-in-apps/01-e-fatura.md)) |
 | `customer_stats` | Müşteri başına tek satır: `orders_count`, `paid_orders_count`, `first_order_at`, `last_order_at`, `last_seen_at` |
 | `customer_spend` | `(customer_id, currency)`: `total_paid`, `total_refunded` (para birimi başına; kur dönüşümü yok) |
 | `customer_tags` | `(customer_id, tag)`; yöneticinin serbest etiketleri |
@@ -52,7 +52,7 @@ Kimlik doğrulama Better Auth'tadır ve ayrıdır ([../03-cekirdek/08-kimlik-dog
 ## 4. Adres defteri
 
 - En çok 20 adres. Ekleme/silme `version` kontrollü; varsayılan adres silinirse varsayılan alan temizlenir (otomatik başkasını seçmez).
-- Adres doğrulaması çekirdekte yalnızca biçimdir (zorunlu alanlar, posta kodu deseni, telefon E.164). Türkiye il/ilçe/mahalle listesi veri olarak gelir (tohum veri); ülke başına adres şeması `Zod` ile tanımlıdır.
+- Adres doğrulaması çekirdekte yalnızca biçimdir (zorunlu alanlar, posta kodu deseni, telefon E.164). Ülke bölge listeleri (ör. Türkiye il/ilçe/mahalle) ilgili ülke paketinin tohum verisidir, çekirdek şemaya sütun eklemez; ülke başına adres şeması `Zod` ile tanımlıdır.
 - Fatura alanları (vergi no/TC) hassas veridir: yalnızca sahibi, `customers:read_pii` izinli yönetici ve fatura akışı görür; günlüğe ve ajan araçlarına maskeli gider.
 - Sipariş adresi her zaman **anlık görüntüdür**; adres defterindeki değişiklik eski siparişi etkilemez.
 
@@ -80,7 +80,7 @@ type Cond =
   | { field: 'consent'; channel: string; purpose: string; value: 'granted' | 'withdrawn' }
 ```
 
-Örnekler: **VIP** = `total_paid(TRY) >= 10000 ve orders_count >= 5`; **Uykuda** = `last_order_at older_than_days 180 ve orders_count >= 1`; **Yeni** = `created_at within_days 30`.
+Örnekler: **VIP** = `total_paid(USD) >= 1000 ve orders_count >= 5`; **Uykuda** = `last_order_at older_than_days 180 ve orders_count >= 1`; **Yeni** = `created_at within_days 30`.
 
 **Değerlendirme (tek uygulama):** kural, JSON'dan **tek bir SQL koşuluna** derlenir (`customers ⋈ customer_stats ⋈ customer_spend`). Aynı derleyici üç yerde kullanılır: (a) bir müşteri için "üyesi mi" kontrolü (anahtar araması + koşul), (b) grubun üyelerini toplu yeniden hesaplama, (c) admin'de "bu kural kaç kişiyi yakalar" önizlemesi. İkinci bir bellek içi değerlendirici **yoktur** (davranış kayması olmasın).
 

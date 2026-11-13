@@ -64,7 +64,7 @@ Belirtiye göre, nedene göre değil. Varsayılan kurallar (eşikler ayarlanır)
 | Uzlaştırma, webhook'un kaçırdığı sipariş buldu | herhangi (bilgi) |
 | Belirsiz iade veya stok istisnası | herhangi |
 | Zamanlanmış görev çalışmadı | 2 dönem |
-| Fatura süresi (7 gün) geçen sipariş | herhangi |
+| Fatura süresi (`legal_policy` ayarı) geçen sipariş | herhangi |
 | Litestream gecikmesi | > 5 dakika |
 | p95 katalog API süresi | hedefin 2 katı, 10 dakika |
 

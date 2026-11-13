@@ -81,7 +81,7 @@ D1'de ve SQLite'ta yazmalar tek sıradan geçer. Koşullu rezervasyon aşırı s
 
 **Cloudflare:** okumalar için D1 okuma kopyaları (Sessions API) kullanılabilir; yazmadan hemen sonraki okuma tutarlılığı için oturum yer imi taşınır. *Bu özelliğin güncel durumu ve sınırları belgeden doğrulanmadı.* Smart Placement ile Worker veritabanına yakın çalıştırılır.
 
-**Her ikisi:** görsel boyutları yüklemede üretilir; istek anında dönüştürme yok.
+**Her ikisi:** görsel boyutları yüklemede üretilir; istek anında dönüştürme yok. Dönüştürme (WebP/boyut sınırı) başarısız olursa ya da kapalıysa orijinal saklanır ve yükleme bozulmaz; dönüştürme yalnız iyileştirmedir, yükleme koşulu değildir.
 
 ## 8. Ölçüm ve kapılar
 

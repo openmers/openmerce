@@ -36,4 +36,4 @@ Eski uygulama sürümleri sahada kalır; API sözleşmesi eklemelidir ([../03-ce
 
 ## 5. Test ve dağıtım
 
-Maestro E2E (iOS simülatör + Android emülatör); EAS Build + Submit.
+`e2e` mobil testleri (`@e2e-dev/mobile`; iOS simülatör + Android emülatör); EAS Build + Submit.

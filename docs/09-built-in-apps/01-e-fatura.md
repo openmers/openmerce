@@ -32,7 +32,7 @@ interface InvoiceProvider {
 
 - Alıcının mükellef olup olmadığı vergi numarasıyla sorgulanır (`lookupTaxpayer`). Sonuç müşteri/şirket kaydında önbelleklenir ve fatura kesiminden hemen önce yenilenir (mükellefiyet değişebilir).
 - Bireysel müşteride TC kimlik numarası yoksa, mevzuatın izin verdiği genel numara kullanılır; hangi durumda zorunlu olduğu eşiğe bağlıdır ve **ayar olarak** tutulur (koda gömülmez).
-- Checkout, kurumsal fatura seçilince vergi dairesi ve vergi numarası ister; biçim ve denetim hanesi çekirdekte doğrulanır.
+- Checkout, kurumsal fatura seçilince `tax_id` ister; vergi dairesi ve mükellefiyet gibi Türkiye'ye özgü alanları bu app kendi alanları olarak ekler ve doğrular. Çekirdek yalnız `tax_id` taşır. Türkiye'ye özgü biçim ve denetim hanesi doğrulaması da bu app'tedir; çekirdek yalnız genel doğrulama yapar.
 
 ## 3. Veri modeli
 

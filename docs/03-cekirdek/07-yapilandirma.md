@@ -14,7 +14,7 @@ Vendure'un `vendure-config.ts` dosyasının karşılığıdır; derleme zamanı 
 
 ```ts
 export default defineStore({
-  builtInApps: [iyzico(), resend(), parasut(), loyaltyApp()],
+  builtInApps: [stripe(), resend(), loyaltyApp()],
   strategies: {
     orderNumber: sequentialPerYear(),
     stockLocation: nearestLocation(),

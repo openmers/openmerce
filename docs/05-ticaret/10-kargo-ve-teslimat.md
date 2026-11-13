@@ -6,6 +6,9 @@ Vendure modeli: **kargo yöntemi** = admin'de tanımlanan kayıt (ad, kanal, bö
 
 - Varyantlar ağırlık ve ölçü taşır; sepet toplam ağırlığı ve desiyi hesaplar.
 - Yerleşik hesaplayıcılar: sabit ücret, ağırlık kademesi, desi, tutar üstü ücretsiz.
+- Ağırlık tamsayı gramdır (birim dönüşümü yalnız form sınırında). `null` = bilinmiyor, 0 değil; ağırlığa bağlı hesaplayıcı bilinmeyen ağırlıkta yedek ücrete düşer ya da yöntemi uygun saymaz (yöntem ayarı), sessizce 0 hesaplamaz.
+- Kademeler birikmez: toplam ağırlık tek kademeye düşer; son kademe sonluysa üstü hizmet dışıdır (hata değil, uygun olmayan yöntem).
+- Teslim biçimi (kargo/mağazadan teslim) etiket metninden çıkarılmaz, yöntemde veri olarak tutulur.
 - Kargo firması canlı fiyatı bir hesaplayıcı built-in app'idir; zaman aşımı ve yedek ücret zorunludur, sonuç sepet özeti anahtarıyla kısa süre önbelleklenir.
 - Uygulamalar `shipping:handle` izniyle senkron kanca üzerinden oran sağlayabilir.
 - Yöntemler ve bölgeler bellektedir; yerleşik hesaplayıcılarla kargo seçeneği listesi sorgu atmaz.

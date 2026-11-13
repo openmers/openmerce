@@ -22,7 +22,7 @@ Varyant bir vergi kategorisi taşır. Tümü bellekte durur.
 ## 3. B2B ve muafiyet
 
 - Müşteri grubu veya şirket başına oran tanımlanabilir (`customer_group`): ihraç kayıtlı, muaf kurum.
-- Şirket kaydı vergi dairesi ve vergi numarası taşır; muafiyet belge ve geçerlilik tarihiyle saklanır.
+- Şirket kaydı vergi numarası (`tax_id`) taşır; ülkeye özgü alanlar (ör. Türkiye vergi dairesi) ilgili modülün özel alanıdır; muafiyet belge ve geçerlilik tarihiyle saklanır.
 - AB içi ters yükleme (reverse charge) `taxLine` stratejisiyle eklenir; çekirdekte yoktur.
 
 ## 4. Türkiye

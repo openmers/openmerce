@@ -92,3 +92,20 @@ Hiçbiri kod değil, tüm belgeler tasarımdır. Testler (her belgenin "Test" b�
 - Cayma ve fatura süresi (2026-11-12): ilme.av.tr makalesi okundu (hukuk bürosu yorumu, 30 Eylül 2026; mevzuat metni değil) → `10-kargo-ve-teslimat.md` bölüm 3'e cayma pencereleri, istisna bayrağı, iade taşıyıcısı ve geri ödeme kuralları eklendi. Doğrulanmayanlar: makalenin Danıştay'ın 6 Mayıs 2026 iptal kararı iddiası, md. 12/5 iade masrafı hükmünün güncel hali, çok teslimatlı sipariş cayma başlangıcı, güncel konsolide md. 15. Fatura 7 gün kuralı kullanıcı bildirimine dayanır ("satış ve ödemenin gerçekleştiği tarihten itibaren"); başlangıç olayının (satış/ödeme mi, teslim mi) mevzuat karşılığı, iade faturasının süresi ve e-arşiv/e-fatura farkı doğrulanmadı; `invoice.deadline_basis` ayarı bu belirsizlik için eklendi. Şema belgelerine `returns.kind`, `fulfillments.delivered_at`, `invoices.due_at`, `withdrawal_exempt` henüz katalog/veri listelerinde ayrıca yazılmadı.
 
 - Hukuk ilkesi (2026-11-12): cayma ve fatura süresi sayıları koda gömülmez, `legal_policy` ayarında örnek varsayılan olarak durur (`policy-tr` hazır ayarı), admin düzenler, siparişe ilke sürümü yazılır. Önceki "doğrulanmadı" maddeleri bekliyor (kullanıcı: sonra bakılacak). `legal_policy` şeması ve ayar belgesine (`03-cekirdek/07-yapilandirma.md`) eklenmesi yapılmadı.
+
+- UI jetonları (2026-11-12): Medusa `ui-preset` 2.22.6 değerlerinin tamamı (90 renk açık/koyu, 23 gölge, 35 tipografi, radius, animasyon) `packages/tokens/src/tokens.json`'a alındı, `packages/ui/src/theme.css` üretildi, kök `NOTICE` yazıldı (MIT, iki telif satırı); "renk değerleri kopyalanmaz" kararı kaldırıldı (`07-ui-kutuphanesi.md` bölüm 4). Doğrulanmayanlar: theme.css gerçek Tailwind 4 derlemesinde denenmedi (depoda Tailwind yok); shadcn ad eşlemesinin bir kısmı yoruma dayanır (`--background` = Medusa `bg-subtle`, `--card` = `bg-base`, `--input` = `border-strong`, `--muted` = `bg-disabled`), bileşen yazılınca gözden geçirilmeli; `tailwindcss-animate` sınıfları (animate-in/out vb.) ve `tw-animate-css` alınmadı; `ENTERPRISE-LICENSE.md` satır 80 sonrası okunmadı.
+
+## Karar (2026-11-13): global varsayılan ve tema konumu
+
+- Varsayılan dil EN (TR desteklenir). Çekirdek müşteri/şirket şeması yalnız `tax_id` + `tax_id_type` taşır; vergi dairesi, TC kimlik, e-fatura mükellefiyeti Türkiye modülünün özel alanıdır.
+- Varsayılan built-in app'ler global (Stripe, Resend, Meilisearch); iyzico, PayTR, Yurtiçi/Aras/MNG, Paraşüt, Netgsm, İYS, pazaryeri Türkiye ek modülleri.
+- Tema konumu: `apps/storefront/src/themes/<tema>/` (`packages/themes` kaldırıldı).
+- Karar: ülkeye özgü vergi numarası doğrulaması modülde (e-fatura app), çekirdekte değil.
+- Kapatıldı (2026-11-13): `atomic(stmts)` batch sözleşmesi (skill örneği düzeltildi); izin adları `06-guvenlik-ve-yetki.md` listesinde (`quotes:offer`, `approvals:decide`); metadata ayırıcısı `.`; kredi sütunu `credit_limit`.
+
+## Minshop incelemesi (2026-11-13)
+
+`/home/fuat/Downloads/minshop-main` yalnız okundu (çalıştırılmadı). Bizde zaten olanlar: koşullu tek batch rezervasyon, `payment_pending`, webhook'la bırakma, tembel+cron süpürme, `settlement_token`, ön hesaplanmış öneriler, form POST + ada, izin listeli önbellek.
+Alınanlar: iade defteri değişmezleri ve DB düzeyinde aşım koşulu (`06-odeme-ve-iade.md` bölüm 5), webhook'ta sabit zamanlı imza + tutar doğrulama + iç hata sızdırmama + dönüş sayfasında `fetchStatus`, form tipli POST için Origin/CSRF, ağırlık `null`/tamsayı gram/birikmeyen kademe, görsel dönüştürme başarısızsa orijinal, uzak-güvenli migration testi, gerçek motorda yarış testi.
+Alınmayanlar: Minshop'un yalnız üç güvenlik başlığı (biz tam set), tek `currency`/tek mağaza, 340 satırlık `recordPaidOrder` yapısı, KEK'in tek SHA-256 ile türetilmesi (bizde KEK döndürme/HKDF açık soru). Okunmadı: `checkout.ts` çoğu, geç ödeme/stok istisna dalı, MCP araçları.
+Ajan ticareti kararları (ödeme bağlantısı 30 dk + 5 dk tolerans, çekirdek `source` sütunu, MCP v1 yalnız herkese açık anahtar): `07-istemciler/08-ajan-ticareti.md` "Kararlar". Doğrulanamayan: Shopify checkout bağlantı ömrü, Stripe ACP ayrıntıları, Vendure ajan MCP'si.

@@ -19,7 +19,7 @@ Neden ayrı: yönetici oturumu çalınması mağazanın tamamıdır; müşteri t
 
 ## 2. Müşteri girişi
 
-- **Yöntemler:** e-posta + parola, e-posta ile tek kullanımlık kod (parolasız), sosyal giriş (Google, Apple; kanal başına açılır). Telefon + SMS kodu Türkiye için isteğe bağlı eklentidir (SMS portu üzerinden).
+- **Yöntemler:** e-posta + parola, e-posta ile tek kullanımlık kod (parolasız), sosyal giriş (Google, Apple; kanal başına açılır). Telefon + SMS kodu isteğe bağlı eklentidir (ör. Türkiye'de yaygın) (SMS portu üzerinden).
 - **Parola:** Workers'ta çalışan bir özet algoritması gerekir (Web Crypto veya saf JS/WASM). *Better Auth'un varsayılanının Workers CPU sınırına uyup uymadığı ölçülmelidir.*
 - **E-posta doğrulama** kanal ayarıdır; doğrulanmamış hesap sipariş verebilir ama hesap sayfasına giremez (misafir siparişle aynı güven düzeyi).
 - **Parola sıfırlama:** tek kullanımlık, kısa ömürlü token; yalnızca özeti saklanır; e-posta outbox'tan gider. Yanıt, hesabın var olup olmadığını belli etmez.

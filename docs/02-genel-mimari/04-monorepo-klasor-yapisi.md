@@ -42,8 +42,6 @@ openmers/
 │   ├── plugins/                  # dışarıda çalışan, depoda gelen tak-çalıştır app'ler (plugin)
 │   │   ├── pixel/
 │   │   └── erp/
-│   └── themes/
-│       └── default/          # varsayılan tema (B2C + B2B), sözleşmenin referansı
 ├── integration-tests/        # api/ · core/ · race/ · contract/ · helpers/ ([03-test.md](../08-isletme/03-test.md))
 ├── store.config.ts           # bu mağazanın modülleri (built-in app), stratejileri, özel alanları
 └── docs/

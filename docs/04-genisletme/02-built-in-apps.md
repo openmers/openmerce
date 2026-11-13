@@ -78,7 +78,7 @@ Varsayılan etkinleştirme: çekirdek hep açık; built-in app ve uygulama **se�
 
 ## 4. Resmî built-in app'ler ve etkinleştirme
 
-Resmî built-in app'ler `modules/` altında, çekirdekle aynı sürümde **ayrı paketlerdir** (`@openmers/builtin-<ad>`): ödeme (iyzico, PayTR, Stripe, Polar), kargo (Yurtiçi, Aras, MNG), e-fatura (Paraşüt), e-posta (Resend), SMS (Netgsm), arama (Meilisearch), abonelik, pazaryeri entegrasyonu. Her biri ilgili sözleşme testini geçer.
+Resmî built-in app'ler `modules/` altında, çekirdekle aynı sürümde **ayrı paketlerdir** (`@openmers/builtin-<ad>`): varsayılan (global): ödeme (Stripe, Polar), e-posta (Resend), arama (Meilisearch), abonelik. Türkiye ek modülleri: ödeme (iyzico, PayTR), kargo (Yurtiçi, Aras, MNG), e-fatura (Paraşüt), SMS (Netgsm), İYS, pazaryeri entegrasyonu. Türkiye modülleri kurulmadan çekirdek çalışır. Her biri ilgili sözleşme testini geçer.
 
 **Çekirdek hep yüklüdür** (katalog, fiyat, stok, sepet/checkout, ödeme, sipariş, müşteriler, promosyon, vergi, kargo, bildirim); kapatılamaz. Medusa'da commerce modülleri de hepsi hazır gelir; Vendure'da ise çekirdek dışı her şey `plugins` dizisine eklenen opt-in pakettir. OpenMers ikisini birleştirir: çekirdek sabit, geri kalan Vendure gibi seçmelidir. Karşılaştırma belgelerde doğrulanmış olanla sınırlıdır: Vendure plugin kaldırılınca tabloların ne olduğunu belgelemiyor, biz aşağıda kendimiz tanımlıyoruz.
 

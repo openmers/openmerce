@@ -52,6 +52,7 @@ Mobil uygulama v1'de yalnızca klasik ekranları ve "ajana sor" sohbetini (çal�
 - Tercih kullanıcı başınadır (`admin_users.ui_mode`); mağaza sahibi builder'ı kapatabilir (ayar). LLM sağlayıcısı yapılandırılmamışsa builder görünmez, klasik açılır.
 - **Klasikten builder'a:** her kayıt sayfasında "Ajana sor" düğmesi; builder'ı o kayıt ekli olarak açar (`@ürün:prd_…`).
 - **Builder'dan klasiğe:** her araç kartı ve çıktı, klasik paneldeki kaydına bağlantıdır. Toplu düzenleme, tablolar, sipariş operasyonu klasikte yapılır; builder bunları yeniden yazmaz.
+- **Tasarım sistemi:** ajanın ürettiği her admin arayüzü yalnızca `@openmers/ui` bileşenleri ve jetonlarıyla yazılır ([07-ui-kutuphanesi.md](07-ui-kutuphanesi.md) 1.1); klasik admin ile aynı görünüm garanti edilir.
 - Rota alanı ortaktır: `/admin/...` klasik ekranlar, `/admin/builder/<oturum>` builder. Klasik ekranlar builder'ın Önizleme → Admin sekmesinde de aynı bileşenlerle açılır; ikinci bir admin yazılmaz.
 
 ## 4. Araçlar
@@ -132,7 +133,7 @@ Tema sistemi zaten GitHub'a dayalıdır ([04-tema-sistemi.md](04-tema-sistemi.md
 1. **Depo yoksa:** builder "Temayı özelleştir" der → kullanıcı varsayılan temanın GitHub şablon deposundan kendi deposunu oluşturur (GitHub'ın "Use this template" sayfası; OpenMers depo oluşturma izni istemez) → GitHub App'i o depoya kurar. Depo bağlanana kadar ajan **kod yazmaz**, yalnızca veri, bölüm ve tema ayarı (`theme.json` ayar şeması üzerinden) değiştirir. Çoğu görsel istek ("ana sayfaya kampanya bandı koy", "renkleri koyulaştır") bu düzeyde biter.
 2. **Ajan dalı:** her oturum `openmers/agent/<oturum>` dalında çalışır. Bir turdaki dosya değişiklikleri **tek commit** olur (commit mesajı = tur özeti). ⚠️ Çok dosyalı tek commit için Git Data API (blob → tree → commit → ref güncelleme) kullanılması planlanıyor; uçlar doğrulanmadı.
 3. **Derleme:** push, mevcut derleme hattını tetikler (statik denetim, `--ignore-scripts`, tip denetimi, duman testi). Derleme hatası ajana **araç sonucu** olarak döner; ajan düzeltir. Statik denetimin izin listesi dışındaki bağımlılık eklemesi derlemeyi düşürür; ajan bunu aşamaz.
-4. **Önizleme:** ajan dalının derlemesi taslak tema olarak açılır (Cloudflare'de Worker sürümü önizleme adresi, self-host'ta `packages/themes/<build>/`); Önizleme sekmesi onu gösterir.
+4. **Önizleme:** ajan dalının derlemesi taslak tema olarak açılır (Cloudflare'de Worker sürümü önizleme adresi, self-host'ta `apps/storefront/src/themes/<build>/`); Önizleme sekmesi onu gösterir.
 5. **Yayınla:** kullanıcı onaylayınca bağlı dal ajan dalının başına ileri sarılır (fast-forward; değilse birleştirme gerekir ve kullanıcıya "dal ayrıştı" denir) → normal push → derleme → mevcut "Güncelle/Yayınla" akışı. ⚠️ Dal güncelleme ucu doğrulanmadı.
 
 **GitHub App izin değişikliği:** kod yazma için App'e **Contents: write** eklenir; tema belgesindeki "kod yazma yok" kuralı builder için gevşer. Kurulum token'ı yine işlem başına üretilir ve `permissions` ile daraltılır: derleme `contents: read`, ajan commit'i `contents: write`. Ajan yalnızca `openmers/agent/*` dallarına yazar; bağlı dal yalnızca "Yayınla" ile güncellenir (bu kural sunucu kodundadır, model değiştiremez).

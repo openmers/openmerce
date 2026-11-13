@@ -6,17 +6,17 @@
 
 ## 2. Kredi
 
-**`company_credit`**: `company_id`, `currency`, `limit`, `used`, `version`.
+**`company_credit`**: `company_id`, `currency`, `credit_limit`, `used`, `erp_used?` (yalnız ERP kipinde, ERP yazar), `version`. Her sütunun tek yazıcısı vardır: `used` mağaza, `erp_used` ERP.
 **`credit_ledger`**: eklemeli kayıt: `order · payment · refund · adjustment`, tutar, referans.
 
-Kullanılabilir = `limit − used`.
+Kullanılabilir = `credit_limit − COALESCE(erp_used, 0) − used`.
 
 Vadeli siparişte settlement `atomic()`'ine bir koşullu ifade eklenir:
 
 ```sql
 UPDATE company_credit SET used = used + :total
  WHERE company_id = :c AND currency = :cur
-   AND used + :total <= limit
+   AND COALESCE(erp_used, 0) + used + :total <= credit_limit
    AND EXISTS (SELECT 1 FROM orders WHERE id = :o AND settlement_token = :t)
 ```
 
@@ -37,7 +37,7 @@ Sipariş ekleme ifadesi de kredinin yeterli olduğu koşuluna bağlıdır; kredi
 | Kip | Limit ve bakiye | Not |
 |---|---|---|
 | Mağaza sahibi | Mağazada yönetilir | ERP'si olmayan veya basit kurulum |
-| ERP sahibi | ERP uygulaması `company_credit.limit` ve `used` değerlerini senkronla yazar | Mağaza kendi açık siparişlerini `used` üstüne ekler; ERP onayladıkça düşer (stoktaki çift düşme sorununun aynısı, aynı çözüm) |
+| ERP sahibi | ERP uygulaması `company_credit.credit_limit` ve `erp_used` değerlerini senkronla yazar | Mağaza yalnız `used`'a kendi açık (ERP'nin henüz görmediği) siparişlerini yazar; ERP onayladıkça `used`'dan düşer (stoktaki çift düşme sorununun aynısı, aynı çözüm) |
 
 Checkout'ta ERP'ye canlı kredi sorgusu **atılmaz**; senkron değer + mağazanın kendi taahhütleri kullanılır.
 

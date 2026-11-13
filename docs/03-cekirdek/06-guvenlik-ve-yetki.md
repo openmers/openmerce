@@ -4,8 +4,16 @@
 - **Admin kapalı başlar.** Hiçbir şey yapılandırılmamışsa admin engellidir. İlk kurulumda yalnızca kurulum sihirbazı açıktır; parola belirlenince kapı kilitlenir. Koruma hem `/admin` arayüzünü hem admin API prosedürlerini kapsar.
 - **Sır kasası.** Sağlayıcı anahtarları (ödeme, e-posta, SMS, kargo) admin panelinden girilir, veritabanında AES-256-GCM ile şifreli durur. Anahtar şifreleme anahtarı (KEK) yalnızca platformun secret deposundadır; veritabanı sızıntısı tek başına yalnızca şifreli metin verir. Değerler arayüze geri gösterilmez. KEK yoksa kasa uykudadır ve mağaza demo modunda çalışır.
 - **İstek sınırlama.** Giriş, checkout ve arama için ayrı bütçeler; anahtar = mağaza + rota + istemci. Webhook'lar hariç (imzalıdır, sağlayıcı yeniden dener). Sınırlayıcı çökerse istek geçer, hata loglanır.
-- **Güvenlik başlıkları** her yanıta: CSP, HSTS, `X-Content-Type-Options: nosniff`, çerçeveleme koruması.
-- **CSRF:** durum değiştiren isteklerde `Origin` kontrolü.
+- **Güvenlik başlıkları** her yanıta, tek saf fonksiyonla (`core/http/securityHeaders.ts`, `surface` = `shop | admin | api`):
+  - `Strict-Transport-Security: max-age=31536000; includeSubDomains` (yalnız HTTPS yanıtında).
+  - `X-Content-Type-Options: nosniff`.
+  - `Referrer-Policy: strict-origin-when-cross-origin`.
+  - `Permissions-Policy`: kamera, mikrofon, konum, ödeme kapalı (`()`); ödeme istemcisi gerekiyorsa yalnız onun kökeni açılır.
+  - `X-Frame-Options: DENY` (eski tarayıcı için) ve CSP `frame-ancestors 'none'`. Admin iframe ile gömülen app'ler bu kuralın dışındadır: app kendi sitesinde `frame-ancestors <admin kökeni>` verir.
+  - `Content-Security-Policy`, yüzey başına profil: **vitrin** `default-src 'self'`, görsel kaynağı kanal CDN'i, `script-src 'self'` + nonce, ödeme sağlayıcısı kökenleri `script-src`/`frame-src`/`connect-src`'e yalnız etkin yöntemde eklenir; **admin** aynı, ek olarak `frame-src` yalnız kurulu app kökenleri; **api** `default-src 'none'; frame-ancestors 'none'`.
+  - Hata yanıtları (4xx/5xx) dahil her yanıtta bulunur; ara katman en dış katmandır, hata yakalayıcıdan sonra da çalışır.
+  - Önce `Content-Security-Policy-Report-Only` ile yayınlanır, ihlal raporu loglanır, temizlenince zorlayıcıya geçilir.
+- **CSRF:** durum değiştiren isteklerde `Origin` kontrolü; eşleşmeyen form tipli (urlencoded, multipart, text/plain) POST 403. Tek istisna imzalı bearer URL'ler (`otk_…` ödeme/sipariş bağlantısı) ve imzalı webhook'lardır. Sepete ekle gibi JS'siz çalışan form POST'ları bu kuraldan geçer.
 - **Bot koruması:** giriş ve checkout'ta Turnstile (isteğe bağlı).
 - **İçerik sayfaları** `html: false` Markdown'dır; ham HTML kaçışlanır. Vitrin ve admin önizlemesi aynı sunucu tarafı `renderMarkdown()` fonksiyonunu kullanır.
 - **Yalnızca Web Crypto.** `node:crypto` yok (Workers'ta çalışmaz).
@@ -14,7 +22,7 @@
 
 Vendure modeli:
 
-- **İzin** = `<varlık>:<eylem>` (`orders:read`, `orders:write`, `products:delete`, `settings:write`, `companies:approve`, `quotes:offer` …). Built-in app'ler kendi izinlerini tanımlar.
+- **İzin** = `<varlık>:<eylem>` (`orders:read`, `orders:write`, `products:delete`, `settings:write`, `companies:approve`, `quotes:offer`, `approvals:decide` …). Built-in app'ler kendi izinlerini tanımlar.
 - **Rol** = izin kümesi. Roller **kanal başına** atanır: bir yönetici B2B kanalında sipariş yöneticisi, B2C kanalında yalnızca okuyucu olabilir.
 - `SuperAdmin` her şeyi yapar ve silinemez; kurulum sihirbazı ilk hesabı bu rolle açar.
 - Uygulama token'ları ve API anahtarları aynı izin sözlüğünü kullanır.

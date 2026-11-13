@@ -182,7 +182,7 @@ Derleme ortamı **yalıtılmıştır**: mağaza sırları, veritabanı ve iç a�
 ### 9.1 Self-host
 
 - **Derleyici:** sunucuda ayrı, yetkisiz bir alt süreç/konteyner. Kaynağı kurulum token'ıyla tarball olarak indirir.
-- **Çıktı:** `packages/themes/<build>/` dizini.
+- **Çıktı:** `apps/storefront/src/themes/<build>/` dizini.
 - **Yayınla:** `channel_themes` işaretçisini değiştirmek (tek koşullu güncelleme) + `shell` önbellek temizliği. Vitrin süreci yayındaki derlemeyi yükler.
 - **Önizleme:** imzalı, süreli `?theme_preview=<token>` → çerez; aynı süreç ilgili derlemeyi sunar.
 
@@ -244,7 +244,7 @@ Tema üçüncü taraf kodudur ve müşterinin tarayıcısında, ayrıca vitrin s
 
 ## 12. Varsayılan tema ve geliştirici deneyimi
 
-- **Varsayılan tema** depoda gelir (`packages/themes/default`), B2C + B2B şablonlarının tamamını içerir ve tema sözleşmesinin referans uygulamasıdır.
+- **Varsayılan tema** depoda gelir (`apps/storefront/src/themes/default`), B2C + B2B şablonlarının tamamını içerir ve tema sözleşmesinin referans uygulamasıdır.
 - `create-openmers-theme`: varsayılan temadan yeni tema iskeleti.
 - `openmers theme dev --store <adres>`: yerelde Astro geliştirme sunucusu, gerçek mağazanın Shop API'sine (veya tohum veriye) bağlı, anında yenileme.
 - `openmers theme check`: bölüm 9'daki statik denetim + tip denetimi, yerelde ve CI'da.

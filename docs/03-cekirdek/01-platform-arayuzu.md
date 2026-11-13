@@ -18,6 +18,8 @@
 
 ## 1. `atomic()` sözleşmesi
 
+Kural: `atomic(stmts)` hazır ifadeler dizisi alır (`db.batch()`); interaktif `atomic(async (tx) => ...)` biçimi D1'de yoktur ve kullanılmaz. Koşullu yazma `UPDATE ... WHERE` ile ifadenin içinde yapılır.
+
 - İfadeler sırayla ve tek birim olarak uygulanır; biri hata verirse hiçbiri kalmaz.
 - İfadeler **koşulludur**: sonraki ifade, öncekinin yazdığı satırın varlığına bağlanır (`WHERE EXISTS (...)`, `WHERE token = ?`). Böylece "oku, karar ver, yaz" gerekmez.
 - Dönüş değeri her ifadenin etkilediği satır sayısıdır; çağıran "kazandım mı" sorusunu buradan okur.

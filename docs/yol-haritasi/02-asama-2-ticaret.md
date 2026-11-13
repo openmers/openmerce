@@ -144,10 +144,10 @@
 - **Bağımlılık:** 14 (kanal varsayılan bölgesi), 15 (varyant vergi kategorisi), 7 (strateji kaydı); senkron kanca kısmı aşama 5 (genişletme).
 - **Yapılacaklar:**
   1. `±` `packages/db/src/schema/tax.ts`: `zones`, `zone_members`, `tax_categories`, `tax_rates`; migration; tohum yalnız tek "standart" kategori (pazara özgü oran yok). (2026-11-13: tablolar `tax-shipping.ts`, `0010_tax-shipping` + `channels` bölge sütunları; tohum kurulum sihirbazında (00-genel karar 11), yapılmadı.)
-  2. `-` `features/tax/registry/taxRegistry.ts`: tabloları belleğe yükler, değişince yeniler; sorgu `queries/loadTaxConfig.ts`.
-  3. `-` `features/tax/strategies/taxZone.ts` (saf) ve `taxLine.ts` (saf, varsayılan oran araması, müşteri grubu muafiyeti).
-  4. `-` `features/tax/calc/splitGrossNet.ts` (saf): dahil/hariç dönüşüm, satır düzeyi yuvarlama; e-fatura app'inin de kullanacağı tek yardımcı olarak `index.ts`'ten açılır.
-  5. `-` `features/tax/calc/allocateOrderDiscount.ts` (saf): sipariş indirimini satırlara oransal dağıtır (kalan kuruş kuralı tek yerde); promosyon da bunu kullanır.
+  2. `+` `features/tax/registry/taxRegistry.ts`: tabloları belleğe yükler, değişince yeniler; sorgu `queries/loadTaxConfig.ts`. (2026-11-13: kanal kayıt defteri kalıbı, `version` çağırandan; dört tablo tek `batch`.)
+  3. `+` `features/tax/strategies/taxZone.ts` (saf) ve `taxLine.ts` (saf, varsayılan oran araması, müşteri grubu muafiyeti). (2026-11-13: bölge en özel eşleşme (alt bölge > ülke), eşleşme yoksa kanal varsayılanı; grup oranı genel oranın yerine geçer, birden çok grupta en düşük.)
+  4. `+` `features/tax/calc/splitGrossNet.ts` (saf): dahil/hariç dönüşüm, satır düzeyi yuvarlama; e-fatura app'inin de kullanacağı tek yardımcı olarak `index.ts`'ten açılır.
+  5. `+` `features/tax/calc/allocateOrderDiscount.ts` (saf): sipariş indirimini satırlara oransal dağıtır (kalan kuruş kuralı tek yerde); promosyon da bunu kullanır. (2026-11-13: taban pay + artan kuruş kesri büyük olana, eşitlikte önceki satıra; indirim toplamı aşarsa kırpılır.)
   6. `-` `features/tax/hooks/externalTaxPort.ts`: senkron kanca portu + zaman aşımı yedeği (çağrı yalnız sepet/checkout).
   7. `-` `apps/api/src/admin/tax/*.ts` + `packages/contract/src/admin/tax.ts`: bölge/kategori/oran CRUD.
   8. `-` Türkiye KDV kategorileri için ayrı tohum dosyası `packages/db/seeds/tax-tr.ts` (yalnız TR kurulumunda çalıştırılır).
@@ -157,7 +157,7 @@
   - `taxZone.test.ts`, `taxLine.test.ts`: adres yokken kanal varsayılanı; grup muafiyeti.
   - `integration-tests/contract/__tests__/taxHook.test.ts`: kanca zaman aşımında yerel orana düşer.
 - **Bitti sayılır:** vergi hesabı bellekten, sepet hesabında ek sorgu yok; yuvarlama testleri yeşil; çekirdekte TR'ye özgü oran sabiti yok (grep ile).
-- **Açık sorular / riskler:** Muafiyet "belge ve geçerlilik tarihiyle" şirket kaydında; tablo B2B'de (aşama 4) tanımlı değil. AB ters yükleme ve dijital hizmette müşteri ülkesi KDV'si strateji ile, çekirdekte yok. Kalan kuruş dağıtım kuralı belgede yazmıyor; seçilen kural belgeye geri yazılmalı.
+- **Açık sorular / riskler:** Muafiyet "belge ve geçerlilik tarihiyle" şirket kaydında; tablo B2B'de (aşama 4) tanımlı değil. AB ters yükleme ve dijital hizmette müşteri ülkesi KDV'si strateji ile, çekirdekte yok. Kalan kuruş kuralı seçildi (`allocateOrderDiscount`: kesri büyük olana, eşitlikte önceki satıra) ve vergi yuvarlaması yarım yukarı; `09-vergi.md`'ye geri yazılmadı. Adres hiçbir bölgeye düşmezse kanal varsayılanına düşülür (belgede yok). `taxLine` birden çok oran dönebilir ama `splitGrossNet` toplam oranla çalışır; vergi satırı başına döküm madde 21'de.
 
 ---
 
@@ -172,20 +172,20 @@
   - `contract` fiyatlı satıra varsayılan promosyon uygulanmaz; indirim rozeti fiyat listesinden gelir.
 - **Bağımlılık:** 16 (satır fiyatı, `contract` türü), 18 (`allocateOrderDiscount`), 24 (grup koşulu için oturum `groupIds`), 7 (operasyon kaydı).
 - **Yapılacaklar:**
-  1. `±` `packages/db/src/schema/promotions.ts`: `promotions` (+ `used`), `promotion_usage`, `promotion_channels`; migration. (2026-11-13: `0012_promotions`, `promotions` + `promotion_usage`; `promotion_channels` katalogda tablo bölümü yazılmadığı için açılmadı.)
-  2. `-` `features/promotions/operations/conditions/*.ts`: yerleşik koşullar (en az tutar, ürün/koleksiyon içerir, müşteri grubu, şirket, `personalized`, ilk sipariş `requires`), her biri ayrı dosya, saf.
-  3. `-` `features/promotions/operations/actions/*.ts`: satır yüzde/tutar, sipariş indirimi, kargo indirimi; saf.
-  4. `-` `features/promotions/registry/compilePromotions.ts`: kanal başına bellekte derleme, değişince yenileme.
-  5. `-` `features/promotions/evaluate/applyPromotions.ts` (saf): tarih/kanal süzgeci, öncelik, `stackable`, `contract` satır atlama, etkisiz promosyonu işaretleme.
-  6. `-` `features/promotions/reserve/buildUsageStatements.ts`: rezervasyon `atomic()` için koşullu `used + 1` (yalnız etkiliyse) + `promotion_usage`; ters ifade bırakmada.
-  7. `-` `features/promotions/requires/collectRequirements.ts`: koşulların istediği verileri tek sorguya toplar (sepet verisi turunda).
+  1. `+` `packages/db/src/schema/promotions.ts`: `promotions` (+ `used`), `promotion_usage`, `promotion_channels`; migration. (2026-11-13: `0012_promotions`, `promotions` + `promotion_usage`; `promotion_channels` 0017_commerce-links ile açıldı.)
+  2. `+` `features/promotions/operations/conditions/*.ts`: yerleşik koşullar (en az tutar, ürün/koleksiyon içerir, müşteri grubu, şirket, `personalized`, ilk sipariş `requires`), her biri ayrı dosya, saf. (2026-11-13: `minAmount`, `containsProducts`, `customerGroup`, `company`, `personalized`, `firstOrder`; argümanlar Zod.)
+  3. `+` `features/promotions/operations/actions/*.ts`: satır yüzde/tutar, sipariş indirimi, kargo indirimi; saf. (2026-11-13: `linePercent`, `lineAmount`, `orderAmount`, `shippingPercent`; yüzde baz puan.)
+  4. `+` `features/promotions/registry/compilePromotions.ts`: kanal başına bellekte derleme, değişince yenileme. (2026-11-13: saf derleme + `queries/loadPromotions.ts` tek `batch`; sürüm/yenileme sarmalayıcısı yok, madde 21 ile.)
+  5. `+` `features/promotions/evaluate/applyPromotions.ts` (saf): tarih/kanal süzgeci, öncelik, `stackable`, `contract` satır atlama, etkisiz promosyonu işaretleme. (2026-11-13: eylemler önceki promosyonlardan kalan tutar üstünde; etkisiz promosyon `stackable` kesmesi yapmaz.)
+  6. `+` `features/promotions/reserve/buildUsageStatements.ts`: rezervasyon `atomic()` için koşullu `used + 1` (yalnız etkiliyse) + `promotion_usage`; ters ifade bırakmada. (2026-11-13: önce `INSERT promotion_usage ... WHERE G`, sonra kullanım satırı olan promosyonda `used + 1`; `G` bütün promosyonlar için ya hep ya hiç, müşteri başına sınır dahil. `buildReleaseUsageStatements` siparişe dönmemiş satırlar için.)
+  7. `+` `features/promotions/requires/collectRequirements.ts`: koşulların istediği verileri tek sorguya toplar (sepet verisi turunda).
   8. `-` `apps/api/src/admin/promotions/*.ts` + admin formu operasyon şemasından (`@openmers/ui`).
 - **Testler:**
   - `applyPromotions.test.ts`: `stackable` kesmesi, öncelik, `contract` satırı atlama, 0 indirimli promosyon "etkisiz".
   - `integration-tests/race/__tests__/promotions/lastCoupon.test.ts`: sınırlı kuponun son kullanımına iki alıcı, tek kazanan.
   - `integration-tests/core/__tests__/promotions/usage.test.ts`: etkisiz promosyon sayacı tüketmez; bırakılan rezervasyon sayacı geri alır.
 - **Bitti sayılır:** yarış testi tek kazanan verir; koşul içinde sorgu yok (koşul dosyaları `db` import etmez, lint/grep); sepet hesabında promosyon için ek tur yok.
-- **Açık sorular / riskler:** `per_customer_limit` doğruluğu rezervasyonda nasıl sağlanır belgede yazmıyor (yalnız toplam `usage_limit` için ifade var). Misafir müşteride müşteri başına sınırın anahtarı (e-posta mı `customer_id` mi) belirsiz. Hediye kartı ve tek kullanımlık kod üretimi kapsam dışı.
+- **Açık sorular / riskler:** `per_customer_limit`: `promotion_usage` koşullu INSERT'inin `G`'sinde `count(customer_id) < per_customer_limit` (02-ticaret kararı); bırakılan rezervasyonun satırı silindiği için sayılmaz. Misafir müşteride müşteri başına sınırın anahtarı (e-posta mı `customer_id` mi) belirsiz. Hediye kartı ve tek kullanımlık kod üretimi kapsam dışı.
 
 ---
 
@@ -201,8 +201,8 @@
 - **Bağımlılık:** 17 (stok satış ifadeleri, `stockLocation`), 18 (zones, kargo vergi kategorisi), 23 (sipariş, teslimat durumu sütunu), 9 (outbox adımı), 25 (özel kova, dijital dosya), 7 (`legal_policy` ayarı).
 - **Yapılacaklar:**
   1. `±` `packages/db/src/schema/shipping.ts` (`shipping_methods`, kanal bağlantısı) ve `fulfillment.ts` (`fulfillments`, `fulfillment_lines`), `returns.ts`, `digital.ts`; ayrı migration'lar. (2026-11-13: `shipping_methods` `tax-shipping.ts` 0010'da, `digital_assets` `media.ts` 0007'de; `fulfillments`, `fulfillment_lines`, `returns`, `digital_entitlements` `fulfillment.ts` 0016'da; kanal bağlantısı kaldı.)
-  2. `-` `features/shipping/calculators/{flat,weightTier,desi,freeOver}.ts` (saf) + `eligibility/*.ts` (saf, bölge, pickup).
-  3. `-` `features/shipping/quote/quoteShipping.ts` (saf): sepet ağırlık/desi, yalnız fiziksel kalemler, uygun yöntemler + ücret; canlı oran kancası portu `hooks/shippingRatePort.ts` (zaman aşımı + yedek ücret, sepet özeti anahtarıyla kısa önbellek).
+  2. `+` `features/shipping/calculators/{flat,weightTier,desi,freeOver}.ts` (saf) + `eligibility/*.ts` (saf, bölge, pickup). (2026-11-13: kademe sınırı dahil; bilinmeyen ağırlık/ölçü `fallbackAmount` ya da uygun değil; desi böleni argüman, kodda sabit yok. Kanal bağlantısı 0017 ile vardı, `queries/loadShippingMethods.ts` tek `batch`.)
+  3. `±` `features/shipping/quote/quoteShipping.ts` (saf): sepet ağırlık/desi, yalnız fiziksel kalemler, uygun yöntemler + ücret; canlı oran kancası portu `hooks/shippingRatePort.ts` (zaman aşımı + yedek ücret, sepet özeti anahtarıyla kısa önbellek). (2026-11-13: `quoteShipping` bitti; `checker_code` dolu ya da yerleşik olmayan hesaplayıcılı yöntem sunulmaz. Kanca portu yok.)
   4. `-` `features/fulfillment/create/createFulfillment.ts` (`atomic()`: satırlar + `stock` satış ifadeleri + olay + durum sütunu) ve `handlers/manualHandler.ts`.
   5. `-` `features/fulfillment/jobs/requestLabel.ts`: `pending` → taşıyıcıdan etiket → `shipped` outbox adımı; `tracking/applyTrackingUpdate.ts`.
   6. `-` `features/fulfillment/returns/{requestReturn,approveReturn,receiveReturn}.ts`: durum geçiş tablosu `returns/transitions.ts` (veri); teslimde `on_hand +` ve ödeme iadesi için ayrı outbox adımı.
@@ -216,7 +216,7 @@
   - `integration-tests/api/__tests__/shop/downloads.test.ts`: süresi dolmuş/iptal hak 403; başkasının hakkı reddedilir; iade sonrası erişim kapanır; misafir jetonu tek hak; bağlantı sipariş DTO'sunda yok.
   - `integration-tests/core/__tests__/shipping/mixedCart.test.ts`: karma sepette kargo satırı yalnız fiziksel kalemler.
 - **Bitti sayılır:** elle teslimatla uçtan uca gönderim stoku düşürür; dijital indirme testleri yeşil; cayma sayıları kodda sabit değil (`policy-tr` dışında grep boş); kargo listesi yerleşik hesaplayıcılarla 0 sorgu.
-- **Açık sorular / riskler:** ATLANANLAR: cayma maddeleri ikincil kaynağa (ilme.av.tr) dayanıyor, güncel konsolide md. 15 ve Danıştay kararı doğrulanmadı; `legal_policy` şeması `03-cekirdek/07-yapilandirma.md`'ye eklenmedi; `returns.kind`, `delivered_at`, `withdrawal_exempt` veri listelerine yazılmadı. Lisans anahtarı havuzu v2. Çok depolu sepette tek kargo satırı ile depo başına gönderimin ücret paylaşımı belirsiz.
+- **Açık sorular / riskler:** ATLANANLAR: cayma maddeleri ikincil kaynağa (ilme.av.tr) dayanıyor, güncel konsolide md. 15 ve Danıştay kararı doğrulanmadı; `legal_policy` şeması `03-cekirdek/07-yapilandirma.md`'ye eklenmedi; `returns.kind`, `delivered_at`, `withdrawal_exempt` veri listelerine yazılmadı. Lisans anahtarı havuzu v2. Çok depolu sepette tek kargo satırı ile depo başına gönderimin ücret paylaşımı belirsiz. Mağazadan teslimde depo `pickup_enabled` denetimi `quoteShipping`'te değil, çağıranın yöntem listesinde.
 
 ---
 

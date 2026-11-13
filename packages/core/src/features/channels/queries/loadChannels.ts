@@ -4,7 +4,7 @@ import type { Platform } from "../../../platform"
 import type { Channel, ChannelDomain, ChannelRow } from "../types"
 
 // `batch` ham satır döner (snake_case, JSON metin, 0/1); Drizzle'ın sütun eşlemesiyle tipe çevrilir.
-function mapRow<T extends Table>(table: T, row: Record<string, unknown>): T["$inferSelect"] {
+export function mapRow<T extends Table>(table: T, row: Record<string, unknown>): T["$inferSelect"] {
   const out: Record<string, unknown> = {}
   for (const [prop, col] of Object.entries(getTableColumns(table))) {
     const raw = row[col.name]

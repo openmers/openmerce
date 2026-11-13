@@ -5,11 +5,14 @@ import {
   ChannelError,
   type ChannelSnapshot,
   type Ctx,
+  type CustomerActor,
   type Platform,
 } from "@openmers/core"
 import { implement, ORPCError } from "@orpc/server"
 import type { ResponseHeadersHandlerPluginContext } from "@orpc/server/plugins"
 import type { AdminAuth } from "../auth/adminAuth"
+import type { CustomerAuth } from "../auth/customerAuth"
+import { loadShopCustomer } from "./customerSession"
 import { type AdminGuardResult, requirePermission } from "./requirePermission"
 
 /**
@@ -28,6 +31,8 @@ export type ApiInitialContext = {
   requestId: string
   /** Better Auth admin instance (built once per app). */
   adminAuth: AdminAuth
+  /** Better Auth customer instance (`om_s`), built once per app. */
+  customerAuth: CustomerAuth
   reqHeaders: Headers
   /** Whether the request is HTTPS; `Secure` is added to the session cookie accordingly. */
   https: boolean
@@ -38,6 +43,8 @@ export type ApiContext = ApiInitialContext & {
   ctxLoaded: true
   /** Set only in session-authenticated Admin procedures. */
   admin?: AdminGuardResult["admin"]
+  /** Set on the Shop surface when a valid `om_s` session exists. */
+  customer?: CustomerActor
 }
 
 /** Expected error code → HTTP status; given to both the handlers and the OpenAPI generator. */
@@ -48,6 +55,7 @@ export const errorStatusMap: Record<string, number> = {
   NOT_FOUND: 404,
   CHANNEL_UNKNOWN: 404,
   CONFLICT: 409,
+  LIMIT_EXCEEDED: 409,
   SETUP_REQUIRED: 403,
   SETUP_DONE: 409,
   IDEMPOTENCY_MISMATCH: 409,
@@ -60,10 +68,17 @@ function channelErrorToOrpc(): ORPCError<"CHANNEL_UNKNOWN", undefined> {
   return new ORPCError("CHANNEL_UNKNOWN", { message: "kanal çözümlenemedi" })
 }
 
-function buildRequestCtx(context: ApiInitialContext): Ctx {
+function buildRequestCtx(context: ApiInitialContext, customer?: CustomerActor | null): Ctx {
   let built: ReturnType<typeof buildCtx>
   try {
     built = buildCtx({
+      ...(customer
+        ? {
+            customer: { id: customer.id, groupIds: customer.groupIds },
+            priceListIds: customer.priceListIds,
+            actor: { type: "customer" as const, id: customer.id, permissions: new Set<string>() },
+          }
+        : {}),
       platform: context.platform,
       api: context.api,
       snapshot: context.snapshot,
@@ -90,14 +105,28 @@ export const base = implement(contract)
     // On the Admin surface the setup gate + session + permission are checked here too, in the same single pass.
     // The surface comes from the router path (not from the URL).
     const isAdmin = path[0] === "admin"
-    const ctx = buildRequestCtx({ ...context, api: isAdmin ? "admin" : "shop" })
-    if (!isAdmin) return next({ context: { ctx, ctxLoaded: true as const, admin: undefined } })
+    if (!isAdmin) {
+      // Personal pages are never cached (11-musteriler §9), errors included.
+      if (path[1] === "account") context.resHeaders?.set("cache-control", "no-store")
+      const customer = await loadShopCustomer(context)
+      const ctx = buildRequestCtx({ ...context, api: "shop" }, customer)
+      return next({
+        context: {
+          ctx,
+          ctxLoaded: true as const,
+          admin: undefined as AdminGuardResult["admin"],
+          customer: customer ?? undefined,
+        },
+      })
+    }
+    const ctx = buildRequestCtx({ ...context, api: "admin" })
     const guard = await requirePermission({ context, ctx, path, procedure })
     return next({
       context: {
         ctx: { ...ctx, actor: guard.actor },
         ctxLoaded: true as const,
         admin: guard.admin,
+        customer: undefined as CustomerActor | undefined,
       },
     })
   })

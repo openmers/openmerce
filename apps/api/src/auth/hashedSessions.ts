@@ -6,7 +6,7 @@ import type { DBAdapter, Where } from "better-auth/types"
 // plain token back on returned rows (Better Auth signs that into the cookie). Only the hash is in the database;
 // a hash from a stolen row is useless as a cookie (it gets hashed again and does not match).
 
-const SESSION_MODELS = new Set(["session", "adminSessions", "admin_sessions"])
+const SESSION_MODELS = new Set(["session", "sessions", "adminSessions", "admin_sessions"])
 
 export async function hashSessionToken(token: string): Promise<string> {
   const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(token))

@@ -11,6 +11,7 @@ export {
 } from "./permissions/registry"
 export { type RoleAssignment, resolvePermissions } from "./permissions/resolvePermissions"
 export { type AdminActor, loadAdminActor } from "./session/loadAdminActor"
+export { type CustomerActor, loadCustomerActor } from "./session/loadCustomerActor"
 export {
   type CreateFirstAdminInput,
   type CreateFirstAdminResult,

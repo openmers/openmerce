@@ -6,6 +6,7 @@ import { afterEach, describe, expect, it } from "vitest"
 import { z } from "zod"
 import { createApp } from "../app"
 import { createAdminAuth } from "../auth/adminAuth"
+import { createCustomerAuth } from "../auth/customerAuth"
 import { hashSessionToken } from "../auth/hashedSessions"
 import { routeGroup } from "../middleware/rateLimit"
 import { requirePermission } from "../orpc/requirePermission"
@@ -214,6 +215,7 @@ describe("admin authentication", () => {
       now: NOW,
       requestId: "req",
       adminAuth: auth,
+      customerAuth: createCustomerAuth({ platform: h.platform, secret: SECRET }),
       reqHeaders: new Headers({ cookie }),
       https: false,
     }

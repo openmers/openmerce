@@ -8,6 +8,7 @@ import {
 import type { Context } from "hono"
 import { Hono } from "hono"
 import { createAdminAuth } from "./auth/adminAuth"
+import { createCustomerAuth } from "./auth/customerAuth"
 import type { AppEnv } from "./http/env"
 import { apiError } from "./http/errors"
 import { isHttps, type SecureOptions, secureResponse } from "./http/secure"
@@ -22,7 +23,7 @@ export type AppOptions = SecureOptions & {
   channels: Pick<ChannelRegistry, "get">
   now?: () => number
   requestId?: () => string
-  /** Admin session cookie signing secret (Better Auth `secret`), at least 32 characters. */
+  /** Session signing secret (Better Auth `secret`), at least 32 characters; the customer key is derived from it. */
   authSecret: string
   /** Rate limiter error log (fail-open); defaults to `console.error`. */
   log?: (message: string, error: unknown) => void
@@ -62,6 +63,11 @@ export function createApp(opts: AppOptions): Hono<AppEnv> {
   const app = new Hono<AppEnv>()
   const secure = (c: Context<AppEnv>, res: Response) => secureResponse(c, res, opts)
   const adminAuth = createAdminAuth({ db: opts.platform.db, secret: opts.authSecret })
+  const customerAuth = createCustomerAuth({
+    platform: opts.platform,
+    secret: opts.authSecret,
+    now: opts.now,
+  })
 
   // 1) Outermost middleware: request id + security headers (including errors/404).
   app.use("*", async (c, next) => {
@@ -93,6 +99,7 @@ export function createApp(opts: AppOptions): Hono<AppEnv> {
       now,
       requestId: c.get("requestId"),
       adminAuth,
+      customerAuth,
       reqHeaders: c.req.raw.headers,
       https: isHttps(c, opts.https),
     }

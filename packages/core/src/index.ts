@@ -1,5 +1,7 @@
 export * from "./ctx"
+export * from "./features/auth"
 export * from "./features/channels"
+export * from "./features/secrets"
 export { getSettingsVersion } from "./features/settings"
 export * from "./http"
 export * from "./platform"

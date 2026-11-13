@@ -4,6 +4,8 @@ import type { ApiInitialContext } from "../orpc/base"
 export type AppEnv = {
   Variables: {
     requestId: string
+    /** Çözülen kanalın kodu; hız sınırı kovası için. */
+    channel: string
     apiContext: ApiInitialContext
   }
 }

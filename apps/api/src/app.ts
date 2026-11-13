@@ -10,6 +10,8 @@ import { Hono } from "hono"
 import type { AppEnv } from "./http/env"
 import { apiError } from "./http/errors"
 import { isHttps, type SecureOptions, secureResponse } from "./http/secure"
+import { csrfOrigin } from "./middleware/csrfOrigin"
+import { rateLimit } from "./middleware/rateLimit"
 import type { ApiInitialContext } from "./orpc/base"
 import { openApiDocument, openApiHandler, rpcHandler } from "./orpc/handlers"
 
@@ -19,6 +21,8 @@ export type AppOptions = SecureOptions & {
   channels: Pick<ChannelRegistry, "get">
   now?: () => number
   requestId?: () => string
+  /** Hız sınırlayıcı hatası logu (fail-open); varsayılan `console.error`. */
+  log?: (message: string, error: unknown) => void
 }
 
 /** `Host`: gerçek sunucuda başlık, `app.request` testinde URL'den gelir. */
@@ -47,8 +51,8 @@ function resolveOrNull(input: {
 }
 
 /**
- * Hono kabuğu (`02-api-ve-istek-baglami` §6, §8): güvenlik başlıkları en dışta, kanal çözümleme
- * ikinci sırada; `/api/*` OpenAPI, `/rpc/*` RPC işleyicisine devredilir. Hono yalnız yönlendirme
+ * Hono kabuğu (`02-api-ve-istek-baglami` §6, §8): güvenlik başlıkları en dışta, sonra CSRF `Origin`,
+ * kanal çözümleme ve hız sınırı; `/api/*` OpenAPI, `/rpc/*` RPC işleyicisine devredilir. Hono yalnız yönlendirme
  * kabuğudur, `hc` istemcisi kullanılmaz.
  */
 export function createApp(opts: AppOptions): Hono<AppEnv> {
@@ -62,7 +66,10 @@ export function createApp(opts: AppOptions): Hono<AppEnv> {
     secure(c, c.res)
   })
 
-  // 2) Kanal: `x-openmers-channel` Host'tan önce gelir; bilinmeyen alan adı/anahtar 404.
+  // 2) CSRF: form tipli, durum değiştiren istekte `Origin` eşleşmeli.
+  app.use("*", csrfOrigin())
+
+  // 3) Kanal: `x-openmers-channel` Host'tan önce gelir; bilinmeyen alan adı/anahtar 404.
   app.use("*", async (c, next) => {
     const now = opts.now?.() ?? Date.now()
     const snapshot: ChannelSnapshot = await opts.channels.get(now)
@@ -83,8 +90,12 @@ export function createApp(opts: AppOptions): Hono<AppEnv> {
       requestId: c.get("requestId"),
     }
     c.set("apiContext", context)
+    c.set("channel", resolved.channel.code)
     await next()
   })
+
+  // 4) Hız sınırı: kova = kanal + rota grubu + istemci; sınırlayıcı çökerse geçer.
+  app.use("*", rateLimit({ platform: opts.platform, log: opts.log }))
 
   app.all("/api/openapi.json", async (c) => c.json(await openApiDocument()))
 

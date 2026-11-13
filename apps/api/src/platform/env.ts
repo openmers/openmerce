@@ -8,7 +8,10 @@ import { z } from "zod"
 export const envSchema = z.object({
   OPENMERS_DB: z.string().min(1),
   PORT: z.coerce.number().int().min(1).max(65_535).default(3000),
-  OPENMERS_KEK: z.string().min(1).optional(),
+  OPENMERS_KEK: z
+    .string()
+    .min(32, "OPENMERS_KEK en az 32 karakter olmalı (ör. `openssl rand -base64 32`)")
+    .optional(), // HKDF parola KDF değildir: zayıf KEK kaba kuvvete açıktır,
 })
 
 export type Env = z.infer<typeof envSchema>

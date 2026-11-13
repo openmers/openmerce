@@ -1,6 +1,6 @@
 import type Database from "better-sqlite3"
 
-// Ticaret şema testleri (0006-0010) için en küçük satırlar; yalnız testler kullanır.
+// Ticaret şema testleri (0006-0016) için en küçük satırlar; yalnız testler kullanır.
 
 export const NOW = 1_700_000_000_000
 
@@ -82,5 +82,102 @@ export function seeder(db: Database.Database) {
       NOW,
     )
 
-  return { run, indexSql, plan, channel, taxCategory, product, variant, location, zone, media }
+  const customer = (email = `c${next()}@example.com`) =>
+    run(
+      `INSERT INTO customers (public_id, email, email_normalized, source, created_at, updated_at)
+       VALUES (?, ?, ?, 'checkout', ?, ?)`,
+      `cus_${next()}`,
+      email,
+      email.trim().toLowerCase(),
+      NOW,
+      NOW,
+    )
+  const promotion = (couponCode: string | null = null, usageLimit: number | null = null) =>
+    run(
+      `INSERT INTO promotions (public_id, name, enabled, priority, coupon_code, usage_limit,
+         conditions, actions, stackable, created_at, updated_at)
+       VALUES (?, 'Promo', 1, 0, ?, ?, '[]', '[]', 0, ?, ?)`,
+      `prm_${next()}`,
+      couponCode,
+      usageLimit,
+      NOW,
+      NOW,
+    )
+  const cart = (channelId = channel(), customerId: number | null = null) =>
+    run(
+      `INSERT INTO carts (public_id, channel_id, customer_id, currency, expires_at, created_at, updated_at)
+       VALUES (?, ?, ?, 'USD', ?, ?, ?)`,
+      `cart_${next()}`,
+      channelId,
+      customerId,
+      NOW,
+      NOW,
+      NOW,
+    )
+  const paymentMethod = (code = `pm${next()}`) =>
+    run(
+      `INSERT INTO payment_methods (code, name, position, handler_code, created_at, updated_at)
+       VALUES (?, ?, 0, 'manual', ?, ?)`,
+      code,
+      code,
+      NOW,
+      NOW,
+    )
+  const reservation = (status = "active", channelId = channel()) =>
+    run(
+      `INSERT INTO checkout_reservations (public_id, cart_id, channel_id, snapshot, payment_method_id,
+         status, expires_at, created_at, updated_at) VALUES (?, 0, ?, '{}', ?, ?, ?, ?, ?)`,
+      `rsv_${next()}`,
+      channelId,
+      paymentMethod(),
+      status,
+      NOW,
+      NOW,
+      NOW,
+    )
+  const order = (channelId = channel(), number = `2026-${next()}`, reservationId?: number) =>
+    run(
+      `INSERT INTO orders (public_id, number, channel_id, customer_id, reservation_id, currency,
+         subtotal_net, tax_total, total_gross, discount_total, shipping_total, payment_status, lang,
+         placed_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, 'USD', 1000, 200, 1200, 0, 0, 'awaiting', 'en', ?, ?)`,
+      `ord_${next()}`,
+      number,
+      channelId,
+      customer(),
+      reservationId ?? reservation("settled", channelId),
+      NOW,
+      NOW,
+    )
+  const orderLine = (orderId: number, quantity = 2) =>
+    run(
+      `INSERT INTO order_lines (public_id, order_id, variant_id, name, sku, unit_price_net,
+         unit_price_gross, base_unit_price, quantity, stock_units)
+       VALUES (?, ?, ?, 'Ürün', 'SKU', 500, 600, 500, ?, ?)`,
+      `itm_${next()}`,
+      orderId,
+      variant(product()),
+      quantity,
+      quantity,
+    )
+
+  return {
+    run,
+    indexSql,
+    plan,
+    channel,
+    taxCategory,
+    product,
+    variant,
+    location,
+    zone,
+    media,
+    customer,
+    promotion,
+    cart,
+    paymentMethod,
+    reservation,
+    order,
+    orderLine,
+  }
 }

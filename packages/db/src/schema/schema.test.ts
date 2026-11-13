@@ -93,6 +93,12 @@ describe("sqlite_master", () => {
       "0008_pricing.sql",
       "0009_stock.sql",
       "0010_tax-shipping.sql",
+      "0011_customers.sql",
+      "0012_promotions.sql",
+      "0013_cart.sql",
+      "0014_payments.sql",
+      "0015_orders.sql",
+      "0016_fulfillment.sql",
     ])
   })
 })

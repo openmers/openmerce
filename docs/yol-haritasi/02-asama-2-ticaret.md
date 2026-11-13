@@ -172,7 +172,7 @@
   - `contract` fiyatlı satıra varsayılan promosyon uygulanmaz; indirim rozeti fiyat listesinden gelir.
 - **Bağımlılık:** 16 (satır fiyatı, `contract` türü), 18 (`allocateOrderDiscount`), 24 (grup koşulu için oturum `groupIds`), 7 (operasyon kaydı).
 - **Yapılacaklar:**
-  1. `-` `packages/db/src/schema/promotions.ts`: `promotions` (+ `used`), `promotion_usage`, `promotion_channels`; migration.
+  1. `±` `packages/db/src/schema/promotions.ts`: `promotions` (+ `used`), `promotion_usage`, `promotion_channels`; migration. (2026-11-13: `0012_promotions`, `promotions` + `promotion_usage`; `promotion_channels` katalogda tablo bölümü yazılmadığı için açılmadı.)
   2. `-` `features/promotions/operations/conditions/*.ts`: yerleşik koşullar (en az tutar, ürün/koleksiyon içerir, müşteri grubu, şirket, `personalized`, ilk sipariş `requires`), her biri ayrı dosya, saf.
   3. `-` `features/promotions/operations/actions/*.ts`: satır yüzde/tutar, sipariş indirimi, kargo indirimi; saf.
   4. `-` `features/promotions/registry/compilePromotions.ts`: kanal başına bellekte derleme, değişince yenileme.
@@ -200,7 +200,7 @@
   - Mağazadan teslim: `pickup_enabled` depo, `stockLocation` o depoyu zorlar.
 - **Bağımlılık:** 17 (stok satış ifadeleri, `stockLocation`), 18 (zones, kargo vergi kategorisi), 23 (sipariş, teslimat durumu sütunu), 9 (outbox adımı), 25 (özel kova, dijital dosya), 7 (`legal_policy` ayarı).
 - **Yapılacaklar:**
-  1. `±` `packages/db/src/schema/shipping.ts` (`shipping_methods`, kanal bağlantısı) ve `fulfillment.ts` (`fulfillments`, `fulfillment_lines`), `returns.ts`, `digital.ts`; ayrı migration'lar. (2026-11-13: `shipping_methods` `tax-shipping.ts` 0010'da, `digital_assets` `media.ts` 0007'de; kanal bağlantısı, `fulfillment.ts`, `returns.ts` kaldı.)
+  1. `±` `packages/db/src/schema/shipping.ts` (`shipping_methods`, kanal bağlantısı) ve `fulfillment.ts` (`fulfillments`, `fulfillment_lines`), `returns.ts`, `digital.ts`; ayrı migration'lar. (2026-11-13: `shipping_methods` `tax-shipping.ts` 0010'da, `digital_assets` `media.ts` 0007'de; `fulfillments`, `fulfillment_lines`, `returns`, `digital_entitlements` `fulfillment.ts` 0016'da; kanal bağlantısı kaldı.)
   2. `-` `features/shipping/calculators/{flat,weightTier,desi,freeOver}.ts` (saf) + `eligibility/*.ts` (saf, bölge, pickup).
   3. `-` `features/shipping/quote/quoteShipping.ts` (saf): sepet ağırlık/desi, yalnız fiziksel kalemler, uygun yöntemler + ücret; canlı oran kancası portu `hooks/shippingRatePort.ts` (zaman aşımı + yedek ücret, sepet özeti anahtarıyla kısa önbellek).
   4. `-` `features/fulfillment/create/createFulfillment.ts` (`atomic()`: satırlar + `stock` satış ifadeleri + olay + durum sütunu) ve `handlers/manualHandler.ts`.
@@ -231,7 +231,7 @@
   - Settlement: `INSERT orders ... ON CONFLICT(reservation_id) DO NOTHING` + `settlement_token` UUID; tüm yan yazmalar token koşuluna bağlı; geç gelen ödeme "stok istisnası" ile kaydedilir; webhook, dönüş sayfası, uzlaştırma aynı fonksiyonu çağırır.
 - **Bağımlılık:** 16, 17, 18, 19, 20 (boru hattı adımları), 24 (müşteri tek kayıt, `cartMerge`), 25 (kişiselleştirme görseli), 22 ve 23 (settlement'in yazdığı ödeme/sipariş tabloları; aynı sprintte), 9 (outbox `order.placed`).
 - **Yapılacaklar:**
-  1. `-` `packages/db/src/schema/cart.ts` (`carts`, `cart_lines`) ve `checkout.ts` (`checkout_reservations`); migration.
+  1. `+` `packages/db/src/schema/cart.ts` (`carts`, `cart_lines`) ve `checkout.ts` (`checkout_reservations`); migration. (2026-11-13: üç tablo tek `cart.ts`, `0013_cart`; `checkout_reservations.source` dahil.)
   2. `-` `features/cart/personalization/{schema,validate,normalize,lineKey}.ts` (saf): kapalı Zod şeması, kural sırası (kapalıysa red, bilinmeyen anahtar, required/maxLength/pattern/select/mime), boş alan atma, kanonik `line_key`.
   3. `-` `features/cart/lines/{addLine,updateLine,removeLine}.ts`: tek koşullu yazma; düzenlemede eski satır sil + yeni ekle tek ifade grubunda; görsel `media_id` sahiplik denetimi `media` `index.ts` üzerinden.
   4. `-` `features/cart/calculate/calculate.ts` (saf orkestra) + `steps/{priceLines,applyPromotions,quoteShipping,applyTax,sumTotals}.ts`, yalnız ilgili feature'ların `index.ts`'ini kullanır.
@@ -264,7 +264,7 @@
   - Çekirdekte `manual` havale/EFT (kanal başına IBAN, süre dolunca iptal) ve kapıda ödeme; `statement_name` ödeme kaydına anlık görüntü; iade ödemenin yapıldığı yöntem kaydının anahtarlarıyla.
 - **Bağımlılık:** 21 (rezervasyon, settlement, uzlaştırma), 11 (`secrets`), 14 (kanal), 18 (iade vergi dağıtımı). Sağlayıcı modülleri (`packages/modules/payment-*`) aşama 6.
 - **Yapılacaklar:**
-  1. `-` `packages/db/src/schema/payments.ts`: `payment_methods` (+ kanal), `payments`, `pending_payments`, `refunds`, `payment_webhook_events` (olay kimliği benzersiz); migration.
+  1. `±` `packages/db/src/schema/payments.ts`: `payment_methods` (+ kanal), `payments`, `pending_payments`, `refunds`, `payment_webhook_events` (olay kimliği benzersiz); migration. (2026-11-13: `0014_payments`, dört tablo; `payment_webhook_events` açılmadı (katalog kararı: tekillik benzersiz indekslerle), kanal bağlantısı katalogda tanımsız, yapılmadı.)
   2. `-` `features/payments/port/paymentHandler.ts`: arayüz + `Normalized` tipi; abonelik yetenekleri yalnız tip olarak (`billing = self | provider`).
   3. `-` `features/payments/registry/paymentMethods.ts`: bellekte yöntem listesi + uygunluk; `queries/loadPaymentMethods.ts`.
   4. `-` `features/payments/webhook/handleWebhook.ts`: sağlayıcıdan bağımsız akış (doğrula → olay kaydı idempotent → `fetchStatus` → `checkout.settle`/`release`/`refundSync`).
@@ -295,7 +295,7 @@
   - `order_notes`: `visibility` `internal · customer`, ≤ 5000, `pinned`, 15 dk düzenleme penceresi, yumuşak silme, `orders:note`.
 - **Bağımlılık:** 21 (settlement yazar), 22 (ödeme türetimi), 20 (teslimat türetimi), 9, 11 (izin/denetim), madde 6'daki `otk_` token kuralı.
 - **Yapılacaklar:**
-  1. `-` `packages/db/src/schema/orders.ts`, `order-lines.ts`, `order-adjustments.ts`, `order-events.ts`, `order-notes.ts`, `order-counters.ts`; indeksler ve kısmi indeks; migration.
+  1. `±` `packages/db/src/schema/orders.ts`, `order-lines.ts`, `order-adjustments.ts`, `order-events.ts`, `order-notes.ts`, `order-counters.ts`; indeksler ve kısmi indeks; migration. (2026-11-13: `orders.ts` (`orders`, `order_events`, `order_notes`, `order_guest_access`) + `order-lines.ts` (satır, indirim, vergi, kargo), `0015_orders`, `payment_due_at` karar 7; sayaç tablosu katalogda tanımsız, yapılmadı.)
   2. `-` `features/orders/transitions/transitions.ts` (veri tablosu) + `applyTransition.ts` (`atomic()`, bekçi kancası çağrısı).
   3. `-` `features/orders/number/orderNumber.ts` (saf biçim) + `buildCounterStatement.ts` (settlement'e verilen koşullu sayaç ifadesi).
   4. `-` `features/orders/derived/refreshDerivedState.ts`: ödeme/teslimat sütunlarını ilgili yazmanın `atomic()`'ine ekleyen ifade üretici (`payments`/`fulfillment` `index.ts` türeticilerini kullanır).
@@ -327,7 +327,7 @@
   - Anonimleştirme: ön koşul açık sipariş/aktif abonelik/bekleyen iade yok; e-posta `anon+<id>@invalid`; 10 gün bekleme ve iptal; yasal tutma; sipariş/fatura anlık görüntüleri saklama süresi kadar (`retention.invoice_years` varsayılan 10 ⚠️); imha kaydı ≥ 3 yıl. İzinler: `customers:read` maskeli, `read_pii` açar ve denetime yazar.
 - **Bağımlılık:** 12 (Better Auth bağlantısı, oturum kümesi), 11 (izin, maskeleme, denetim), 9 (olaylar, işler), 23 (istatistik siparişten okur), 14 (`customer_channels`). İYS built-in app'i (`ConsentRegistry`) aşama 6.
 - **Yapılacaklar** (belgenin bölüm 15 sırasıyla):
-  1. `-` `packages/db/src/schema/customers.ts`, `addresses.ts`, `customer-search.ts` (FTS5); `features/customers/email/normalizeEmail.ts` (saf) ve `upsertCheckoutCustomer.ts` (hesapsız müşteri, profil değiştirmeme kuralı).
+  1. `±` `packages/db/src/schema/customers.ts`, `addresses.ts`, `customer-search.ts` (FTS5); `features/customers/email/normalizeEmail.ts` (saf) ve `upsertCheckoutCustomer.ts` (hesapsız müşteri, profil değiştirmeme kuralı). (2026-11-13: şema `customers.ts`, `customer-auth.ts` (Better Auth müşteri örneği), `customer-groups.ts`, `0011_customers`, 16 tablo; `customer-search` (0017) ve feature kodu kaldı.)
   2. `-` `features/customers/account/linkUserOnVerified.ts`: doğrulanmış e-postada `user_id` bağlama; doğrulama öncesi sipariş geçmişi gizli; `invite/sendAccountInvite.ts`.
   3. `-` `features/customers/addresses/{addAddress,updateAddress,deleteAddress,setDefault}.ts`: 20 sınırı, `version` kontrolü, varsayılan silinince alan temizlenir; ülke başına Zod adres şeması `addresses/schemas/<ülke>.ts`, TR il/ilçe tohum verisi ayrı seed.
   4. `-` `features/customers/stats/recomputeCustomerStats.ts` (olay işi, `(customer_id, placed_at)` indeksiyle yeniden okuma) + `jobs/sampleReconcileStats.ts`; `packages/db/src/schema/customer-stats.ts`.

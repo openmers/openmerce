@@ -78,6 +78,48 @@
       "when": 1794595704782,
       "tag": "0010_tax-shipping",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "6",
+      "when": 1794599147608,
+      "tag": "0011_customers",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "6",
+      "when": 1794599530756,
+      "tag": "0012_promotions",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "6",
+      "when": 1794599599936,
+      "tag": "0013_cart",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "6",
+      "when": 1794599676591,
+      "tag": "0014_payments",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "6",
+      "when": 1794599759922,
+      "tag": "0015_orders",
+      "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "6",
+      "when": 1794599846437,
+      "tag": "0016_fulfillment",
+      "breakpoints": true
     }
   ]
 }

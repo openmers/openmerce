@@ -99,6 +99,7 @@ describe("sqlite_master", () => {
       "0014_payments.sql",
       "0015_orders.sql",
       "0016_fulfillment.sql",
+      "0017_commerce-links.sql",
     ])
   })
 })

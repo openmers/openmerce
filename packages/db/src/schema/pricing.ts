@@ -14,7 +14,7 @@ import { channels } from "./channels"
 import { createdAt, publicId, updatedAt } from "./columns"
 
 // 02-ticaret.md bölüm 4 (fiyat listeleri, hedefler, fiyatlar, `currency_rates` karar 10), 0008.
-// `price_list_targets` hedefleri sonra açılır (`customer_groups` 0011, `companies` 0022): FK'sız.
+// `price_list_targets` hedefleri sonra açılır (`customer_groups` 0011, `companies` 0023): FK'sız.
 
 export const priceLists = sqliteTable(
   "price_lists",

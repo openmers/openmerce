@@ -7,7 +7,7 @@ import { orders } from "./orders"
 
 // 02-ticaret.md bölüm 9, 0012. `promotion_usage.reservation_id` (0013) ve `order_id` (0015) ileri
 // FK'dır: SQLite FK hedefini CREATE'te denetlemez (02 B7); 0013'ten önce kullanım satırı yazılmaz.
-// Etkin promosyonlar kanal başına bellekte; `promotion_channels` katalogda tanımsız, açılmadı.
+// Etkin promosyonlar kanal başına bellekte; `promotion_channels` 0017'de (`commerce-links.ts`).
 
 type Rules = { code: string; args: Record<string, unknown> }[]
 

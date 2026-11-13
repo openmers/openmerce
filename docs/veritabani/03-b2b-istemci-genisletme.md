@@ -8,13 +8,13 @@
 
 | Grup | Adet | Tablolar | Şema dosyası |
 |---|---|---|---|
-| B2B şirket ve kredi | 6 | `companies`, `company_members`, `company_addresses`, `company_channels`, `company_credit`, `credit_ledger` | `companies.ts` (0022) |
-| B2B onay | 4 | `approval_policies`, `approval_requests`, `approval_steps`, `approval_delegations` | `approvals-quotes.ts` (0023) |
-| B2B teklif | 5 | `quotes`, `quote_versions`, `quote_version_lines`, `quote_messages`, `quote_attachments` | `approvals-quotes.ts` (0023) |
-| Tema | 4 | `themes`, `theme_builds`, `theme_settings`, `channel_themes` | `themes.ts` (0024) |
-| Agentic builder | 7 | `agent_sessions`, `agent_messages`, `agent_tool_calls`, `agent_checkpoints`, `agent_artifacts`, `agent_missions`, `agent_usage` | `agent.ts` (0025) |
-| Admin | 2 | `admin_layouts`, `admin_user_prefs` | `admin-prefs.ts` (0026) |
-| Çekirdek entegrasyon | 2 | `invoices`, `customer_payment_methods` | `invoices.ts` (0021), `customers.ts` (0011) |
+| B2B şirket ve kredi | 6 | `companies`, `company_members`, `company_addresses`, `company_channels`, `company_credit`, `credit_ledger` | `companies.ts` (0023) |
+| B2B onay | 4 | `approval_policies`, `approval_requests`, `approval_steps`, `approval_delegations` | `approvals-quotes.ts` (0024) |
+| B2B teklif | 5 | `quotes`, `quote_versions`, `quote_version_lines`, `quote_messages`, `quote_attachments` | `approvals-quotes.ts` (0024) |
+| Tema | 4 | `themes`, `theme_builds`, `theme_settings`, `channel_themes` | `themes.ts` (0025) |
+| Agentic builder | 7 | `agent_sessions`, `agent_messages`, `agent_tool_calls`, `agent_checkpoints`, `agent_artifacts`, `agent_missions`, `agent_usage` | `agent.ts` (0026) |
+| Admin | 2 | `admin_layouts`, `admin_user_prefs` | `admin-prefs.ts` (0027) |
+| Çekirdek entegrasyon | 2 | `invoices`, `customer_payment_methods` | `invoices.ts` (0022), `customers.ts` (0011) |
 | Built-in: wishlist | 2 | `bia_wishlist_lists`, `bia_wishlist_items` | modül |
 | Built-in: reviews | 5 | `bia_reviews_reviews`, `bia_reviews_responses`, `bia_reviews_media`, `bia_reviews_stats`, `bia_reviews_requests` | modül |
 | Built-in: İYS | 2 | `bia_iys_sync`, `bia_iys_cursor` | modül |
@@ -137,7 +137,7 @@
 - **Yapılacaklar:** migration; test: bağlı olmadığı kanalda checkout reddi.
 
 ### `company_credit`
-- **Sahip:** `packages/core/src/features/credit`; şema `companies.ts` (karar: `00-genel.md` migration 0022 kredi tablolarını şirket dosyasında topluyor).
+- **Sahip:** `packages/core/src/features/credit`; şema `companies.ts` (karar: `00-genel.md` migration 0023 kredi tablolarını şirket dosyasında topluyor).
 - **Kaynak:** `06-b2c-b2b/05-kredi-ve-odeme-kosullari.md` §2, §3, §4; `credit_limit` adı karar.
 - **Sütunlar:**
 
@@ -501,7 +501,7 @@ Sahip: `apps/api/src/features/agent/` (belge §11); şema `packages/db/src/schem
 # F. Admin
 
 ### `admin_layouts`
-- **Sahip:** `packages/core/src/features/admin-prefs` (karar: `00-genel.md` 0026 `admin-prefs.ts`); şema `packages/db/src/schema/admin-prefs.ts`.
+- **Sahip:** `packages/core/src/features/admin-prefs` (karar: `00-genel.md` 0027 `admin-prefs.ts`); şema `packages/db/src/schema/admin-prefs.ts`.
 - **Kaynak:** `07-istemciler/06-admin-genisletme.md` §2.7.
 - **Sütunlar:** `id integer PK` (karar: iki kısmi benzersiz indeks bileşik PK'ye izin vermez); `scope text` (`store · user`); `admin_user_id integer FK → admin_users.id?` (`scope='user'` iken dolu); `page_id text` (menü ve üst çubuk sırası için özel değer `_shell`; karar: tek çözümleme yolu); `config text JSON`; `version integer`; `updated_at integer`.
 - **Anahtar ve indeksler:** kısmi benzersiz `(page_id) WHERE scope='store'` ve `(admin_user_id, page_id) WHERE scope='user'`; `(admin_user_id)`.
@@ -534,7 +534,7 @@ Karar 3: tek tablo, çekirdek; bu dosyada ikinci tablo tanımlanmaz. `10-tak-cal
 Test (01'e): başka uygulamanın kaynağına yazma reddi; `metadata` bunun yerine kullanılmaz.
 
 ### `invoices`
-- **Sahip:** çekirdek `packages/core/src/features/invoices`; şema `packages/db/src/schema/invoices.ts` (0021). Türkiye'ye özgü kısım `packages/modules/e-fatura` (`bia_efatura_*`, bölüm L).
+- **Sahip:** çekirdek `packages/core/src/features/invoices`; şema `packages/db/src/schema/invoices.ts` (0022). Türkiye'ye özgü kısım `packages/modules/e-fatura` (`bia_efatura_*`, bölüm L).
 - **Kaynak:** `09-built-in-apps/01-e-fatura.md` §1, §3, §4, §5, §8; `00-genel.md` karar 6, 7.
 - **Sütunlar:** (karar 6: pazardan bağımsız; port `issue()` dönüşündeki genel alanlar çekirdekte)
 

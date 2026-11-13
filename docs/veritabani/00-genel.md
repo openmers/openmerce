@@ -1,6 +1,6 @@
 # Veritabanı: genel dizin
 
-Tasarım belgelerindeki tüm tabloların kataloğu. Kod yazılmadan önce tek kaynak budur; şema bu dosyalardan çıkar, karar değişirse önce burası güncellenir. Durum 2026-11-13: `packages/db` kurulu; yazılan migration'lar `0000`-`0016` (`settings`, `channels`, `channel_domains`, yönetici kimliği/rol/politika, sırlar/anahtarlar/idempotency/denetim, outbox/zamanlanmış görev/`external_refs`: 22 tablo; 0006-0010 katalog, medya, fiyat, stok, vergi-kargo: 36 tablo; 0011-0016 müşteri (Better Auth müşteri örneği dahil), promosyon, sepet/rezervasyon, ödeme, sipariş, gönderim/iade/dijital hak: 37 tablo, toplam 95). İleri FK'lar (`product_variants.tax_category_id` → 0010, `product_assets.asset_id` → 0007, `promotion_usage.reservation_id`/`order_id` → 0013/0015, `checkout_reservations.payment_method_id` → 0014, `payments.order_id`/`refunds.order_id` → 0015, `refunds.return_id` → 0016) SQLite'ın CREATE'te FK hedefini denetlememesine dayanır; hedef tablo gelmeden o tabloya yazılamaz (SQLite DML'de "no such table" verir), bütün seri birlikte uygulanır. 0011 öncesi migration'lardaki `customer_groups` hedefleri (`price_list_targets`, `tax_rates`) ve 0022 hedefleri (`companies`: `carts`/`orders.company_id`, `sessions.active_company_id`) FK'sız sütundur. Kalanlar `-`.
+Tasarım belgelerindeki tüm tabloların kataloğu. Kod yazılmadan önce tek kaynak budur; şema bu dosyalardan çıkar, karar değişirse önce burası güncellenir. Durum 2026-11-13: `packages/db` kurulu; yazılan migration'lar `0000`-`0017` (`settings`, `channels`, `channel_domains`, yönetici kimliği/rol/politika, sırlar/anahtarlar/idempotency/denetim, outbox/zamanlanmış görev/`external_refs`: 22 tablo; 0006-0010 katalog, medya, fiyat, stok, vergi-kargo: 36 tablo; 0011-0016 müşteri (Better Auth müşteri örneği dahil), promosyon, sepet/rezervasyon, ödeme, sipariş, gönderim/iade/dijital hak: 37 tablo; 0017 promosyon/kargo/ödeme yöntemi kanal bağlantıları ve sipariş numarası sayacı: 4 tablo, toplam 99). İleri FK'lar (`product_variants.tax_category_id` → 0010, `product_assets.asset_id` → 0007, `promotion_usage.reservation_id`/`order_id` → 0013/0015, `checkout_reservations.payment_method_id` → 0014, `payments.order_id`/`refunds.order_id` → 0015, `refunds.return_id` → 0016) SQLite'ın CREATE'te FK hedefini denetlememesine dayanır; hedef tablo gelmeden o tabloya yazılamaz (SQLite DML'de "no such table" verir), bütün seri birlikte uygulanır. 0011 öncesi migration'lardaki `customer_groups` hedefleri (`price_list_targets`, `tax_rates`) ve 0023 hedefleri (`companies`: `carts`/`orders.company_id`, `sessions.active_company_id`) FK'sız sütundur. Kalanlar `-`.
 
 | Dosya | Kapsam | Tablo |
 |---|---|---|
@@ -57,17 +57,18 @@ Sıra bağımlılığa göredir (yabancı anahtarın hedefi önce). Numara `pack
 | 0014 | `payments.ts` | `payment_methods`, `payments`, `pending_payments`, `refunds` | 02 |
 | 0015 | `orders.ts` | `orders`, `order_lines`, `order_adjustments`, `order_tax_lines`, `order_shipping_lines`, `order_events`, `order_notes`, `order_guest_access` | 01, 02 |
 | 0016 | `fulfillment.ts` | `fulfillments`, `fulfillment_lines`, `returns`, `digital_entitlements` | 02 |
-| 0017 | `read-model.ts` | `catalog_index`, `catalog_index_facets`, `catalog_index_collections`, `catalog_fts` (FTS5), `product_view`, `customer_search` (FTS5), `customer_stats`, `customer_spend` | 02 |
-| 0018 | `content.ts` | `pages`, `page_translations`, `posts`, `post_tags`, `menus`, `menu_items`, `sections`, `redirects` | 02 |
-| 0019 | `notify.ts` | `notification_templates`, `notification_settings`, `notification_log` | 02 |
-| 0020 | `reports.ts` | `stats_daily_*` (5), `stats_applied_events`, `documents`, `customer_merges`, `customer_exports` | 02 |
-| 0021 | `invoices.ts` | `invoices` (pazardan bağımsız) | 03 |
-| 0022 | `companies.ts` | `companies`, `company_members`, `company_addresses`, `company_channels`, `company_credit`, `credit_ledger` | 03 |
-| 0023 | `approvals-quotes.ts` | `approval_*` (4), `quotes`, `quote_versions`, `quote_version_lines`, `quote_messages`, `quote_attachments` | 03 |
-| 0024 | `themes.ts` | `themes`, `theme_builds`, `theme_settings`, `channel_themes` | 03 |
-| 0025 | `agent.ts` | `agent_sessions`, `agent_messages`, `agent_tool_calls`, `agent_checkpoints`, `agent_artifacts`, `agent_missions`, `agent_usage` | 03 |
-| 0026 | `admin-prefs.ts` | `admin_layouts`, `admin_user_prefs` | 03 |
-| 0027 | `apps.ts` | `app_installations` | 01 |
+| 0017 | `commerce-links.ts` (dosya `0017_commerce-links.sql`) | `promotion_channels`, `shipping_method_channels`, `payment_method_channels`, `order_number_counters` | 02 |
+| 0018 | `read-model.ts` | `catalog_index`, `catalog_index_facets`, `catalog_index_collections`, `catalog_fts` (FTS5), `product_view`, `customer_search` (FTS5), `customer_stats`, `customer_spend` | 02 |
+| 0019 | `content.ts` | `pages`, `page_translations`, `posts`, `post_tags`, `menus`, `menu_items`, `sections`, `redirects` | 02 |
+| 0020 | `notify.ts` | `notification_templates`, `notification_settings`, `notification_log` | 02 |
+| 0021 | `reports.ts` | `stats_daily_*` (5), `stats_applied_events`, `documents`, `customer_merges`, `customer_exports` | 02 |
+| 0022 | `invoices.ts` | `invoices` (pazardan bağımsız) | 03 |
+| 0023 | `companies.ts` | `companies`, `company_members`, `company_addresses`, `company_channels`, `company_credit`, `credit_ledger` | 03 |
+| 0024 | `approvals-quotes.ts` | `approval_*` (4), `quotes`, `quote_versions`, `quote_version_lines`, `quote_messages`, `quote_attachments` | 03 |
+| 0025 | `themes.ts` | `themes`, `theme_builds`, `theme_settings`, `channel_themes` | 03 |
+| 0026 | `agent.ts` | `agent_sessions`, `agent_messages`, `agent_tool_calls`, `agent_checkpoints`, `agent_artifacts`, `agent_missions`, `agent_usage` | 03 |
+| 0027 | `admin-prefs.ts` | `admin_layouts`, `admin_user_prefs` | 03 |
+| 0028 | `apps.ts` | `app_installations` | 01 |
 | — | ayrı veritabanı | `tenants`, `tenant_domains` (kontrol düzlemi, SaaS) | 01 |
 | — | modül migration'ları | `bia_wishlist_*`, `bia_reviews_*`, `bia_iys_*`, `bia_subscriptions_*`, `bia_efatura_*`; kendi paketlerinde, çekirdekten sonra | 03 |
 | — | tak-çalıştır app'in kendi DB'si | ERP `webhook_inbox`, `conflicts` (mağaza DB'sinde değil) | 03 |

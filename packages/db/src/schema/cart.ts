@@ -9,7 +9,7 @@ import { shippingMethods } from "./tax-shipping"
 
 // 02-ticaret.md bölüm 6, 0013. Sepet tutar saklamaz, süresi dolunca sert silinir; sipariş
 // rezervasyon anlık görüntüsüne dayanır. `checkout_reservations.payment_method_id` (0014) ileri
-// FK; `carts.company_id` hedefi 0022'de: FK'sız.
+// FK; `carts.company_id` hedefi 0023'de: FK'sız.
 
 type Json = Record<string, unknown>
 

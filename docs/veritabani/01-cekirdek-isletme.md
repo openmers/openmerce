@@ -1,6 +1,6 @@
 # Veritabanı kataloğu 1: çekirdek ve işletme
 
-> **Denetim (2026-11-13):** 30 tablo (mağaza DB 28, kontrol düzlemi 2; önceki sürümde 24 başlık vardı: 2FA/passkey başlığı 4 tabloya bölündü, Better Auth gereği `admin_accounts` ve `admin_verifications`, karar 4 gereği `app_installations` eklendi). yaklaşık 40 düzeltme (belgeyle/kararla çelişen, uydurulmuş ya da eksik; elle sayım), 166 "(karar: …)" işareti (önceki "(çıkarım)"/"(öneri)" işaretlerinin tümü kapatıldı, yeni tablolar da kararla tanımlandı), 15 açık kaldı (dosya sonu). `00-genel.md` tablo sayısı (24) ve 0003/0011/0027 satırları bu dosyaya göre güncellenmeli.
+> **Denetim (2026-11-13):** 30 tablo (mağaza DB 28, kontrol düzlemi 2; önceki sürümde 24 başlık vardı: 2FA/passkey başlığı 4 tabloya bölündü, Better Auth gereği `admin_accounts` ve `admin_verifications`, karar 4 gereği `app_installations` eklendi). yaklaşık 40 düzeltme (belgeyle/kararla çelişen, uydurulmuş ya da eksik; elle sayım), 166 "(karar: …)" işareti (önceki "(çıkarım)"/"(öneri)" işaretlerinin tümü kapatıldı, yeni tablolar da kararla tanımlandı), 15 açık kaldı (dosya sonu). `00-genel.md` tablo sayısı (24) ve 0003/0011/0028 satırları bu dosyaya göre güncellenmeli.
 
 Kapsam: `docs/01-tech-stack/01-tech-stack.md`, `docs/02-genel-mimari/*`, `docs/03-cekirdek/*`, `docs/08-isletme/*`, `docs/04-genisletme/03-tak-calistir-apps.md`, `05-tak-calistir-app-gelistirme.md`, `06-b2c-b2b/06-uygulama-sistemi-ve-b2b.md`. Kurallar: `03-cekirdek/03-veri-kurallari.md`, `.claude/skills/database/openmers-db-structure/SKILL.md`, `ATLANANLAR.md` 2026-11-13 kararları, `00-genel.md` "Bu dizinde verilen kararlar".
 
@@ -251,7 +251,7 @@ Müşteri tabloları Better Auth'un birinci örneğidir: `user` → `users`, `se
 | ip_address / user_agent | text | evet | (karar: Better Auth alanları) |
 | customer_id | integer | hayır | (karar: `customers.id`; belge "müşteri kimliği") |
 | group_ids | text JSON | hayır | belge "grup kimlikleri" (karar: `number[]`, Ctx `customer.groupIds`) |
-| active_company_id | integer | evet | etkin şirket (karar: FK kısıtı yok, `companies` 0022'de, bkz. migration sırası) |
+| active_company_id | integer | evet | etkin şirket (karar: FK kısıtı yok, `companies` 0023'de, bkz. migration sırası) |
 | company_role | text enum `admin · buyer · approver` | evet | Ctx ile aynı |
 | price_list_ids | text JSON | hayır | öncelik sırasıyla (karar: `number[]`) |
 | session_version | integer | hayır | (karar: açılıştaki `users.session_version` kopyası; uyuşmazsa red) |
@@ -350,7 +350,7 @@ Ortak kural (`08-kimlik-dogrulama.md` bölüm 6): yalnızca özeti saklanır, ö
 - **Yapılacaklar:** migration; test: iptal edilen anahtarla Shop API reddi; döndürme sonrası eski anahtar grace içinde geçer, `expires_at` sonrası reddedilir; `revoked_at` grace'i beklemeden reddeder.
 
 ### `app_installations`
-- **Sahip:** `packages/core/src/features/apps`; şema `schema/apps.ts` (0027).
+- **Sahip:** `packages/core/src/features/apps`; şema `schema/apps.ts` (0028).
 - **Kaynak:** `04-genisletme/03-tak-calistir-apps.md` bölüm 2, 3, 5, 7, 11, 12; `04-genisletme/05-tak-calistir-app-gelistirme.md` bölüm 3, 4, 11, 13, 14; `06-b2c-b2b/06-uygulama-sistemi-ve-b2b.md` bölüm 1; `00-genel.md` karar 4.
 - **Sütunlar:**
 
@@ -381,7 +381,7 @@ Ortak kural (`08-kimlik-dogrulama.md` bölüm 6): yalnızca özeti saklanır, ö
 | version | integer | hayır, varsayılan 0 | (karar: admin düzenlemesi ve yeniden onay koşullu yazılır) |
 | created_at / updated_at | integer | hayır | |
 
-- **Ayrı tablo açılmaz (karar):** yol haritasındaki `app_webhook_subscriptions`, `app_extensions`, `app_agent_tools` `manifest` JSON'undadır (filtrelenmez, bellekte dizinlenir; `00-genel.md` 0027 yalnız bu tabloyu listeler). Webhook imza sırrı (`webhookSecret`) burada değil `secrets` tablosunda `scope='app_installation'`, `scope_id = id`, `key='webhook.secret'` (karar: imzalamak için çözülebilir olmalı, kasa ile aynı şifreleme). Iframe/ajan JWT imza anahtarı mağaza geneli `secrets` `(global, 0, 'apps.jwt_signing_key')` (karar).
+- **Ayrı tablo açılmaz (karar):** yol haritasındaki `app_webhook_subscriptions`, `app_extensions`, `app_agent_tools` `manifest` JSON'undadır (filtrelenmez, bellekte dizinlenir; `00-genel.md` 0028 yalnız bu tabloyu listeler). Webhook imza sırrı (`webhookSecret`) burada değil `secrets` tablosunda `scope='app_installation'`, `scope_id = id`, `key='webhook.secret'` (karar: imzalamak için çözülebilir olmalı, kasa ile aynı şifreleme). Iframe/ajan JWT imza anahtarı mağaza geneli `secrets` `(global, 0, 'apps.jwt_signing_key')` (karar).
 - **Anahtar ve indeksler:** benzersiz `token_hash`; benzersiz `public_id`; kısmi benzersiz `(app_key) WHERE status <> 'uninstalled'` (karar: aynı app bir kez kurulu; kaldırılıp yeniden kurulabilir); `(status)`.
 - **Kurallar:** kurulum: manifest indir (SSRF süzgeci, `https`) → doğrula → izin onayı → `atomic()` (satır `installing` + token özeti + webhook sırrı + denetim) → `registerUrl` → başarıda `active`, başarısızlıkta satır silinir. Kaldırma: `status='uninstalled'`, `token_hash` korunur ama doğrulama `status='active'` ister (karar: satır denetim kaydının aktörü olarak kalır), webhook sırrı silinir, `app.uninstalled` outbox satırı aynı `atomic()`. İzin, kanca, araç veya risk genişlerse `pending_manifest` yazılır, onaya kadar eski `manifest` geçerli. Uygulama token'ı politikaya tabi değil, ayrı hız sınırı. Her çağrı ve teslimat `audit_log`'a. Kişisel veri içeren olay yalnızca ilgili okuma izni olan uygulamaya.
 - **İlişkiler:** `admin_users`; `outbox.app_installation_id` (webhook teslimatları, "son teslimatlar"); `secrets`; `audit_log` aktörü/`via`; `metadata` anahtar öneki (`app_key.`).
@@ -450,7 +450,7 @@ Ortak kural (`08-kimlik-dogrulama.md` bölüm 6): yalnızca özeti saklanır, ö
 | kind | text enum: `event · notify · webhook · reindex · collection · import · invoice · fulfillment · scheduled` | hayır | (karar: `event` = süreç içi abonelerin satırı, aşağıda) |
 | event | text | evet | olay adı (`order.placed`, `product.updated`, `stock.bucket_changed`, `company.approved` …); `event`/`webhook` satırında dolu |
 | payload | text JSON | hayır | küçük: kimlikler + değişen alan adları + `channel`; `import` için imleç |
-| app_installation_id | integer | evet | (karar: `webhook` satırının hedef uygulaması; önceki `target text` yerine. FK kısıtı yok, `app_installations` 0027'de) |
+| app_installation_id | integer | evet | (karar: `webhook` satırının hedef uygulaması; önceki `target text` yerine. FK kısıtı yok, `app_installations` 0028'de) |
 | status | text enum: `pending · sending · sent · failed · dead` | hayır | |
 | attempts | integer | hayır, varsayılan 0 | "deneme sayısı"; sınır 10 (karar 8) |
 | priority | integer | hayır | (karar: küçük önce; `notify`/`webhook` 0, `event`/`invoice`/`fulfillment`/`scheduled` 1, `collection` 2, `reindex`/`import` 3) |
@@ -592,8 +592,8 @@ Ortak kural (`08-kimlik-dogrulama.md` bölüm 6): yalnızca özeti saklanır, ö
 
 Hedefi sonra açılan referanslar FK kısıtı olmadan (yalnız mantıksal, indeksli `integer`) tanımlanır (karar: migration eklemeli; SQLite'ta sonradan FK eklemek tablo yeniden kurmak demektir):
 
-- `sessions.active_company_id` → `companies` (0022), `sessions` 0011'de.
-- `outbox.app_installation_id` → `app_installations` (0027), `outbox` 0005'te.
+- `sessions.active_company_id` → `companies` (0023), `sessions` 0011'de.
+- `outbox.app_installation_id` → `app_installations` (0028), `outbox` 0005'te.
 - `scheduled_runs.outbox_id` → `outbox` (satır silinir).
 - `audit_log.actor_id`, `via_app_installation_id`, `on_behalf_customer_id`; `settings.scope_id`, `secrets.scope_id`; `idempotency_keys.actor_id` (çok biçimli).
 
@@ -605,7 +605,7 @@ FK hedefleri katalogda var: `channels`, `customers`, `orders`, `price_lists` (`0
 - **Kapandı (karar):** `access_policies` kapsam eşlemesi: `assigned_to` → `orders.assigned_admin_id`, `customers.assigned_admin_id`, `companies.sales_rep_admin_id`, `quotes.sales_rep_admin_id`; `shipping_province` → `orders.shipping_region`. `companies.tag` için ayrı tablo yok, `customer_tags` benzeri şirket etiketi açık soru olarak kalır. `customers.user_id` artık `INTEGER` (02 düzeltildi). Eski not:
 - `access_policies` kapsam sütunları hedef tablolarda yok: `orders.assigned_to`, `orders.shipping_province` (genel adres kuralına göre `shipping_region` olmalı), `companies.assigned_to`, `quotes.assigned_to`, `customers.assigned_to`; `companies.tag` tek sütun değil, etiket tablosu olabilir (`02`/`03` dosya sahipleri).
 - `03` "Uygulama kayıt defteri" maddesi: tanım bu dosyada (`app_installations`); yol haritası `04-asama-5-6` madde 47.2'deki `apps`, `app_webhook_subscriptions`, `app_extensions`, `app_agent_tools` adları geçersiz.
-- `00-genel.md`: tablo sayısı 24 → 30; 0003'e `admin_accounts`, `admin_verifications`, `admin_two_factors`, `admin_passkeys`; 0011'e `two_factors`, `passkeys`; 0027 "tanım aşama 5" ifadesi kalkmalı (tanım burada).
+- `00-genel.md`: tablo sayısı 24 → 30; 0003'e `admin_accounts`, `admin_verifications`, `admin_two_factors`, `admin_passkeys`; 0011'e `two_factors`, `passkeys`; 0028 "tanım aşama 5" ifadesi kalkmalı (tanım burada).
 
 ## Belgelerde adı geçip tanımı olmayan tablolar
 

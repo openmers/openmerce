@@ -520,7 +520,7 @@ Kaynak: `docs/03-cekirdek/03-veri-kurallari.md`, `.claude/skills/database/openme
 # 3. Okuma modeli (vitrin)
 
 ### `catalog_index`
-- **Sahip:** `features/catalogIndex`, şema `schema/read-model.ts` (karar: `00-genel.md` 0017).
+- **Sahip:** `features/catalogIndex`, şema `schema/read-model.ts` (karar: `00-genel.md` 0018).
 - **Kaynak:** `02-katalog-ve-arama.md` bölüm 2, 3, 4, 7; `04-stok.md` bölüm 5, 9; `14-seo.md` bölüm 5.
 
 | ad | tür | boş olabilir mi | açıklama |
@@ -560,7 +560,7 @@ Kaynak: `docs/03-cekirdek/03-veri-kurallari.md`, `.claude/skills/database/openme
 - **Açık sorular:** —
 
 ### `catalog_index_facets`
-- **Sahip:** `features/catalogIndex`, şema `schema/read-model.ts` (karar: `00-genel.md` 0017).
+- **Sahip:** `features/catalogIndex`, şema `schema/read-model.ts` (karar: `00-genel.md` 0018).
 - **Kaynak:** `02-katalog-ve-arama.md` bölüm 2, 4.
 
 | ad | tür | boş olabilir mi | açıklama |
@@ -579,7 +579,7 @@ Kaynak: `docs/03-cekirdek/03-veri-kurallari.md`, `.claude/skills/database/openme
 - **Açık sorular:** —
 
 ### `catalog_index_collections`
-- **Sahip:** `features/catalogIndex`, şema `schema/read-model.ts` (karar: `00-genel.md` 0017).
+- **Sahip:** `features/catalogIndex`, şema `schema/read-model.ts` (karar: `00-genel.md` 0018).
 - **Kaynak:** `02-katalog-ve-arama.md` bölüm 2, 4.
 
 | ad | tür | boş olabilir mi | açıklama |
@@ -598,7 +598,7 @@ Kaynak: `docs/03-cekirdek/03-veri-kurallari.md`, `.claude/skills/database/openme
 - **Açık sorular:** —
 
 ### `catalog_fts`
-- **Sahip:** `features/catalogIndex`, şema `schema/read-model.ts` (FTS5 sanal tablo; Drizzle'da ham SQL migration) (karar: `00-genel.md` 0017).
+- **Sahip:** `features/catalogIndex`, şema `schema/read-model.ts` (FTS5 sanal tablo; Drizzle'da ham SQL migration) (karar: `00-genel.md` 0018).
 - **Kaynak:** `02-katalog-ve-arama.md` bölüm 2, 4.
 
 | ad | tür | boş olabilir mi | açıklama |
@@ -616,7 +616,7 @@ Kaynak: `docs/03-cekirdek/03-veri-kurallari.md`, `.claude/skills/database/openme
 - **Açık sorular:** —
 
 ### `product_view`
-- **Sahip:** `features/catalogIndex`, şema `schema/read-model.ts` (karar: `00-genel.md` 0017).
+- **Sahip:** `features/catalogIndex`, şema `schema/read-model.ts` (karar: `00-genel.md` 0018).
 - **Kaynak:** `02-katalog-ve-arama.md` bölüm 2, 7; `04-stok.md` bölüm 9; `05-sepet-ve-checkout.md` bölüm 1.1 (performans); `14-seo.md` bölüm 3.
 
 | ad | tür | boş olabilir mi | açıklama |
@@ -940,8 +940,8 @@ Kaynak: `docs/03-cekirdek/03-veri-kurallari.md`, `.claude/skills/database/openme
 | `created_at`, `updated_at` | INTEGER | hayır | (karar: ortak kural) |
 
 - **Anahtar ve indeksler:** benzersiz `code`; küçük tablo, bellekte tutulur.
-- **Kurallar:** Sağlayıcı anahtarları kasada (`secrets`, `01`) durur, satırda tutulmaz. İade, ödemenin yapıldığı yöntem kaydının anahtarlarıyla çalışır. Kanal bağlantısı `payment_method_channels(payment_method_id, channel_id)` bağlantı tablosundadır (karar: veri kuralları bölüm 4 ödeme yöntemini `<varlık>_channels` ile bağlar; 06 bölüm 7 "kanal başına ayrı yöntem kaydı" da bununla çalışır; tablo katalogda yok, "Açık sorular (A)").
-- **İlişkiler:** `payment_method_channels` (katalogda yok), `payments`, `pending_payments`, `checkout_reservations`, `secrets` (`01`).
+- **Kurallar:** Sağlayıcı anahtarları kasada (`secrets`, `01`) durur, satırda tutulmaz. İade, ödemenin yapıldığı yöntem kaydının anahtarlarıyla çalışır. Kanal bağlantısı `payment_method_channels(payment_method_id, channel_id)` bağlantı tablosundadır (karar: veri kuralları bölüm 4 ödeme yöntemini `<varlık>_channels` ile bağlar; 06 bölüm 7 "kanal başına ayrı yöntem kaydı" da bununla çalışır; 0017).
+- **İlişkiler:** `payment_method_channels` (0017, `commerce-links.ts`), `payments`, `pending_payments`, `checkout_reservations`, `secrets` (`01`).
 - **Yapılacaklar:**
   - şema
   - migration
@@ -1090,7 +1090,8 @@ Kaynak: `docs/03-cekirdek/03-veri-kurallari.md`, `.claude/skills/database/openme
   - `features/orders/queries/{settle,transition,listByChannel,listByCustomer,getByNumber}.ts`
   - yarış testleri: settlement'ın iki tetikleyicisi, dönüş sayfası + webhook, sayaç
   - müşteri sayfası sorgu planı testi
-- **Açık sorular:** Sipariş numarası sayaç tablosu tanımsız (07 bölüm 6 "sayaç satırı"). `number` kanal başına benzersiz mi, global mi? Toplam sütunlarının adları, türetilmiş durum sütunlarının adları ve yasal/onay anlık görüntüsünün biçimi bu bölümde karara bağlandı.
+- **Sayaç (karar 2026-11-13):** `order_number_counters(channel_id, period, last_value, updated_at)`, PK `(channel_id, period)`, 0017. `number` kanal başına benzersiz (`orders_number_uq`). Dönem stratejiye bağlı (varsayılan yıl; dönemsiz strateji 0). Settlement `atomic()`'i içinde `INSERT … ON CONFLICT DO UPDATE SET last_value = last_value + 1`; atomic geri alınırsa sayaç da geri alınır, boşluk oluşmaz.
+- **Açık sorular:** Toplam sütunlarının adları, türetilmiş durum sütunlarının adları ve yasal/onay anlık görüntüsünün biçimi bu bölümde karara bağlandı.
 
 ### `order_lines`
 - **Sahip:** `features/orders`, şema `schema/order-lines.ts`.
@@ -1266,7 +1267,7 @@ Kaynak: `docs/03-cekirdek/03-veri-kurallari.md`, `.claude/skills/database/openme
 
 - **Anahtar ve indeksler:** benzersiz `public_id`; kupon araması için benzersiz `coupon_code` (kısmi, `WHERE coupon_code IS NOT NULL`; karar: kupon kodu mağaza genelinde tek promosyonu gösterir). Etkin promosyonlar kanal başına bellekte.
 - **Kurallar:** `UPDATE promotions SET used = used + 1 WHERE id = ? AND (usage_limit IS NULL OR used < usage_limit) AND EXISTS (rezervasyon)` (düzeltme: belgedeki `used < usage_limit` NULL sınırda hiç artmaz). Yalnızca sıfırdan büyük indirim üreten promosyonda artar. Bırakmada geri alınır. Müşteri başına sınır `promotion_usage` koşullu INSERT'iyle aynı `atomic()` içinde uygulanır (karar, aşağıda).
-- **İlişkiler:** `promotion_channels` (karar: 01 bölüm 2 `<varlık>_channels` kalıbı; tanımı sondaki listede), `promotion_usage`, `order_adjustments`.
+- **İlişkiler:** `promotion_channels` (karar: 01 bölüm 2 `<varlık>_channels` kalıbı; 0017, `commerce-links.ts`), `promotion_usage`, `order_adjustments`.
 - **Yapılacaklar:**
   - şema
   - migration
@@ -1402,7 +1403,7 @@ Kaynak: `docs/03-cekirdek/03-veri-kurallari.md`, `.claude/skills/database/openme
 
 - **Anahtar ve indeksler:** benzersiz `public_id`. Bellekte tutulur.
 - **Kurallar:** Yerleşik hesaplayıcılarla seçenek listesi sorgu atmaz (10 bölüm 1).
-- **İlişkiler:** `shipping_method_channels` (karar: `<varlık>_channels` kalıbı; tanımı sondaki listede), `zones`, `tax_categories`, `stock_locations`, `order_shipping_lines`.
+- **İlişkiler:** `shipping_method_channels` (karar: `<varlık>_channels` kalıbı; 0017, `commerce-links.ts`), `zones`, `tax_categories`, `stock_locations`, `order_shipping_lines`.
 - **Yapılacaklar:**
   - şema
   - migration
@@ -1622,7 +1623,7 @@ Kaynak: `docs/03-cekirdek/03-veri-kurallari.md`, `.claude/skills/database/openme
 - **Açık sorular:** —
 
 ### `customer_stats`
-- **Sahip:** `features/customers`, şema `schema/read-model.ts` (00-genel 0017).
+- **Sahip:** `features/customers`, şema `schema/read-model.ts` (00-genel 0018).
 - **Kaynak:** `11-musteriler.md` bölüm 2, 6.
 
 | ad | tür | boş olabilir mi | açıklama |
@@ -1645,7 +1646,7 @@ Kaynak: `docs/03-cekirdek/03-veri-kurallari.md`, `.claude/skills/database/openme
 - **Açık sorular:** —
 
 ### `customer_spend`
-- **Sahip:** `features/customers`, şema `schema/read-model.ts` (00-genel 0017).
+- **Sahip:** `features/customers`, şema `schema/read-model.ts` (00-genel 0018).
 - **Kaynak:** `11-musteriler.md` bölüm 2, 17 (karar 3).
 
 | ad | tür | boş olabilir mi | açıklama |
@@ -1798,7 +1799,7 @@ Kaynak: `docs/03-cekirdek/03-veri-kurallari.md`, `.claude/skills/database/openme
 - **Açık sorular:** —
 
 ### `customer_merges`
-- **Sahip:** `features/customers`, şema `schema/reports.ts` (00-genel 0020).
+- **Sahip:** `features/customers`, şema `schema/reports.ts` (00-genel 0021).
 - **Kaynak:** `11-musteriler.md` bölüm 2, 8, 17.1; 00-genel karar 9.
 
 | ad | tür | boş olabilir mi | açıklama |
@@ -1822,7 +1823,7 @@ Kaynak: `docs/03-cekirdek/03-veri-kurallari.md`, `.claude/skills/database/openme
 - **Açık sorular:** —
 
 ### `customer_exports`
-- **Sahip:** `features/customers`, şema `schema/reports.ts` (00-genel 0020).
+- **Sahip:** `features/customers`, şema `schema/reports.ts` (00-genel 0021).
 - **Kaynak:** `11-musteriler.md` bölüm 2, 8, 10; 00-genel karar 9.
 
 | ad | tür | boş olabilir mi | açıklama |
@@ -1852,7 +1853,7 @@ Kaynak: `docs/03-cekirdek/03-veri-kurallari.md`, `.claude/skills/database/openme
 - **Açık sorular:** —
 
 ### `customer_search`
-- **Sahip:** `features/customers`, şema `schema/read-model.ts` (00-genel 0017; FTS5, ham SQL migration).
+- **Sahip:** `features/customers`, şema `schema/read-model.ts` (00-genel 0018; FTS5, ham SQL migration).
 - **Kaynak:** `11-musteriler.md` bölüm 2, 6.
 
 | ad | tür | boş olabilir mi | açıklama |
@@ -2000,7 +2001,7 @@ Kaynak: `docs/03-cekirdek/03-veri-kurallari.md`, `.claude/skills/database/openme
 - **Açık sorular:** —
 
 ### `menus`
-- **Sahip:** `features/pages`, şema `schema/content.ts` (00-genel 0018).
+- **Sahip:** `features/pages`, şema `schema/content.ts` (00-genel 0019).
 - **Kaynak:** `13-icerik-ve-gezinme.md` bölüm 1, 3.
 
 | ad | tür | boş olabilir mi | açıklama |
@@ -2064,7 +2065,7 @@ Kaynak: `docs/03-cekirdek/03-veri-kurallari.md`, `.claude/skills/database/openme
 - **Açık sorular:** (açık: taslak önizleme var, 13 bölüm 2 ve `07-istemciler/04-tema-sistemi.md`, ama taslak bölümlerin nerede tutulduğu, ayrı satır mı, ayrı sütun mu, belgede yok. Önceki katalogdaki uydurma `status` sütunu kaldırıldı.)
 
 ### `redirects`
-- **Sahip:** `features/pages` (karar: `features/seo` klasörü yok; yönlendirme içerik/slug yazımıyla birlikte yaşar), şema `schema/content.ts` (00-genel 0018).
+- **Sahip:** `features/pages` (karar: `features/seo` klasörü yok; yönlendirme içerik/slug yazımıyla birlikte yaşar), şema `schema/content.ts` (00-genel 0019).
 - **Kaynak:** `14-seo.md` bölüm 2; `13-icerik-ve-gezinme.md` bölüm 1.
 
 | ad | tür | boş olabilir mi | açıklama |
@@ -2118,7 +2119,7 @@ Kaynak: `docs/03-cekirdek/03-veri-kurallari.md`, `.claude/skills/database/openme
 - **Açık sorular:** —
 
 ### `notification_templates`
-- **Sahip:** `features/notify`, şema `schema/notify.ts` (00-genel 0019).
+- **Sahip:** `features/notify`, şema `schema/notify.ts` (00-genel 0020).
 - **Kaynak:** `15-bildirimler.md` bölüm 1, 3.
 
 | ad | tür | boş olabilir mi | açıklama |
@@ -2144,7 +2145,7 @@ Kaynak: `docs/03-cekirdek/03-veri-kurallari.md`, `.claude/skills/database/openme
 - **Açık sorular:** —
 
 ### `notification_settings`
-- **Sahip:** `features/notify`, şema `schema/notify.ts` (00-genel 0019).
+- **Sahip:** `features/notify`, şema `schema/notify.ts` (00-genel 0020).
 - **Kaynak:** `15-bildirimler.md` bölüm 1, 7.
 
 | ad | tür | boş olabilir mi | açıklama |
@@ -2164,7 +2165,7 @@ Kaynak: `docs/03-cekirdek/03-veri-kurallari.md`, `.claude/skills/database/openme
 - **Açık sorular:** —
 
 ### `notification_log`
-- **Sahip:** `features/notify`, şema `schema/notify.ts` (00-genel 0019).
+- **Sahip:** `features/notify`, şema `schema/notify.ts` (00-genel 0020).
 - **Kaynak:** `15-bildirimler.md` bölüm 1, 5, 6, 8; `11-musteriler.md` bölüm 7 (zaman çizelgesinde gönderilen e-postalar).
 
 | ad | tür | boş olabilir mi | açıklama |
@@ -2194,7 +2195,7 @@ Kaynak: `docs/03-cekirdek/03-veri-kurallari.md`, `.claude/skills/database/openme
 # 16. Raporlama
 
 ### `stats_daily_sales`
-- **Sahip:** `features/reports` (karar: yeni klasör; yol haritasında yok, eklenmeli), şema `schema/reports.ts` (00-genel 0020).
+- **Sahip:** `features/reports` (karar: yeni klasör; yol haritasında yok, eklenmeli), şema `schema/reports.ts` (00-genel 0021).
 - **Kaynak:** `16-raporlama.md` bölüm 2, 3.
 
 | ad | tür | boş olabilir mi | açıklama |
@@ -2319,7 +2320,7 @@ Kaynak: `docs/03-cekirdek/03-veri-kurallari.md`, `.claude/skills/database/openme
 # 17. Belgeler
 
 ### `documents`
-- **Sahip:** `features/documents` (karar: yeni klasör; yol haritasında yok, eklenmeli), şema `schema/reports.ts` (00-genel 0020).
+- **Sahip:** `features/documents` (karar: yeni klasör; yol haritasında yok, eklenmeli), şema `schema/reports.ts` (00-genel 0021).
 - **Kaynak:** `17-belgeler.md`; `05-sepet-ve-checkout.md` bölüm 1.1.
 
 | ad | tür | boş olabilir mi | açıklama |
@@ -2351,9 +2352,9 @@ Kaynak: `docs/03-cekirdek/03-veri-kurallari.md`, `.claude/skills/database/openme
 | `promotion_channels`, `shipping_method_channels`, `payment_method_channels`, `stock_location` ve rol kanal bağlantıları | 01 bölüm 2 (`<varlık>_channels`), veri kuralları bölüm 4 | Denetim B: `promotion_channels(promotion_id, channel_id)` ve `shipping_method_channels(shipping_method_id, channel_id)` adları karar, PK iki sütun, ek indeks `(channel_id)`; tablo bölümü yazılmalı, 00-genel 0010/0012 listesine eklenmeli. Rol kanal bağlantısı 00-genel karar 1 ile kalktı (`admin_role_assignments.channel_id`) |
 | Ürün/varyant–özellik değeri bağlantısı | 02 bölüm 1 ("ürün veya varyanta bağlanır") | kapandı (2026-11-13): `product_facet_values`, `variant_facet_values` |
 | Varyant–seçenek değeri bağlantısı | 02 bölüm 1 ("seçenek değerleri kombinasyonu") | kapandı (2026-11-13): `variant_option_values` |
-| Diğer `*_translations` (varyant, seçenek, özellik, yazı, menü öğesi) | 02 bölüm 1, 13 bölüm 1 | Denetim B: `post_translations` (sütunlar `posts` kurallarında) ve `menu_item_translations(menu_item_id, lang, label)` karar; tablo bölümü yazılmalı, 00-genel 0018 listesine eklenmeli. Varyant/seçenek/özellik ilk yarının işi |
+| Diğer `*_translations` (varyant, seçenek, özellik, yazı, menü öğesi) | 02 bölüm 1, 13 bölüm 1 | Denetim B: `post_translations` (sütunlar `posts` kurallarında) ve `menu_item_translations(menu_item_id, lang, label)` karar; tablo bölümü yazılmalı, 00-genel 0019 listesine eklenmeli. Varyant/seçenek/özellik ilk yarının işi |
 | Elle koleksiyon üyeliği | 02 bölüm 1 | belgede yok |
-| Sipariş numarası sayaç tablosu | 07 bölüm 6 ("sayaç satırı") | belgede yok |
+| Sipariş numarası sayaç tablosu | 07 bölüm 6 ("sayaç satırı") | kapandı: `order_number_counters`, 0017 |
 | Sipariş düzeltme kaydı (fark satırları) | 07 bölüm 4 | belgede yok |
 | Muafiyet belgesi ve geçerlilik tarihi | 09 bölüm 3 | açık (açık sorular listesi, madde B1) |
 | `return_lines` | 10 bölüm 3 ("satırlar") | kapandı (Denetim B): ayrı tablo yok, `returns.lines` JSON |
@@ -2404,4 +2405,4 @@ Kaynak: `docs/03-cekirdek/03-veri-kurallari.md`, `.claude/skills/database/openme
 - **B4.** `sections`: taslak önizlemenin veri modeli (ayrı satır mı, ayrı sütun mu) belgede yok.
 - **B5.** `notification_log` saklama süresi belgede yok.
 - **B6.** `stats_daily_funnel`: müşteri olaylarının kaynağı (Pixel / sunucu) ve oturum sayımı belgede yok.
-- **B7.** 00-genel migration sırası (00-genel düzeltilmeli, bu dosya değil): `tax_rates.customer_group_id` (0010) → `customer_groups` (0011); `promotion_usage.reservation_id` (0012) → `checkout_reservations` (0013) ve `order_id` → `orders` (0015) hedefleri sonra geliyor. SQLite FK hedefini oluşturmada denetlemez, ama "hedef önce" kuralı bozuk. Ayrıca 00-genel listelerinde `fulfillment_lines`, `post_translations`, `menu_item_translations`, `promotion_channels`, `shipping_method_channels` yok; 0018-0020 satırındaki tablo adları bu dosyadaki yerleşimle uyumlu.
+- **B7.** 00-genel migration sırası (00-genel düzeltilmeli, bu dosya değil): `tax_rates.customer_group_id` (0010) → `customer_groups` (0011); `promotion_usage.reservation_id` (0012) → `checkout_reservations` (0013) ve `order_id` → `orders` (0015) hedefleri sonra geliyor. SQLite FK hedefini oluşturmada denetlemez, ama "hedef önce" kuralı bozuk. Ayrıca 00-genel listelerinde `fulfillment_lines`, `post_translations`, `menu_item_translations`, `promotion_channels`, `shipping_method_channels` yok; 0019-0021 satırındaki tablo adları bu dosyadaki yerleşimle uyumlu.

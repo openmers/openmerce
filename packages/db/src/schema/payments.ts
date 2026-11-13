@@ -16,7 +16,7 @@ import { orders } from "./orders"
 // 02-ticaret.md bölüm 7, 0014. `payments.order_id`, `refunds.order_id` (0015) ve
 // `refunds.return_id` (0016) ileri FK'dır (02 B7). Ödeme ve iade silinmez; webhook tekilliği
 // settlement_token, (yöntem, sağlayıcı referansı) ve kümülatif refunded_amount koşuluyla.
-// `payment_method_channels` katalogda tanımsız, açılmadı.
+// Kanal bağlantısı `payment_method_channels` 0017'de (`commerce-links.ts`).
 
 type Json = Record<string, unknown>
 

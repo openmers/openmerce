@@ -52,7 +52,7 @@ export const sessions = sqliteTable(
       .notNull()
       .references(() => customers.id),
     groupIds: text("group_ids", { mode: "json" }).$type<number[]>().notNull(),
-    // companies 0022'de: FK'sız
+    // companies 0023'de: FK'sız
     activeCompanyId: integer("active_company_id"),
     companyRole: text("company_role", { enum: companyRoles }),
     // öncelik sırasıyla

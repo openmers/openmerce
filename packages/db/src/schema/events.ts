@@ -3,7 +3,7 @@ import { check, index, integer, sqliteTable, text, uniqueIndex } from "drizzle-o
 import { createdAt, publicId, updatedAt } from "./columns"
 
 // 01-cekirdek-isletme.md E (outbox, zamanlanmış görevler) ve G (`external_refs`, karar 3).
-// Hedefi sonra açılan referanslar FK'sız (outbox.app_installation_id → 0027, scheduled_runs.outbox_id
+// Hedefi sonra açılan referanslar FK'sız (outbox.app_installation_id → 0028, scheduled_runs.outbox_id
 // satırı silinir).
 
 export const outboxKinds = [

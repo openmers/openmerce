@@ -8,7 +8,7 @@ import { customers } from "./customers"
 
 // 02-ticaret.md bölüm 8 (`orders`, `order_events`, `order_notes`), 01 G (`order_guest_access`),
 // 00-genel karar 7 (`payment_due_at`), 0015. Yalnız kesinleşmiş sipariş; silinmez. Anlık görüntü:
-// adres, kur, yasal sürümler kopyalanır, join edilmez. `company_id` hedefi 0022'de: FK'sız.
+// adres, kur, yasal sürümler kopyalanır, join edilmez. `company_id` hedefi 0023'de: FK'sız.
 
 type Json = Record<string, unknown>
 

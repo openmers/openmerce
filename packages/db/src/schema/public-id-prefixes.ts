@@ -1,13 +1,13 @@
-// `public_id` önek haritası: TEK kaynak. Sahibi belgelerdir (`03-cekirdek/03-veri-kurallari.md` §1
-// ve `docs/veritabani/01|02|03`); kod ve testler buradan okur, kopya tutmaz.
-// Harita `packages/db`'de durur: `core` zaten `db`'ye bağımlıdır, ters yön (db → core) döngü olurdu.
-// `core/features/ids/prefixes.ts` bu dosyayı yeniden dışa açar.
+// `public_id` prefix map: the SINGLE source. The docs own it (`03-cekirdek/03-veri-kurallari.md` §1
+// and `docs/veritabani/01|02|03`); code and tests read from here, no copies.
+// The map lives in `packages/db`: `core` already depends on `db`, the reverse (db → core) would be a cycle.
+// `core/features/ids/prefixes.ts` re-exports this file.
 //
-// Değerler kalıcıdır: bir varlığın öneki değişmez, yeni varlık yeni satır ekler (03-veri-kurallari §1).
+// Values are permanent: an entity's prefix never changes, a new entity adds a new row (03-veri-kurallari §1).
 
-/** Tablo adı → önek. `03-veri-kurallari` §1 listesi + katalog 01/02/03 satırları. */
+/** Table name → prefix. `03-veri-kurallari` §1 list + catalog 01/02/03 rows. */
 export const PUBLIC_ID_PREFIXES = {
-  // 03-veri-kurallari §1 (kalıcı liste)
+  // 03-veri-kurallari §1 (permanent list)
   products: "prod_",
   product_variants: "var_",
   collections: "col_",
@@ -19,7 +19,7 @@ export const PUBLIC_ID_PREFIXES = {
   quotes: "quo_",
   channels: "chn_",
   price_lists: "pl_",
-  // katalog 02 (`02-ticaret.md`)
+  // catalog 02 (`02-ticaret.md`)
   stock_locations: "loc_",
   carts: "cart_",
   checkout_reservations: "rsv_",
@@ -40,7 +40,7 @@ export const PUBLIC_ID_PREFIXES = {
   posts: "pst_",
   redirects: "rdr_",
   documents: "doc_",
-  // katalog 01 (`01-cekirdek-isletme.md` "public_id önekleri")
+  // catalog 01 (`01-cekirdek-isletme.md` "public_id prefixes")
   admin_users: "adm_",
   roles: "rol_",
   access_policies: "acp_",
@@ -50,7 +50,7 @@ export const PUBLIC_ID_PREFIXES = {
   outbox: "evt_",
   audit_log: "aud_",
   tenants: "tnt_",
-  // katalog 03 (`03-b2b-istemci-genisletme.md` "Kimlik" satırı)
+  // catalog 03 (`03-b2b-istemci-genisletme.md` "Identity" row)
   company_members: "cmb_",
   company_addresses: "cad_",
   approval_policies: "apl_",
@@ -73,12 +73,12 @@ export const PUBLIC_ID_PREFIXES = {
 
 export type PublicIdPrefix = (typeof PUBLIC_ID_PREFIXES)[keyof typeof PUBLIC_ID_PREFIXES]
 
-/** Önek → tablo (ters arama; sınırda "hangi varlık" sorusu için). */
+/** Prefix → table (reverse lookup; for the "which entity" question at a boundary). */
 export const PUBLIC_ID_TABLES: Readonly<Record<PublicIdPrefix, string>> = Object.fromEntries(
   Object.entries(PUBLIC_ID_PREFIXES).map(([table, prefix]) => [prefix, table]),
 ) as Readonly<Record<PublicIdPrefix, string>>
 
-/** Token önekleri `public_id` değildir, ayrı ad alanı (katalog 01, 08-kimlik §6). */
+/** Token prefixes are not `public_id`, a separate namespace (catalog 01, 08-kimlik §6). */
 export const TOKEN_PREFIXES = ["omk_", "oma_", "omp_", "otk_"] as const
 
 export type TokenPrefix = (typeof TOKEN_PREFIXES)[number]

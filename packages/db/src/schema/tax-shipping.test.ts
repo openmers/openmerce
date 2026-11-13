@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest"
 import { NOW, seeder } from "../testing/commerce"
 import { openMigratedDb } from "../testing/sqlite"
 
-// 0010_tax-shipping: gerçek better-sqlite3 :memory:, foreign_keys=ON, her test taze DB.
+// 0010_tax-shipping: real better-sqlite3 :memory:, foreign_keys=ON, fresh DB per test.
 let db: Database.Database
 let s: ReturnType<typeof seeder>
 beforeEach(() => {
@@ -13,7 +13,7 @@ beforeEach(() => {
 afterEach(() => db.close())
 
 describe("sqlite_master", () => {
-  it("benzersiz ve ifade indeksleri var", () => {
+  it("unique and expression indexes exist", () => {
     expect(s.indexSql("zone_members_uq")).toMatch(/coalesce\(`region`, ''\)/)
     expect(s.indexSql("tax_rates_uq")).toMatch(/coalesce\(`customer_group_id`, 0\)/)
     for (const idx of [
@@ -26,7 +26,7 @@ describe("sqlite_master", () => {
     }
   })
 
-  it("channels bölge sütunları zones'a FK", () => {
+  it("channels region columns FK to zones", () => {
     const fks = db.prepare("SELECT `from`, `table` FROM pragma_foreign_key_list('channels')").all()
     expect(fks).toContainEqual({ from: "default_tax_zone_id", table: "zones" })
     expect(fks).toContainEqual({ from: "default_shipping_zone_id", table: "zones" })
@@ -34,7 +34,7 @@ describe("sqlite_master", () => {
 })
 
 describe("zone_members", () => {
-  it("NULL bölgede de çift reddedilir; ülke kodu 2 harf", () => {
+  it("duplicate rejected even with NULL region; country code is 2 letters", () => {
     const z = s.zone()
     const member = (country: string, region: string | null) =>
       s.run(
@@ -52,7 +52,7 @@ describe("zone_members", () => {
 })
 
 describe("tax_rates", () => {
-  it("(bölge, kategori, grup) NULL grupta da tek; FK", () => {
+  it("(region, category, group) unique even with NULL group; FK", () => {
     const z = s.zone()
     const cat = s.taxCategory("standard")
     let n = 0
@@ -76,7 +76,7 @@ describe("tax_rates", () => {
 })
 
 describe("shipping_methods", () => {
-  it("vergi kategorisi zorunlu FK; depo FK'si", () => {
+  it("tax category FK required; warehouse FK", () => {
     const method = (taxCategoryId: number, locationId: number | null) =>
       s.run(
         `INSERT INTO shipping_methods (public_id, name, calculator_code, calculator_args, tax_category_id, pickup_location_id, created_at, updated_at)

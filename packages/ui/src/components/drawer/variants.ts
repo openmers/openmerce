@@ -1,6 +1,6 @@
 import { cva } from "class-variance-authority"
 
-// Medusa UI drawer.tsx (MIT). `bg-ui-bg-base` → `bg-card`, `border-ui-border-base` → `border-border`.
+// Ported from an MIT-licensed UI kit; see NOTICE. `bg-ui-bg-base` → `bg-card`, `border-ui-border-base` → `border-border`.
 export const drawerOverlayVariants = cva([
   "bg-bg-overlay fixed inset-0",
   "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
@@ -22,7 +22,7 @@ export const drawerFooterVariants = cva(
   "border-border flex items-center justify-end gap-x-2 overflow-y-auto border-t px-6 py-4",
 )
 
-// `Kbd` bileşeni B1 kapsamında; drawer başlığı için sınıfları burada tutulur.
+// The `Kbd` component is part of B1; its classes are kept here for the drawer header.
 export const drawerKbdVariants = cva([
   "inline-flex h-5 w-fit min-w-[20px] items-center justify-center rounded-md px-1",
   "border border-tag-neutral-border bg-tag-neutral-bg text-tag-neutral-text",

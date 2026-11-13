@@ -28,7 +28,7 @@ function createUniqueId() {
   return Math.random().toString(36).slice(2, 8)
 }
 
-/** Medusa `utils/toast.tsx` karşılığı: `Toast` görünümü svelte-sonner üzerinden gösterilir. */
+/** The kit's `utils/toast.tsx` counterpart: the `Toast` view is shown through svelte-sonner. */
 function create(variant: ToastVariant, title: string, options: ToastOptions = {}) {
   const id = options.id ?? createUniqueId()
   sonnerToast.custom(Toast, {

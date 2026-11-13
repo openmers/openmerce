@@ -1,7 +1,7 @@
 <script lang="ts">
 import { Toaster as SonnerToaster, type ToasterProps as SonnerToasterProps } from "svelte-sonner"
 
-// svelte-sonner'da `cn`/`theme`/`richColors`/`icons` yok; Medusa bu API'yi dışlıyordu, aynı daraltma.
+// svelte-sonner has no `cn`/`theme`/`richColors`/`icons`; the kit excluded that API too, so the same narrowing applies.
 type Props = Omit<
   SonnerToasterProps,
   "richColors" | "closeButton" | "icons" | "theme" | "invert" | "toastOptions"

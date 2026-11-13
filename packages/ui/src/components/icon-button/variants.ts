@@ -1,6 +1,6 @@
 import { cva, type VariantProps } from "class-variance-authority"
 
-// Medusa UI icon-button.tsx (MIT). theme.css'te olmayan sınıf eklenmedi.
+// Ported from an MIT-licensed UI kit; see NOTICE. No class missing from theme.css was added.
 export const iconButtonVariants = cva(
   [
     "transition-fg inline-flex w-fit items-center justify-center overflow-hidden rounded-md outline-hidden",

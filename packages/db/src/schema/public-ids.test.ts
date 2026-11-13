@@ -3,9 +3,9 @@ import { describe, expect, it } from "vitest"
 import { openMigratedDb } from "../testing/sqlite"
 import { PUBLIC_ID_PREFIXES } from "./public-id-prefixes"
 
-// Önek haritasının tek kaynağı `schema/public-id-prefixes.ts`'tir (yol haritası 6.5); bu test
-// haritanın katalogla aynı olduğunu ve `public_id` sütunu olan her tablonun haritada bulunduğunu
-// doğrular. Katalog satırı: 01-cekirdek-isletme.md "`public_id` önekleri", 02-ticaret.md `channels`.
+// The only source of the prefix map is `schema/public-id-prefixes.ts` (roadmap 6.5); this test
+// verifies the map matches the catalog and that every table with a `public_id` column is in the map.
+// Catalog row: 01-cekirdek-isletme.md "`public_id` prefixes", 02-ticaret.md `channels`.
 
 const doc = (name: string) =>
   readFileSync(new URL(`../../../../docs/veritabani/${name}`, import.meta.url), "utf8")
@@ -37,30 +37,30 @@ function tablesWithPublicId(): string[] {
   }
 }
 
-describe("public_id önekleri", () => {
-  it("önekler katalogla aynı", () => {
+describe("public_id prefixes", () => {
+  it("prefixes match the catalog", () => {
     const catalog = catalogPrefixes()
     for (const [table, prefix] of Object.entries(PUBLIC_ID_PREFIXES)) {
       if (table === "channels") {
         expect(doc("02-ticaret.md")).toMatch(/\| `public_id` \| TEXT \| hayır \| `chn_` \|/)
         continue
       }
-      if (catalog[table] === undefined) continue // 02/03 tabloları bu satırda yok
+      if (catalog[table] === undefined) continue // 02/03 tables are not in this row
       expect(catalog[table], table).toBe(prefix)
     }
-    // Katalogdaki her önek haritada olmalı (eksik satır sessizce kaybolmasın).
+    // every prefix in the catalog must be in the map (a missing row must not vanish silently).
     for (const [table, prefix] of Object.entries(catalog)) {
       expect(PUBLIC_ID_PREFIXES[table as keyof typeof PUBLIC_ID_PREFIXES], table).toBe(prefix)
     }
   })
 
-  it("önekler benzersiz ve biçim kuralına uyuyor", () => {
+  it("prefixes are unique and follow the format rule", () => {
     const values = Object.values(PUBLIC_ID_PREFIXES)
     expect(new Set(values).size).toBe(values.length)
     for (const prefix of values) expect(prefix).toMatch(/^[a-z]{2,4}_$/)
   })
 
-  it("public_id sütunu olan her tablo haritada", () => {
+  it("every table with a public_id column is in the map", () => {
     const tables = tablesWithPublicId()
     expect(tables.length).toBeGreaterThan(0)
     for (const table of tables) {

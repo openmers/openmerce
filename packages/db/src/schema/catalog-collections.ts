@@ -11,7 +11,7 @@ import { productVariants } from "./catalog-products"
 import { channels } from "./channels"
 import { createdAt, publicId, updatedAt } from "./columns"
 
-// 02-ticaret.md bölüm 1-2 (`collections`, üyelik, çeviri, kanal bağlantısı), 0006.
+// 02-ticaret.md sections 1-2 (`collections`, membership, translation, channel link), 0006.
 
 type Json = Record<string, unknown>
 
@@ -22,7 +22,7 @@ export const collections = sqliteTable(
     publicId: publicId(),
     parentId: integer("parent_id").references((): AnySQLiteColumn => collections.id),
     position: integer("position").notNull(),
-    // CollectionFilter operasyonları [{code, args}]; elle üyelik de bir operasyon
+    // CollectionFilter operations [{code, args}]; manual membership is also an operation
     filters: text("filters", { mode: "json" }).$type<{ code: string; args: Json }[]>(),
     inheritFilters: integer("inherit_filters", { mode: "boolean" }).notNull().default(true),
     indexableFilters: text("indexable_filters", { mode: "json" }).$type<unknown[]>(),
@@ -38,7 +38,7 @@ export const collections = sqliteTable(
   ],
 )
 
-// hesaplanmış üyelik; iş satırları yeniden yazar, zaman sütunu yok
+// computed membership; the job rewrites rows, no time column
 export const collectionVariants = sqliteTable(
   "collection_variants",
   {

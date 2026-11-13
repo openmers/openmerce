@@ -1,7 +1,7 @@
 import { cva } from "class-variance-authority"
 import type { SelectSize } from "./context"
 
-// Medusa UI select.tsx (MIT). `bg-ui-bg-field` → `bg-bg-field`, `bg-ui-bg-disabled` → `bg-muted`.
+// Ported from an MIT-licensed UI kit; see NOTICE. `bg-ui-bg-field` → `bg-bg-field`, `bg-ui-bg-disabled` → `bg-muted`.
 export const selectTriggerVariants = cva(
   [
     "bg-bg-field shadow-buttons-neutral transition-fg flex w-full select-none items-center justify-between rounded-md outline-hidden",
@@ -43,12 +43,12 @@ export const selectItemVariants = cva([
   "txt-compact-small grid cursor-pointer grid-cols-[15px_1fr] items-center gap-x-2 rounded-[4px] bg-popover px-2 py-1.5 outline-hidden transition-colors",
   "focus-visible:bg-bg-component-hover",
   "active:bg-bg-component-pressed",
-  // Radix `data-state=checked` yerine bits-ui `data-selected` yayınlar.
+  // bits-ui emits `data-selected` instead of Radix `data-state=checked`.
   "data-selected:txt-compact-small-plus",
   "disabled:text-fg-disabled",
 ])
 
-// Medusa `bg-ui-border-component` jetonu mapping.md'de yok; separator yalnız menü kenar renklerini taşır.
+// the kit's `bg-ui-border-component` token is absent from mapping.md; the separator only carries the menu edge colors.
 export const selectSeparatorVariants = cva(
   "-mx-1 my-1 h-0.5 border-b border-t border-b-border-menu-bot border-t-border-menu-top",
 )

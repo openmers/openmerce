@@ -1,13 +1,13 @@
-# Medusa → OpenMers jeton eşlemesi
+# Source → OpenMers token mapping
 
-Değerler Medusa `@medusajs/ui-preset` 2.22.6'dan aynen alındı (MIT, bkz. kök `NOTICE`).
-shadcn adı olan jetonlar shadcn adını alır; karşılığı olmayanlar Medusa adını korur.
-Tailwind sınıfı: `bg-<ad>`, `text-<ad>`, `border-<ad>` (ör. `bg-background`, `bg-tag-blue-bg`).
-14 jeton yeniden adlandırıldı, 76 jeton adını korudu; toplam 90.
+Values are taken verbatim from an MIT-licensed design token preset (see the root `NOTICE`).
+Tokens that have a shadcn name take the shadcn name; the rest keep the source name.
+Tailwind class: `bg-<name>`, `text-<name>`, `border-<name>` (e.g. `bg-background`, `bg-tag-blue-bg`).
+14 tokens were renamed, 76 kept their names; 90 in total.
 
-## Renkler (90)
+## Colors (90)
 
-| Medusa                         | OpenMers                       | Tailwind adı                 |
+| Source                         | OpenMers                       | Tailwind name                |
 | ------------------------------ | ------------------------------ | ---------------------------- |
 | `--alpha-250`                  | `--alpha-250`                  | `alpha-250`                  |
 | `--alpha-400`                  | `--alpha-400`                  | `alpha-400`                  |
@@ -100,11 +100,11 @@ Tailwind sınıfı: `bg-<ad>`, `text-<ad>`, `border-<ad>` (ör. `bg-background`,
 | `--tag-red-icon`               | `--tag-red-icon`               | `tag-red-icon`               |
 | `--tag-red-text`               | `--tag-red-text`               | `tag-red-text`               |
 
-## shadcn takma adları (değer yok, başvuru)
+## shadcn aliases (no value, reference only)
 
-Medusa'da ayrı değeri olmayan shadcn adları başka jetona bağlanır.
+shadcn names that have no separate upstream value point at another token.
 
-| OpenMers                       | değer                       |
+| OpenMers                       | value                       |
 | ------------------------------ | --------------------------- |
 | `--card-foreground`            | `var(--foreground)`         |
 | `--popover-foreground`         | `var(--foreground)`         |
@@ -119,8 +119,8 @@ Medusa'da ayrı değeri olmayan shadcn adları başka jetona bağlanır.
 | `--sidebar-border`             | `var(--border)`             |
 | `--sidebar-ring`               | `var(--ring)`               |
 
-## Diğerleri (adlar korundu)
+## Others (names kept)
 
-- Gölgeler (23): `--<ad>` aynen, sınıf `shadow-<ad>` (ör. `shadow-buttons-neutral`).
-- Tipografi (35): Medusa sınıf adları aynen (`txt-compact-small`, `h1-core` …).
-- `rounded-xs`, `font-sans`, `font-mono`, `animate-accordion-down/up`, `transition-fg`: aynen.
+- Shadows (23): `--<name>` as is, class `shadow-<name>` (e.g. `shadow-buttons-neutral`).
+- Typography (35): upstream class names as is (`txt-compact-small`, `h1-core` …).
+- `rounded-xs`, `font-sans`, `font-mono`, `animate-accordion-down/up`, `transition-fg`: as is.

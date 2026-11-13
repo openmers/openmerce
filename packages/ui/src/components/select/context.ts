@@ -4,7 +4,7 @@ export type SelectSize = "base" | "small"
 
 const SELECT_SIZE = Symbol("SelectSize")
 
-/** Kök `Select` boyutu tetikleyiciye taşır; Radix'teki `SelectContext` karşılığı. */
+/** Carries the root `Select` size to the trigger; the `SelectContext` counterpart in Radix. */
 export function setSelectSize(getSize: () => SelectSize) {
   setContext(SELECT_SIZE, getSize)
 }

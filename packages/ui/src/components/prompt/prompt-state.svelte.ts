@@ -4,7 +4,7 @@ export type PromptOptions = {
   title: string
   description: string
   variant?: PromptVariant
-  /** Yıkıcı eylemlerde onay için yazılması gereken metin ("mağaza adını yazın"). */
+  /** Text that must be typed to confirm destructive actions ("type the store name"). */
   verificationText?: string
   verificationInstruction?: string
   cancelText?: string
@@ -17,7 +17,7 @@ type PromptRequest = PromptOptions & {
 
 let request = $state<PromptRequest | null>(null)
 
-/** `PromptHost` kök düzende bir kez render edilir; istek modül durumunda tutulur. */
+/** `PromptHost` is rendered once in the root layout; the request is kept in module state. */
 export function getPromptRequest(): PromptRequest | null {
   return request
 }

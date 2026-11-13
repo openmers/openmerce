@@ -2,7 +2,7 @@ import type Database from "better-sqlite3"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 import { openMigratedDb } from "../testing/sqlite"
 
-// Şema testi: migration'lar gerçek better-sqlite3 :memory: üzerinde (mock yok), her test taze DB.
+// Schema test: migrations run on real better-sqlite3 :memory: (no mocks), fresh DB per test.
 let db: Database.Database
 beforeEach(() => {
   db = openMigratedDb()
@@ -46,7 +46,7 @@ const insertDomain = (
     .run(channelId, domain, isPrimary, mode, NOW, NOW)
 
 describe("sqlite_master", () => {
-  it("indeksler var, kısmi indekslerde WHERE SQL'de", () => {
+  it("indexes exist, WHERE present in partial index SQL", () => {
     expect(indexSql("settings_scope_key_uq")).toMatch(/UNIQUE INDEX/)
     expect(indexSql("channels_public_id_uq")).toMatch(/UNIQUE INDEX/)
     expect(indexSql("channels_code_uq")).toMatch(/UNIQUE INDEX/)
@@ -56,7 +56,7 @@ describe("sqlite_master", () => {
     expect(indexSql("channel_domains_channel_idx")).toMatch(/INDEX/)
   })
 
-  it("check kısıtları tablo SQL'inde", () => {
+  it("check constraints in the table SQL", () => {
     for (const ck of ["settings_scope_ck", "settings_scope_id_ck", "settings_key_ck"]) {
       expect(tableSql("settings")).toContain(ck)
     }
@@ -79,7 +79,7 @@ describe("sqlite_master", () => {
     }
   })
 
-  it("d1_migrations bütün dosyaları kaydetti", () => {
+  it("d1_migrations recorded all files", () => {
     const names = db.prepare("SELECT name FROM d1_migrations ORDER BY id").pluck().all()
     expect(names).toEqual([
       "0000_baseline.sql",
@@ -105,7 +105,7 @@ describe("sqlite_master", () => {
 })
 
 describe("settings", () => {
-  it("geçerli scope/scope_id çiftlerini kabul eder", () => {
+  it("accepts valid scope/scope_id pairs", () => {
     insertSetting("global", 0)
     insertSetting("built_in_app", 0, "wishlist.enabled")
     insertSetting("channel", 1)
@@ -113,7 +113,7 @@ describe("settings", () => {
     insertSetting("customer", 1)
   })
 
-  it("created_at zorunlu", () => {
+  it("created_at required", () => {
     expect(() =>
       db
         .prepare(
@@ -123,20 +123,20 @@ describe("settings", () => {
     ).toThrow(/NOT NULL constraint failed: settings.created_at/)
   })
 
-  it("geçersiz scope'u reddeder", () => {
+  it("rejects invalid scope", () => {
     expect(() => insertSetting("user", 1)).toThrow(/CHECK constraint failed/)
   })
 
-  it("geçersiz scope/scope_id çiftini reddeder", () => {
+  it("rejects invalid scope/scope_id pair", () => {
     expect(() => insertSetting("global", 5)).toThrow(/settings_scope_id_ck/)
     expect(() => insertSetting("channel", 0)).toThrow(/settings_scope_id_ck/)
   })
 
-  it("boş anahtarı reddeder", () => {
+  it("rejects empty key", () => {
     expect(() => insertSetting("global", 0, "")).toThrow(/settings_key_ck/)
   })
 
-  it("(scope, scope_id, key) benzersiz", () => {
+  it("(scope, scope_id, key) unique", () => {
     insertSetting("channel", 1)
     insertSetting("channel", 2)
     expect(() => insertSetting("channel", 1)).toThrow(/UNIQUE constraint failed/)
@@ -144,7 +144,7 @@ describe("settings", () => {
 })
 
 describe("channels", () => {
-  it("varsayılanlar uygulanır", () => {
+  it("defaults applied", () => {
     insertChannel("default", 1)
     expect(db.prepare("SELECT * FROM channels").get()).toMatchObject({
       type: "b2c",
@@ -159,7 +159,7 @@ describe("channels", () => {
     })
   })
 
-  it("min_order_amounts ve settings JSON nesnesi olmalı", () => {
+  it("min_order_amounts and settings must be JSON objects", () => {
     const id = insertChannel("default")
     const set = (col: string, v: string) =>
       db.prepare(`UPDATE channels SET ${col} = ? WHERE id = ?`).run(v, id)
@@ -173,20 +173,20 @@ describe("channels", () => {
     expect(() => set("settings", "[]")).toThrow(/channels_settings_ck/)
   })
 
-  it("ikinci varsayılan kanalı reddeder, varsayılan olmayanlar çoğalabilir", () => {
+  it("rejects a second default channel, non-defaults may multiply", () => {
     insertChannel("default", 1)
     insertChannel("b2b")
     insertChannel("wholesale")
     expect(() => insertChannel("other", 1)).toThrow(/UNIQUE constraint failed: channels.is_default/)
   })
 
-  it("kod tekrarını ve büyük harfli kodu reddeder", () => {
+  it("rejects duplicate code and uppercase code", () => {
     insertChannel("default")
     expect(() => insertChannel("default")).toThrow(/UNIQUE constraint failed/)
     expect(() => insertChannel("Shop")).toThrow(/channels_code_ck/)
   })
 
-  it("geçersiz type, access ve para birimini reddeder", () => {
+  it("rejects invalid type, access and currency", () => {
     const id = insertChannel("default")
     const set = (col: string, v: string) =>
       db.prepare(`UPDATE channels SET ${col} = ? WHERE id = ?`).run(v, id)
@@ -197,7 +197,7 @@ describe("channels", () => {
 })
 
 describe("channel_domains", () => {
-  it("kanal başına ikinci birincil alan adını reddeder", () => {
+  it("rejects a second primary domain per channel", () => {
     const a = insertChannel("a")
     const b = insertChannel("b")
     insertDomain(a, "a.example.com", 1)
@@ -208,7 +208,7 @@ describe("channel_domains", () => {
     )
   })
 
-  it("secondary_mode: birincilde boş, ikincilde redirect|serve", () => {
+  it("secondary_mode: empty on primary, redirect|serve on secondary", () => {
     const a = insertChannel("a")
     insertDomain(a, "a.example.com", 1)
     insertDomain(a, "en.a.example.com", 0, "serve")
@@ -223,19 +223,19 @@ describe("channel_domains", () => {
     )
   })
 
-  it("büyük harfli alan adını reddeder", () => {
+  it("rejects uppercase domain", () => {
     const a = insertChannel("a")
     expect(() => insertDomain(a, "Shop.Example.com")).toThrow(/channel_domains_domain_ck/)
   })
 
-  it("aynı alan adı iki kanala eklenemez", () => {
+  it("the same domain cannot be added to two channels", () => {
     insertDomain(insertChannel("a"), "shop.example.com")
     expect(() => insertDomain(insertChannel("b"), "shop.example.com")).toThrow(
       /UNIQUE constraint failed: channel_domains.domain/,
     )
   })
 
-  it("FK: olmayan kanala alan adı eklenemez, alan adı olan kanal silinemez", () => {
+  it("FK: cannot add a domain to a missing channel, cannot delete a channel with domains", () => {
     expect(() => insertDomain(999, "x.example.com")).toThrow(/FOREIGN KEY constraint failed/)
     const a = insertChannel("a")
     insertDomain(a, "a.example.com")

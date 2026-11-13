@@ -1,6 +1,6 @@
 import { cva } from "class-variance-authority"
 
-// Medusa UI popover.tsx (MIT). Radix popper değişkenleri bits-ui karşılıklarına çevrildi.
+// Ported from an MIT-licensed UI kit; see NOTICE. Radix popper variables were mapped to their bits-ui counterparts.
 export const popoverContentVariants = cva([
   "max-h-[var(--bits-floating-available-height)] min-w-[220px] overflow-hidden rounded-lg bg-card p-1 text-foreground shadow-elevation-flyout",
   "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",

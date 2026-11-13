@@ -10,11 +10,11 @@ import type { DataTableInstance, DataTableOptions } from "./table-types"
 import { DataTableEmptyState, type DataTableFilteringState, type DataTableRowData } from "./types"
 
 /**
- * Medusa `useDataTable` karşılığı. Tablo veri getirmez, sıralamaz, süzmez;
- * her özellik `state` + `on…Change` çiftiyle dışarıdan denetlenir.
+ * The kit's `useDataTable` counterpart. The table does not fetch, sort or filter data;
+ * every feature is controlled from outside through a `state` + `on…Change` pair.
  *
- * Denetimli durumun canlı kalması için seçenekleri bir getter ile verin:
- * `createDataTable(() => ({ ... }))`. Düz nesne verilirse ilk değerler dondurulur.
+ * To keep controlled state live, pass the options through a getter:
+ * `createDataTable(() => ({ ... }))`. A plain object freezes the initial values.
  */
 export function createDataTable<TData extends DataTableRowData>(
   optionsOrGetter: DataTableOptions<TData> | (() => DataTableOptions<TData>),

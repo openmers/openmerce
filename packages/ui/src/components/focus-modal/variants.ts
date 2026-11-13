@@ -1,6 +1,6 @@
 import { cva } from "class-variance-authority"
 
-// Medusa UI focus-modal.tsx (MIT). `bg-ui-bg-base` → `bg-card`, `border-ui-border-base` → `border-border`.
+// Ported from an MIT-licensed UI kit; see NOTICE. `bg-ui-bg-base` → `bg-card`, `border-ui-border-base` → `border-border`.
 export const focusModalOverlayVariants = cva([
   "bg-bg-overlay fixed inset-0",
   "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",

@@ -1,6 +1,6 @@
 import { cva } from "class-variance-authority"
 
-// Medusa UI radio-group.tsx (MIT). `bg-ui-bg-base` → `bg-card`, `bg-ui-bg-base-hover` → `bg-accent`.
+// Ported from an MIT-licensed UI kit; see NOTICE. `bg-ui-bg-base` → `bg-card`, `bg-ui-bg-base-hover` → `bg-accent`.
 export const radioGroupVariants = cva("grid gap-2")
 
 export const radioGroupItemVariants = cva(

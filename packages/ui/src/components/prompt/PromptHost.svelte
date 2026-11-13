@@ -11,7 +11,7 @@ import PromptTitle from "./PromptTitle.svelte"
 import { getPromptRequest, settlePrompt } from "./prompt-state.svelte"
 import { promptInputVariants } from "./variants"
 
-// Medusa `hooks/use-prompt`: söz döndüren onay penceresi. Kök düzende tek `<PromptHost />`.
+// the kit's `hooks/use-prompt`: a confirmation dialog that returns a promise. One `<PromptHost />` in the root layout.
 let input = $state("")
 const current = $derived(getPromptRequest())
 

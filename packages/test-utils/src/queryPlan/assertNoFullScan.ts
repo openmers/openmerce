@@ -1,10 +1,10 @@
 import type Database from "better-sqlite3"
 import { parseQueryPlan, type QueryPlanRow } from "./parseQueryPlan"
 
-/** Drizzle `query.toSQL()` çıktısı ya da düz SQL. */
+/** Output of Drizzle `query.toSQL()` or plain SQL. */
 export type PlannedQuery = string | { sql: string; params?: unknown[] }
 
-/** Sorguyu aynı parametrelerle EXPLAIN QUERY PLAN'la çalıştırır; tam tarama varsa kırılır. Yalnız SQLite. */
+/** Runs the query through EXPLAIN QUERY PLAN with the same params; fails on a full scan. SQLite only. */
 export function assertNoFullScan(
   db: Database.Database,
   query: PlannedQuery,

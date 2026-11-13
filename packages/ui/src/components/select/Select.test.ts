@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event"
 import { describe, expect, it, vi } from "vitest"
 import SelectExample from "./fixtures/SelectExample.svelte"
 
-// jsdom Pointer Events API'sini eksik sağlar; bits-ui Select tetikleyicisi `hasPointerCapture` çağırır.
+// jsdom provides an incomplete Pointer Events API; the bits-ui Select trigger calls `hasPointerCapture`.
 if (!Element.prototype.hasPointerCapture) {
   Element.prototype.hasPointerCapture = () => false
   Element.prototype.setPointerCapture = () => undefined
@@ -42,7 +42,7 @@ describe("Select", () => {
     expect(trigger).toHaveClass("disabled:!bg-muted")
   })
 
-  it("opens the content with the Medusa styles", async () => {
+  it("opens the content with the kit styles", async () => {
     const user = userEvent.setup()
     render(SelectExample)
 

@@ -1,6 +1,6 @@
 import { cva } from "class-variance-authority"
 
-// Medusa UI tabs.tsx (MIT). `bg-ui-bg-base` → `bg-card`, `text-ui-fg-subtle` → `text-muted-foreground`.
+// Ported from an MIT-licensed UI kit; see NOTICE. `bg-ui-bg-base` → `bg-card`, `text-ui-fg-subtle` → `text-muted-foreground`.
 export const tabsListVariants = cva("flex items-center gap-2")
 
 export const tabsTriggerVariants = cva([

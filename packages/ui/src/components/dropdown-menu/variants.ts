@@ -1,6 +1,6 @@
 import { cva } from "class-variance-authority"
 
-// Medusa UI dropdown-menu.tsx (MIT). `bg-ui-bg-component` → `bg-popover`, tipografi sınıfları aynı.
+// Ported from an MIT-licensed UI kit; see NOTICE. `bg-ui-bg-component` → `bg-popover`, typography classes are unchanged.
 const itemBase = [
   "bg-popover text-foreground txt-compact-small relative flex cursor-pointer select-none items-center rounded-md px-2 py-1.5 outline-hidden transition-colors",
   "focus-visible:bg-bg-component-hover focus:bg-bg-component-hover",

@@ -13,7 +13,7 @@ type Props = {
 
 let { open = $bindable(false), defaultOpen = false, onOpenChange, children }: Props = $props()
 
-// Radix `Popover.Anchor` yerine görünmez sabit çapa; bits-ui `customAnchor` ile konumlanır.
+// An invisible fixed anchor instead of Radix `Popover.Anchor`; bits-ui positions with `customAnchor`.
 let anchor = $state<HTMLElement | null>(null)
 
 $effect(() => {

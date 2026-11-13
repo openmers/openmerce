@@ -39,7 +39,7 @@ let { id, filter, isNew = false, onUpdate, onRemove }: Props = $props()
 
 const instance = getDataTableContext()
 const meta = $derived(instance.getFilterMeta(id))
-// Yeni süzgeç, kullanıcı değer seçebilsin diye açık başlar.
+// A new filter starts open so the user can pick a value.
 // svelte-ignore state_referenced_locally
 let open = $state(isNew)
 

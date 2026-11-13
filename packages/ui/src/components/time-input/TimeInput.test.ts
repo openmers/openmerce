@@ -6,7 +6,7 @@ import TimeInputExample from "./fixtures/TimeInputExample.svelte"
 const segments = () => [...document.querySelectorAll<HTMLElement>("[data-segment]")]
 
 describe("TimeInput", () => {
-  it("renders the time field with the Medusa surface styles", () => {
+  it("renders the time field with the kit surface styles", () => {
     render(TimeInputExample)
 
     const field = document.querySelector<HTMLElement>("[data-time-field-input]") as HTMLElement
@@ -25,7 +25,7 @@ describe("TimeInput", () => {
   })
 
   it("renders the day period segment in a 12 hour locale", () => {
-    // bits-ui `hourCycle` yalnız 24 saat için zorlar; 12 saat görünümü locale'den gelir.
+    // bits-ui `hourCycle` only forces 24 hours; the 12-hour view comes from the locale.
     render(TimeInputExample, { props: { hourCycle: 12, locale: "en-US" } })
 
     const parts = segments().map((segment) => segment.dataset.segment)

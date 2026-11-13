@@ -7,9 +7,9 @@ import { promotions } from "./promotions"
 import { stockLocations } from "./stock"
 import { shippingMethods } from "./tax-shipping"
 
-// 02-ticaret.md bölüm 8 (sipariş satırları, indirim, vergi, kargo satırları), 0015. Anlık görüntü;
-// satır yerinde düzenlenmez (tek istisna: ek ücreti değiştirmeyen kişiselleştirme düzeltmesi).
-// Katalog bu tablolara created_at/updated_at vermez; sipariş satırının zamanı orders.placed_at.
+// 02-ticaret.md section 8 (order lines, discount, tax, shipping lines), 0015. Snapshot;
+// lines are never edited in place (single exception: a personalization fix that keeps the surcharge).
+// The catalog gives these tables no created_at/updated_at; an order line's time is orders.placed_at.
 
 const orderId = () =>
   integer("order_id")
@@ -23,7 +23,7 @@ export const orderLines = sqliteTable(
     id: integer("id").primaryKey(),
     publicId: publicId(),
     orderId: orderId(),
-    // referans; ad ve sku kopyadır
+    // reference; name and sku are copies
     variantId: integer("variant_id")
       .notNull()
       .references(() => productVariants.id),
@@ -31,12 +31,12 @@ export const orderLines = sqliteTable(
     sku: text("sku").notNull(),
     unitPriceNet: integer("unit_price_net").notNull(),
     unitPriceGross: integer("unit_price_gross").notNull(),
-    // ek ücret öncesi
+    // before the surcharge
     baseUnitPrice: integer("base_unit_price").notNull(),
-    // kişiselleştirme ek ücreti
+    // personalization surcharge
     surcharge: integer("surcharge").notNull().default(0),
     quantity: integer("quantity").notNull(),
-    // adet × unit_factor
+    // quantity × unit_factor
     stockUnits: integer("stock_units").notNull(),
     locationId: integer("location_id").references(() => stockLocations.id),
     personalization: text("personalization", { mode: "json" }).$type<Record<string, unknown>>(),
@@ -58,19 +58,19 @@ export const orderLines = sqliteTable(
   ],
 )
 
-// sipariş düzeyi indirim satırlara oransal dağıtılır
+// order-level discount is spread across lines proportionally
 export const orderAdjustments = sqliteTable(
   "order_adjustments",
   {
     id: integer("id").primaryKey(),
     orderId: orderId(),
-    // boşsa sipariş ya da kargo düzeyi
+    // empty means order or shipping level
     orderLineId: orderLineId(),
     source: text("source", { enum: ["promotion", "coupon", "manual"] }).notNull(),
     promotionId: integer("promotion_id").references(() => promotions.id),
     amount: integer("amount").notNull(),
     target: text("target", { enum: ["line", "order", "shipping"] }).notNull(),
-    // promosyon/kupon adı kopyası
+    // copy of promotion/coupon name
     description: text("description"),
   },
   (t) => [
@@ -85,7 +85,7 @@ export const orderAdjustments = sqliteTable(
   ],
 )
 
-// order_line_id boşsa kargo vergisi; yuvarlama satır düzeyinde
+// empty order_line_id means shipping tax; rounding at line level
 export const orderTaxLines = sqliteTable(
   "order_tax_lines",
   {
@@ -94,7 +94,7 @@ export const orderTaxLines = sqliteTable(
     orderLineId: orderLineId(),
     rateBp: integer("rate_bp").notNull(),
     amount: integer("amount").notNull(),
-    // kategori kodu kopyası; dış vergi servisinde boş
+    // copy of category code; empty for external tax service
     taxCategory: text("tax_category"),
   },
   (t) => [
@@ -104,7 +104,7 @@ export const orderTaxLines = sqliteTable(
   ],
 )
 
-// v1'de sipariş başına tek kargo satırı
+// one shipping line per order in v1
 export const orderShippingLines = sqliteTable(
   "order_shipping_lines",
   {
@@ -112,7 +112,7 @@ export const orderShippingLines = sqliteTable(
     orderId: orderId(),
     shippingMethodId: integer("shipping_method_id").references(() => shippingMethods.id),
     methodName: text("method_name").notNull(),
-    // fiyatlanan ağırlık
+    // priced weight
     weight: integer("weight"),
     amount: integer("amount").notNull(),
   },

@@ -8,7 +8,7 @@ const group = () =>
 const content = () => document.querySelector<HTMLElement>("[data-popover-content]")
 
 describe("DatePicker", () => {
-  it("renders the field group with the Medusa styles", () => {
+  it("renders the field group with the kit styles", () => {
     render(DatePickerExample)
 
     expect(group()).toHaveClass("bg-bg-field", "shadow-borders-base", "rounded-md", "gap-2")
@@ -35,7 +35,7 @@ describe("DatePicker", () => {
     expect(screen.getByRole("button", { name: "Open calendar" })).toHaveClass("size-7")
   })
 
-  it("opens the calendar popover and applies the Medusa panel styles", async () => {
+  it("opens the calendar popover and applies the kit panel styles", async () => {
     const user = userEvent.setup()
     render(DatePickerExample)
 

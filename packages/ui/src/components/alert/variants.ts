@@ -1,6 +1,6 @@
 import { cva, type VariantProps } from "class-variance-authority"
 
-// Medusa UI alert.tsx (MIT).
+// Ported from an MIT-licensed UI kit; see NOTICE.
 export const alertIconVariants = cva("size-5", {
   variants: {
     variant: {

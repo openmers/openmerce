@@ -1,7 +1,7 @@
 import { cva, type VariantProps } from "class-variance-authority"
 
-// Medusa UI button.tsx (MIT). Yalnız theme.css'te karşılığı olan sınıflar taşındı;
-// gradient `after:*` yardımcıları ve `shadow-buttons-colored` theme.css'te yok, çıkarıldı.
+// Ported from an MIT-licensed UI kit; see NOTICE. Only classes with a counterpart in theme.css were ported;
+// the gradient `after:*` helpers and `shadow-buttons-colored` are absent from theme.css, so they were dropped.
 export const buttonVariants = cva(
   [
     "transition-fg relative inline-flex w-fit items-center justify-center overflow-hidden rounded-md outline-hidden",

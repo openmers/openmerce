@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event"
 import { afterEach, describe, expect, it, vi } from "vitest"
 import OtpInput from "./OtpInput.svelte"
 
-// jsdom `ResizeObserver` sağlamaz; bits-ui PinInput kök yüksekliğini bununla izler.
+// jsdom does not provide `ResizeObserver`; bits-ui PinInput tracks the root height with it.
 if (!globalThis.ResizeObserver) {
   globalThis.ResizeObserver = class {
     observe() {}
@@ -12,8 +12,8 @@ if (!globalThis.ResizeObserver) {
   } as unknown as typeof ResizeObserver
 }
 
-// bits-ui PinInput değer değişiminde 0, 10 ve 50 ms'lik üç `setTimeout` kurar (syncTimeouts) ve
-// gizli input'a `input` olayı yollar; jsdom kapanmadan en uzunu (50 ms) bitsin diye 80 ms beklenir.
+// on value change, bits-ui PinInput sets up three `setTimeout`s of 0, 10 and 50 ms (syncTimeouts) and
+// dispatches an `input` event to the hidden input; we wait 80 ms so the longest (50 ms) finishes before jsdom closes.
 afterEach(async () => {
   await new Promise((resolve) => setTimeout(resolve, 80))
 })
@@ -29,7 +29,7 @@ describe("OtpInput", () => {
     expect(screen.getByLabelText("One-time password")).toBeInTheDocument()
   })
 
-  it("applies the Medusa cell styles", () => {
+  it("applies the kit cell styles", () => {
     render(OtpInput)
 
     const cell = cells()[0]
@@ -95,7 +95,7 @@ describe("OtpInput", () => {
     const root = document.querySelector("[data-pin-input-root]") as HTMLElement
     expect(root).toHaveClass("gap-x-6")
     expect(root).not.toHaveClass("gap-x-3")
-    // `aria-label` gizli input'a gider (Radix'teki grup etiketinin karşılığı).
+    // `aria-label` goes to the hidden input (the counterpart of the group label in Radix).
     expect(screen.getByLabelText("Kod")).toBeInTheDocument()
   })
 })

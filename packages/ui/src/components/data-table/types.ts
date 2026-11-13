@@ -57,7 +57,7 @@ export type DataTableRowModel<TData extends DataTableRowData = DataTableRowData>
   TData
 >
 
-/** Hücre/başlık içeriği: düz metin ya da çağrıldığında render edilen bir snippet. */
+/** Cell/header content: plain text, or a snippet rendered when called. */
 export type DataTableRenderedContent = string | number | boolean | Snippet | null | undefined
 
 export type DataTableCellRenderer<TData extends DataTableRowData, TValue = unknown> = (

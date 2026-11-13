@@ -1,6 +1,6 @@
 import { cva } from "class-variance-authority"
 
-// Medusa UI prompt.tsx (MIT). `bg-ui-bg-base` → `bg-card`, `text-ui-fg-subtle` → `text-muted-foreground`.
+// Ported from an MIT-licensed UI kit; see NOTICE. `bg-ui-bg-base` → `bg-card`, `text-ui-fg-subtle` → `text-muted-foreground`.
 export const promptOverlayVariants = cva([
   "bg-bg-overlay fixed inset-0",
   "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
@@ -17,7 +17,7 @@ export const promptHeaderVariants = cva("flex flex-col gap-y-1 px-6 pt-6")
 
 export const promptFooterVariants = cva("flex items-center justify-end gap-x-2 p-6")
 
-// Doğrulama alanı Medusa `Input` bileşeninin temel sınıflarını kullanır (B1 kapsamı dışında kaldı).
+// The verification field uses the base classes of the kit's `Input` (it fell outside the B1 scope).
 export const promptInputVariants = cva([
   "caret-foreground bg-bg-field hover:bg-bg-field-hover shadow-borders-base placeholder-muted-foreground text-foreground transition-fg relative w-full appearance-none rounded-md outline-hidden",
   "focus-visible:shadow-borders-interactive-with-active",

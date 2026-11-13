@@ -1,6 +1,6 @@
 import { cva, type VariantProps } from "class-variance-authority"
 
-// Medusa UI text.tsx (MIT). Boyut + leading eşleşmesi compoundVariants ile aynen taşındı.
+// Ported from an MIT-licensed UI kit; see NOTICE. The size + leading mapping was ported as-is with compoundVariants.
 export const textVariants = cva("", {
   variants: {
     size: {

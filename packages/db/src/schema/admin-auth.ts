@@ -2,11 +2,11 @@ import { sql } from "drizzle-orm"
 import { check, index, integer, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core"
 import { publicId } from "./columns"
 
-// 01-cekirdek-isletme.md B: Better Auth yönetici örneği (user, session, account, verification,
-// twoFactor, passkey). Better Auth 1.7.23 doğrulandı: generateId "serial" ile tamsayı id; model ve
-// alan adları modelName/fields ile eşlenir. Better Auth tarih alanlarına Date yazar (drizzle
-// adaptörü supportsDates), bu yüzden bu tablolarda zaman sütunları timestamp_ms: SQL'de yine
-// integer UTC epoch ms, columns.ts ile aynı depolama.
+// 01-cekirdek-isletme.md B: Better Auth admin instance (user, session, account, verification,
+// twoFactor, passkey). Better Auth 1.7.23 verified: generateId "serial" gives integer ids; model and
+// field names map via modelName/fields. Better Auth writes Date into date fields (the drizzle
+// adapter supportsDates), so time columns here are timestamp_ms: still integer UTC epoch ms in SQL,
+// same storage as columns.ts.
 const ts = (name: string) => integer(name, { mode: "timestamp_ms" })
 const baCreatedAt = () => ts("created_at").notNull()
 const baUpdatedAt = () => ts("updated_at").notNull()
@@ -35,8 +35,8 @@ export const adminUsers = sqliteTable(
   ],
 )
 
-// Better Auth referansları onDelete cascade üretir; yönetici satırı silinmez (suspended) ama
-// kurtarma/temizlikte alt satırlar artık kalmaz.
+// Better Auth references generate onDelete cascade; the admin row is never deleted (suspended) but
+// recovery/cleanup no longer leaves child rows behind.
 const adminUserId = () =>
   integer("admin_user_id")
     .notNull()
@@ -47,8 +47,8 @@ export const adminSessions = sqliteTable(
   {
     id: integer("id").primaryKey(),
     adminUserId: adminUserId(),
-    // Better Auth 1.7.23'te session.token için özet seçeneği yok; adaptör sarmalayıcısı yalnız
-    // SHA-256 özetini yazar (apps/api/src/auth/hashedSessions.ts, karar 13)
+    // Better Auth 1.7.23 has no hash option for session.token; the adapter wrapper writes only
+    // the SHA-256 digest (apps/api/src/auth/hashedSessions.ts, decision 13)
     token: text("token").notNull(),
     expiresAt: ts("expires_at").notNull(),
     ipAddress: text("ip_address"),
@@ -76,7 +76,7 @@ export const adminAccounts = sqliteTable(
     providerId: text("provider_id").notNull(),
     accountId: text("account_id").notNull(),
     password: text("password"),
-    // OAuth alanları yönetici tarafında boş; Better Auth şeması gerektirir
+    // OAuth fields are empty on the admin side; the Better Auth schema requires them
     accessToken: text("access_token"),
     refreshToken: text("refresh_token"),
     idToken: text("id_token"),
@@ -96,7 +96,7 @@ export const adminVerifications = sqliteTable(
   "admin_verifications",
   {
     id: integer("id").primaryKey(),
-    // verification.storeIdentifier "hashed" ile özet; value için seçenek yok
+    // verification.storeIdentifier "hashed" stores a digest; no option for value
     identifier: text("identifier").notNull(),
     value: text("value").notNull(),
     expiresAt: ts("expires_at").notNull(),
@@ -109,8 +109,8 @@ export const adminVerifications = sqliteTable(
   ],
 )
 
-// twoFactor eklentisi 1.7.23: created_at/updated_at yazmaz (NOT NULL olsa ekleme kırılır, sütun
-// yok); verified, failed_verification_count, locked_until ister. backupCodes "encrypted" seçilebilir.
+// twoFactor plugin 1.7.23: writes no created_at/updated_at (insert breaks if NOT NULL, column
+// absent); wants verified, failed_verification_count, locked_until. backupCodes can be "encrypted".
 export const adminTwoFactors = sqliteTable(
   "admin_two_factors",
   {
@@ -125,7 +125,7 @@ export const adminTwoFactors = sqliteTable(
   (t) => [uniqueIndex("admin_two_factors_admin_user_uq").on(t.adminUserId)],
 )
 
-// @better-auth/passkey 1.7.23 alanları; credentialID → credential_id fields eşlemesiyle
+// @better-auth/passkey 1.7.23 fields; credentialID → credential_id via fields mapping
 export const adminPasskeys = sqliteTable(
   "admin_passkeys",
   {

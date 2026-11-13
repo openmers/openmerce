@@ -11,14 +11,14 @@ import {
 type Props = {
   part: SegmentPart
   value: string
-  /** DateField ve TimeField ayrı context kullanır; segment bileşeni buna göre seçilir. */
+  /** DateField and TimeField use separate contexts; the segment component is chosen accordingly. */
   field?: "date" | "time"
   class?: string
 }
 
 let { part, value, field = "date", class: className }: Props = $props()
 
-// bits-ui `isPlaceholder` yayınlamaz; boş alanlar biçim harfleriyle ("mm", "dd"...) gösterilir.
+// bits-ui does not emit `isPlaceholder`; empty parts are shown with format letters ("mm", "dd"...).
 const isEmpty = $derived(part !== "dayPeriod" && value.trim() !== "" && !/\d/.test(value))
 </script>
 

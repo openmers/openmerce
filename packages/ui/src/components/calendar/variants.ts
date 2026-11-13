@@ -1,6 +1,6 @@
 import { cva } from "class-variance-authority"
 
-// Medusa UI calendar.tsx (MIT). `bg-ui-bg-field` → `bg-bg-field`, `bg-ui-bg-base` → `bg-card`,
+// Ported from an MIT-licensed UI kit; see NOTICE. `bg-ui-bg-field` → `bg-bg-field`, `bg-ui-bg-base` → `bg-card`,
 // `bg-ui-bg-interactive` → `bg-bg-interactive`, `bg-ui-bg-base-hover` → `bg-accent`.
 export const calendarVariants = cva("flex flex-col gap-y-2")
 

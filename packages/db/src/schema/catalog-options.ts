@@ -13,8 +13,8 @@ import { products, productVariants } from "./catalog-products"
 import { createdAt, updatedAt } from "./columns"
 import { media } from "./media"
 
-// 02-ticaret.md bölüm 2 (seçenek, seçenek değeri, çevirileri, ürün görseli), 0006.
-// `product_assets.asset_id` hedefi `media` 0007'de açılır (ileri FK, bkz. catalog-products.ts).
+// 02-ticaret.md section 2 (option, option value, translations, product asset), 0006.
+// `product_assets.asset_id` target opens in `media` 0007 (forward FK, see catalog-products.ts).
 
 export const productOptions = sqliteTable(
   "product_options",
@@ -49,12 +49,12 @@ export const optionValues = sqliteTable(
   (t) => [
     uniqueIndex("option_values_code_uq").on(t.optionId, t.code),
     index("option_values_position_idx").on(t.optionId, t.position),
-    // variant_option_values bileşik FK hedefi: değer ile seçeneğin eşleştiğini DB zorlar
+    // variant_option_values composite FK target: DB enforces that value and option match
     uniqueIndex("option_values_id_option_uq").on(t.id, t.optionId),
   ],
 )
 
-// varyantın seçenek değeri kombinasyonu; aynı seçenekten en çok bir değer. Satır güncellenmez.
+// a variant's option value combination; at most one value per option. Rows are never updated.
 export const variantOptionValues = sqliteTable(
   "variant_option_values",
   {
@@ -107,7 +107,7 @@ export const optionValueTranslations = sqliteTable(
   (t) => [primaryKey({ name: "option_value_translations_pk", columns: [t.optionValueId, t.lang] })],
 )
 
-// atama güncellenmez (sil + ekle); görsel varyant → seçenek değeri → ürün sırasıyla çözülür
+// assignment is not updated (delete + insert); asset resolves variant → option value → product
 export const productAssets = sqliteTable(
   "product_assets",
   {
@@ -125,7 +125,7 @@ export const productAssets = sqliteTable(
   },
   (t) => [
     index("product_assets_product_idx").on(t.productId, t.position),
-    // medya silmede NOT EXISTS kontrolü
+    // NOT EXISTS check on media delete
     index("product_assets_asset_idx").on(t.assetId),
     check("product_assets_level_ck", sql`${t.variantId} IS NULL OR ${t.optionValueId} IS NULL`),
   ],

@@ -10,8 +10,8 @@ export const settingScopes = [
   "built_in_app",
 ] as const
 
-// 01-cekirdek-isletme.md `settings`, 04-asama-1-db-plani §3.1. scope_id: global ve built_in_app = 0
-// (01 kararı; app kimliği anahtar önekinde), diğerleri gerçek id. NULL yok (benzersizliği bozar).
+// 01-cekirdek-isletme.md `settings`, 04-asama-1-db-plani §3.1. scope_id: global and built_in_app = 0
+// (01 decision; app identity in the key prefix), others a real id. No NULL (would break uniqueness).
 export const settings = sqliteTable(
   "settings",
   {

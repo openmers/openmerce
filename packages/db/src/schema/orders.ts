@@ -6,9 +6,9 @@ import { channels } from "./channels"
 import { createdAt, publicId, updatedAt } from "./columns"
 import { customers } from "./customers"
 
-// 02-ticaret.md bölüm 8 (`orders`, `order_events`, `order_notes`), 01 G (`order_guest_access`),
-// 00-genel karar 7 (`payment_due_at`), 0015. Yalnız kesinleşmiş sipariş; silinmez. Anlık görüntü:
-// adres, kur, yasal sürümler kopyalanır, join edilmez. `company_id` hedefi 0023'de: FK'sız.
+// 02-ticaret.md section 8 (`orders`, `order_events`, `order_notes`), 01 G (`order_guest_access`),
+// 00-genel decision 7 (`payment_due_at`), 0015. Only finalized orders; never deleted. Snapshot:
+// address, rate, legal versions are copied, not joined. `company_id` target is 0023: no FK.
 
 type Json = Record<string, unknown>
 
@@ -33,12 +33,12 @@ export const orders = sqliteTable(
   {
     id: integer("id").primaryKey(),
     publicId: publicId(),
-    // yıl + kanal başına sıra, boşluksuz
+    // sequence per year + channel, gap-free
     number: text("number").notNull(),
     channelId: integer("channel_id")
       .notNull()
       .references(() => channels.id),
-    // misafir de bir müşteri satırı
+    // a guest is also a customer row
     customerId: integer("customer_id")
       .notNull()
       .references(() => customers.id),
@@ -48,7 +48,7 @@ export const orders = sqliteTable(
     reservationId: integer("reservation_id")
       .notNull()
       .references(() => checkoutReservations.id),
-    // rezervasyondan kopya; CHECK yok: abonelik modülü `subscription` ekler (03)
+    // copied from the reservation; no CHECK: the subscription module adds `subscription` (03)
     source: text("source").notNull().default("web"),
     // `SET settlement_token = :uuid WHERE reservation_id = ? AND settlement_token IS NULL`
     settlementToken: text("settlement_token"),
@@ -60,19 +60,19 @@ export const orders = sqliteTable(
     shippingTotal: integer("shipping_total").notNull(),
     shippingAddress: text("shipping_address", { mode: "json" }).$type<Json>(),
     billingAddress: text("billing_address", { mode: "json" }).$type<Json>(),
-    // teslimat adresindeki region kopyası (politika kapsamı)
+    // copy of the region from the delivery address (policy scope)
     shippingRegion: text("shipping_region"),
     assignedAdminId: integer("assigned_admin_id").references(() => adminUsers.id),
     state: text("state", { enum: orderStates }).notNull().default("placed"),
-    // önbellek: payments/refunds'tan türetilir, aynı atomic() içinde
+    // cache: derived from payments/refunds, in the same atomic()
     paymentStatus: text("payment_status", { enum: orderPaymentStatuses }).notNull(),
-    // önbellek: fulfillments'tan türetilir
+    // cache: derived from fulfillments
     fulfillmentStatus: text("fulfillment_status", { enum: orderFulfillmentStatuses })
       .notNull()
       .default("unfulfilled"),
     poNumber: text("po_number"),
     paymentTerms: text("payment_terms"),
-    // kredi/vadeli ödeme son günü (karar 7)
+    // last due day for credit/invoice payment (decision 7)
     paymentDueAt: integer("payment_due_at"),
     lang: text("lang").notNull(),
     // { base, quote, rate_e9, day }
@@ -93,10 +93,10 @@ export const orders = sqliteTable(
     index("orders_channel_placed_idx").on(t.channelId, t.placedAt),
     index("orders_customer_placed_idx").on(t.customerId, t.placedAt),
     index("orders_company_placed_idx").on(t.companyId, t.placedAt),
-    // açık siparişler
+    // open orders
     index("orders_open_idx").on(t.state).where(sql`${t.state} = 'placed'`),
     index("orders_updated_idx").on(t.updatedAt),
-    // rapor; tabloda created_at yok, placed_at kullanılır
+    // report; no created_at in the table, placed_at is used
     index("orders_source_idx").on(t.channelId, t.source, t.placedAt),
     index("orders_region_idx").on(t.channelId, t.shippingRegion),
     index("orders_payment_due_idx").on(t.paymentDueAt).where(sql`${t.paymentStatus} = 'awaiting'`),
@@ -122,7 +122,7 @@ const orderId = () =>
     .notNull()
     .references(() => orders.id)
 
-// yalnız eklenir; kind'e CHECK yok (built-in app kancası kendi kind'ini yazar)
+// append-only; no CHECK on kind (a built-in app hook writes its own kind)
 export const orderEvents = sqliteTable(
   "order_events",
   {
@@ -138,7 +138,7 @@ export const orderEvents = sqliteTable(
   (t) => [index("order_events_order_idx").on(t.orderId, t.createdAt)],
 )
 
-// yazar 15 dk içinde düzeltir (`WHERE created_at > now-15dk AND author_id = ?`)
+// the author can fix it within 15 min (`WHERE created_at > now-15min AND author_id = ?`)
 export const orderNotes = sqliteTable(
   "order_notes",
   {
@@ -147,7 +147,7 @@ export const orderNotes = sqliteTable(
     body: text("body").notNull(),
     visibility: text("visibility", { enum: ["internal", "customer"] }).notNull(),
     pinned: integer("pinned", { mode: "boolean" }).notNull().default(false),
-    // katalogda FK yok
+    // no FK in the catalog
     authorId: integer("author_id").notNull(),
     authorName: text("author_name").notNull(),
     createdAt: createdAt(),
@@ -155,14 +155,14 @@ export const orderNotes = sqliteTable(
     deletedAt: integer("deleted_at"),
   },
   (t) => [
-    // sabitlenen üstte, kalanı yeniden eskiye
+    // pinned on top, the rest newest first
     index("order_notes_order_idx").on(t.orderId, sql`${t.pinned} DESC`, sql`${t.createdAt} DESC`),
     check("order_notes_body_ck", sql`length(${t.body}) <= 5000`),
     check("order_notes_visibility_ck", sql`${t.visibility} IN ('internal', 'customer')`),
   ],
 )
 
-// ord_ bilmek yetmez; token (otk_) yalnız SHA-256 özeti; döndürmede eskisi revoked_at alır
+// knowing ord_ is not enough; token (otk_) is only a SHA-256 digest; on rotation the old one gets revoked_at
 export const orderGuestAccess = sqliteTable(
   "order_guest_access",
   {

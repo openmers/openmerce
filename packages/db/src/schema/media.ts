@@ -11,8 +11,8 @@ import {
 import { productVariants } from "./catalog-products"
 import { createdAt, publicId, updatedAt } from "./columns"
 
-// 02-ticaret.md bölüm 13 (`media`) ve 11 (`digital_assets`), 0007. Silme tek ifadedir:
-// DELETE ... WHERE NOT EXISTS (kullanımlar); kullanım tablolarında medya sütunu indeksli.
+// 02-ticaret.md section 13 (`media`) and 11 (`digital_assets`), 0007. Delete is a single statement:
+// DELETE ... WHERE NOT EXISTS (usages); the media column is indexed in usage tables.
 
 export const media = sqliteTable(
   "media",
@@ -21,15 +21,15 @@ export const media = sqliteTable(
     publicId: publicId(),
     status: text("status", { enum: ["pending", "ready", "rejected"] }).notNull(),
     bucket: text("bucket", { enum: ["public", "private"] }).notNull(),
-    // içerik özetli yol
+    // content-addressed path
     key: text("key").notNull(),
     mime: text("mime"),
     bytes: integer("bytes"),
     width: integer("width"),
     height: integer("height"),
-    // üretilen genişlik merdiveni, ör. [320, 640, 1000]
+    // generated width ladder, e.g. [320, 640, 1000]
     sizes: text("sizes", { mode: "json" }).$type<number[]>(),
-    // kişiselleştirme görselinin sahibi; FK yok (çok biçimli)
+    // owner of the personalization image; no FK (polymorphic)
     ownerKind: text("owner_kind", { enum: ["cart", "order"] }),
     ownerId: integer("owner_id"),
     posterMediaId: integer("poster_media_id").references((): AnySQLiteColumn => media.id),
@@ -47,7 +47,7 @@ export const media = sqliteTable(
   ],
 )
 
-// version dosya sürümüdür, iyimser kilit sayacı değil
+// version is the file version, not an optimistic lock counter
 export const digitalAssets = sqliteTable(
   "digital_assets",
   {

@@ -2,7 +2,7 @@ import type Database from "better-sqlite3"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 import { openMigratedDb } from "../testing/sqlite"
 
-// 0003_admin_auth: gerçek better-sqlite3 :memory:, foreign_keys=ON, her test taze DB.
+// 0003_admin_auth: real better-sqlite3 :memory:, foreign_keys=ON, fresh DB per test.
 let db: Database.Database
 beforeEach(() => {
   db = openMigratedDb()
@@ -66,7 +66,7 @@ const insertPolicy = (roleId: unknown, adminId: unknown, condition = "{}") =>
   )
 
 describe("sqlite_master", () => {
-  it("benzersiz ve ifade indeksleri var", () => {
+  it("unique and expression indexes exist", () => {
     for (const uq of [
       "admin_users_public_id_uq",
       "admin_users_email_uq",
@@ -100,13 +100,13 @@ describe("sqlite_master", () => {
 })
 
 describe("admin_users", () => {
-  it("çift public_id ve çift e-postayı reddeder", () => {
+  it("rejects duplicate public_id and duplicate e-mail", () => {
     insertAdmin("adm_1", "a@example.com")
     expect(() => insertAdmin("adm_1", "b@example.com")).toThrow(/admin_users.public_id/)
     expect(() => insertAdmin("adm_2", "a@example.com")).toThrow(/admin_users.email/)
   })
 
-  it("geçersiz status reddedilir, Better Auth alanlarının varsayılanları uygulanır", () => {
+  it("invalid status rejected, Better Auth field defaults applied", () => {
     const id = insertAdmin("adm_1", "a@example.com")
     expect(db.prepare("SELECT * FROM admin_users WHERE id = ?").get(id)).toMatchObject({
       email_verified: 0,
@@ -120,7 +120,7 @@ describe("admin_users", () => {
 })
 
 describe("admin_sessions / two_factors / passkeys", () => {
-  it("FK: olmayan yöneticiye oturum açılamaz; yönetici silinince alt satırlar gider", () => {
+  it("FK: no session for a missing admin; deleting an admin removes child rows", () => {
     const session = (adminId: unknown, token: string) =>
       run(
         `INSERT INTO admin_sessions (admin_user_id, token, expires_at, session_version, permissions, created_at, updated_at)
@@ -150,7 +150,7 @@ describe("admin_sessions / two_factors / passkeys", () => {
     expect(db.prepare("SELECT count(*) FROM admin_two_factors").pluck().get()).toBe(0)
   })
 
-  it("permissions JSON nesnesi olmalı", () => {
+  it("permissions must be a JSON object", () => {
     const a = insertAdmin("adm_1", "a@example.com")
     expect(() =>
       run(
@@ -166,7 +166,7 @@ describe("admin_sessions / two_factors / passkeys", () => {
 })
 
 describe("roles / role_permissions / admin_role_assignments", () => {
-  it("çift rol kodu ve çift izin reddedilir", () => {
+  it("duplicate role code and duplicate permission rejected", () => {
     const r = insertRole("SuperAdmin")
     expect(() => insertRole("SuperAdmin")).toThrow(/roles\.(code|public_id)/)
     const perm = () =>
@@ -179,7 +179,7 @@ describe("roles / role_permissions / admin_role_assignments", () => {
     expect(perm).toThrow(/UNIQUE constraint failed: role_permissions/)
   })
 
-  it("çift atama reddedilir; NULL kanal (tüm kanallar) de tekrar edemez", () => {
+  it("duplicate assignment rejected; NULL channel (all channels) cannot repeat either", () => {
     const a = insertAdmin("adm_1", "a@example.com")
     const r = insertRole("editor")
     const c1 = insertChannel("b2c")
@@ -191,7 +191,7 @@ describe("roles / role_permissions / admin_role_assignments", () => {
     expect(() => assign(a, r)).toThrow(/UNIQUE constraint failed/)
   })
 
-  it("FK: olmayan rol, yönetici ya da kanala atama reddedilir", () => {
+  it("FK: assignment to a missing role, admin or channel rejected", () => {
     const a = insertAdmin("adm_1", "a@example.com")
     const r = insertRole("editor")
     expect(() => assign(a, 999)).toThrow(/FOREIGN KEY constraint failed/)
@@ -201,7 +201,7 @@ describe("roles / role_permissions / admin_role_assignments", () => {
 })
 
 describe("access_policies", () => {
-  it("role_id ve admin_id'den tam biri dolu olmalı", () => {
+  it("exactly one of role_id and admin_id must be set", () => {
     const a = insertAdmin("adm_1", "a@example.com")
     const r = insertRole("editor")
     insertPolicy(r, null)
@@ -210,7 +210,7 @@ describe("access_policies", () => {
     expect(() => insertPolicy(r, a)).toThrow(/access_policies_target_ck/)
   })
 
-  it("condition JSON nesnesi, resource enum", () => {
+  it("condition must be a JSON object, resource enum", () => {
     const r = insertRole("editor")
     expect(() => insertPolicy(r, null, "[]")).toThrow(/access_policies_condition_ck/)
     const id = insertPolicy(r, null)

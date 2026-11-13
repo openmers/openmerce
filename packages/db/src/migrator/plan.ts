@@ -1,5 +1,5 @@
-// Saf: migration dosya adları + uygulanmış adlar → sırayla uygulanacaklar. G/Ç çağıranda
-// (wrangler, Node çalıştırıcı, test yardımcısı); kayıt adı d1_migrations.name ile aynı (dosya adı).
+// Pure: migration file names + applied names → the ones to apply in order. I/O stays with the caller
+// (wrangler, Node runner, test helper); record name matches d1_migrations.name (file name).
 
 export const MIGRATION_NAME = /^(\d{4})_[a-z0-9]+(?:-[a-z0-9]+)*\.sql$/
 
@@ -7,7 +7,7 @@ export class MigrationPlanError extends Error {
   override name = "MigrationPlanError"
 }
 
-/** Dosya adlarını doğrular ve numara sırasına dizer: 0000'dan ardışık, boşluk ve tekrar yok. */
+/** Validates file names and sorts by number: consecutive from 0000, no gaps or duplicates. */
 export function orderMigrations(files: readonly string[]): string[] {
   const sorted = [...files].sort()
   sorted.forEach((file, i) => {
@@ -20,7 +20,7 @@ export function orderMigrations(files: readonly string[]): string[] {
   return sorted
 }
 
-/** Bekleyen migration'lar. Uygulanmış ama dosyası olmayan ya da sıra dışı uygulanmış kayıt hatadır. */
+/** Pending migrations. An applied record with no file, or applied out of order, is an error. */
 export function planMigrations(files: readonly string[], applied: readonly string[]): string[] {
   const ordered = orderMigrations(files)
   const done = new Set(applied)
@@ -28,7 +28,7 @@ export function planMigrations(files: readonly string[], applied: readonly strin
   if (unknown.length > 0) {
     throw new MigrationPlanError(`dosyası olmayan uygulanmış migration: ${unknown.join(", ")}`)
   }
-  // Uygulanmışlar baştan kesintisiz bir önek olmalı; aradaki eksik, sırayı bozar.
+  // Applied ones must be a contiguous prefix from the start; a gap in between breaks the order.
   const prefix = ordered.slice(0, done.size)
   const gap = prefix.find((name) => !done.has(name))
   if (gap) throw new MigrationPlanError(`sıra dışı: ${gap} uygulanmamış ama sonrakiler uygulanmış`)

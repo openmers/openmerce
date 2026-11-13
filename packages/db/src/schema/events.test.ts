@@ -2,7 +2,7 @@ import type Database from "better-sqlite3"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 import { openMigratedDb } from "../testing/sqlite"
 
-// 0005_events: gerçek better-sqlite3 :memory:, foreign_keys=ON, her test taze DB.
+// 0005_events: real better-sqlite3 :memory:, foreign_keys=ON, fresh DB per test.
 let db: Database.Database
 beforeEach(() => {
   db = openMigratedDb()
@@ -52,7 +52,7 @@ const insertRef = (source: string, externalId: string, connectionId?: string) =>
   )
 
 describe("sqlite_master", () => {
-  it("benzersiz ve kısmi indeksler var", () => {
+  it("unique and partial indexes exist", () => {
     expect(indexSql("outbox_public_id_uq")).toMatch(/UNIQUE INDEX/)
     expect(indexSql("outbox_dedupe_uq")).toMatch(
       /UNIQUE INDEX .*WHERE .*status.* = 'pending' AND .*dedupe_key.* IS NOT NULL/,
@@ -71,14 +71,14 @@ describe("sqlite_master", () => {
 })
 
 describe("outbox", () => {
-  it("durum ve tür check'i, varsayılan attempts 0", () => {
+  it("status and type check, attempts defaults to 0", () => {
     const id = insertOutbox("event", "pending")
     expect(db.prepare("SELECT attempts FROM outbox WHERE id = ?").pluck().get(id)).toBe(0)
     expect(() => insertOutbox("event", "queued")).toThrow(/outbox_status_ck/)
     expect(() => insertOutbox("job", "pending")).toThrow(/outbox_kind_ck/)
   })
 
-  it("çift public_id reddedilir; payload JSON nesnesi", () => {
+  it("duplicate public_id rejected; payload is a JSON object", () => {
     insertOutbox("event", "pending", null, "evt_x")
     expect(() => insertOutbox("event", "pending", null, "evt_x")).toThrow(/outbox.public_id/)
     expect(() =>
@@ -92,7 +92,7 @@ describe("outbox", () => {
     ).toThrow(/outbox_payload_ck/)
   })
 
-  it("dedupe yalnız bekleyen satırlar arasında", () => {
+  it("dedupe only among pending rows", () => {
     insertOutbox("reindex", "pending", "product:1")
     expect(() => insertOutbox("reindex", "pending", "product:1")).toThrow(
       /UNIQUE constraint failed/,
@@ -105,7 +105,7 @@ describe("outbox", () => {
 })
 
 describe("scheduled_runs", () => {
-  it("(task, period) benzersiz; ON CONFLICT DO NOTHING tek çalışma", () => {
+  it("(task, period) unique; ON CONFLICT DO NOTHING runs once", () => {
     insertRun("outbox.sweep", NOW)
     insertRun("outbox.sweep", NOW + 300_000)
     expect(() => insertRun("outbox.sweep", NOW)).toThrow(/UNIQUE constraint failed/)
@@ -117,7 +117,7 @@ describe("scheduled_runs", () => {
     expect(claim.run(NOW, NOW, NOW, NOW).changes).toBe(0)
   })
 
-  it("geçersiz status reddedilir", () => {
+  it("invalid status rejected", () => {
     const id = insertRun("t", NOW)
     expect(() => run("UPDATE scheduled_runs SET status = 'pending' WHERE id = ?", id)).toThrow(
       /scheduled_runs_status_ck/,
@@ -126,12 +126,12 @@ describe("scheduled_runs", () => {
 })
 
 describe("external_refs", () => {
-  it("(source, connection_id, entity_type, external_id) benzersiz; connection_id varsayılanı ''", () => {
-    insertRef("shopify", "1")
+  it("(source, connection_id, entity_type, external_id) unique; connection_id defaults to ''", () => {
+    insertRef("legacy-store", "1")
     expect(db.prepare("SELECT connection_id FROM external_refs").pluck().get()).toBe("")
-    expect(() => insertRef("shopify", "1")).toThrow(/UNIQUE constraint failed/)
-    expect(() => insertRef("shopify", "1", "")).toThrow(/UNIQUE constraint failed/)
-    insertRef("shopify", "1", "store-b")
+    expect(() => insertRef("legacy-store", "1")).toThrow(/UNIQUE constraint failed/)
+    expect(() => insertRef("legacy-store", "1", "")).toThrow(/UNIQUE constraint failed/)
+    insertRef("legacy-store", "1", "store-b")
     insertRef("openmers.erp", "1")
   })
 })

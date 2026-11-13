@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest"
 import { NOW, seeder } from "../testing/commerce"
 import { openMigratedDb } from "../testing/sqlite"
 
-// 0006_catalog bağlantıları: varyant–seçenek değeri, ürün/varyant–özellik değeri. Gerçek SQLite.
+// 0006_catalog links: variant–option value, product/variant–facet value. Real SQLite.
 let db: Database.Database
 let s: ReturnType<typeof seeder>
 beforeEach(() => {
@@ -44,7 +44,7 @@ const facetValue = () => {
 }
 
 describe("sqlite_master", () => {
-  it("ters arama indeksleri ve seçenek benzersizliği var", () => {
+  it("reverse lookup indexes and option uniqueness exist", () => {
     expect(s.indexSql("variant_option_values_value_idx")).toMatch(
       /INDEX .*\(`option_value_id`,`variant_id`\)/,
     )
@@ -59,7 +59,7 @@ describe("sqlite_master", () => {
 })
 
 describe("variant_option_values", () => {
-  it("çift satır, aynı seçenekten ikinci değer ve yanlış seçenek reddedilir", () => {
+  it("duplicate row, second value for the same option and wrong option rejected", () => {
     const p = s.product()
     const v = s.variant(p)
     const size = option(p, "size")
@@ -78,14 +78,14 @@ describe("variant_option_values", () => {
     expect(() => link(size, s2)).toThrow(
       /variant_option_values.variant_id, variant_option_values.option_id/,
     )
-    // değer başka seçeneğe ait: bileşik FK
+    // value belongs to another option: composite FK
     expect(() => link(color, s2)).toThrow(/FOREIGN KEY constraint failed/)
     link(color, red)
   })
 })
 
-describe("ürün/varyant–özellik değeri", () => {
-  it("çift satır ve FK ihlali reddedilir", () => {
+describe("product/variant–facet value", () => {
+  it("duplicate row and FK violation rejected", () => {
     const p = s.product()
     const v = s.variant(p)
     const fv = facetValue()

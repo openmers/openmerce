@@ -9,7 +9,7 @@ type Props = {
 
 let { value: initialValue, placeholder = "Enter value...", onUpdate }: Props = $props()
 
-// İlk değer dışarıdan gelir; sonraki değişimler aşağıdaki effect ile eşitlenir.
+// The initial value comes from outside; later changes are synced by the effect below.
 // svelte-ignore state_referenced_locally
 let value = $state(initialValue ?? "")
 let timer: ReturnType<typeof setTimeout> | undefined

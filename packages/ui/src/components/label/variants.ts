@@ -1,7 +1,7 @@
 import { cva, type VariantProps } from "class-variance-authority"
 
-// Medusa UI label.tsx (MIT). Radix Label.Root yerine yerel <label> kullanılıyor;
-// tıklama ile ilişkili alanı odaklama davranışı tarayıcının kendi label davranışından gelir.
+// Ported from an MIT-licensed UI kit; see NOTICE. Uses a native <label> instead of Radix Label.Root;
+// click-to-focus on the associated field comes from the browser's own label behavior.
 export const labelVariants = cva("font-sans", {
   variants: {
     size: {

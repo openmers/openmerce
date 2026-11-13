@@ -1,6 +1,6 @@
 import type { DataTableFilter, DataTableFilterProps } from "./filter-types"
 
-/** Süzgeç tanımlarını sütun anahtarına bağlar; `custom` serbest tanım bırakır. */
+/** Binds filter definitions to a column key; `custom` leaves a free-form definition. */
 export function createDataTableFilterHelper<TData>() {
   return {
     accessor: (accessor: keyof TData & string, props: DataTableFilterProps): DataTableFilter =>

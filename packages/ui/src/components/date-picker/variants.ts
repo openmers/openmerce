@@ -1,6 +1,6 @@
 import { cva } from "class-variance-authority"
 
-// Medusa UI date-picker.tsx (MIT). `bg-ui-bg-field` → `bg-bg-field`, `shadow-borders-base` aynı.
+// Ported from an MIT-licensed UI kit; see NOTICE. `bg-ui-bg-field` → `bg-bg-field`, `shadow-borders-base` is unchanged.
 export const datePickerGroupVariants = cva(
   [
     "bg-bg-field shadow-borders-base txt-compact-small text-foreground transition-fg grid items-center gap-2 overflow-hidden rounded-md h-fit",

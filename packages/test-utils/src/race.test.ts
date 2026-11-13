@@ -9,32 +9,32 @@ const loser = (code: string): PromiseRejectedResult => ({
 })
 const winner = <T>(value: T): PromiseFulfilledResult<T> => ({ status: "fulfilled", value })
 
-describe("expectExactlyOneWinner (sahte sonuç)", () => {
-  it("tam bir kazanan ve doğru kodlu kaybedenle geçer, kazananın değerini döner", () => {
+describe("expectExactlyOneWinner (fake results)", () => {
+  it("passes with one winner and losers on the right code, returns the winner value", () => {
     expect(expectExactlyOneWinner([loser("DUP"), winner(7), loser("DUP")], "DUP")).toBe(7)
   })
 
-  it("iki kazananda kırılır", () => {
+  it("fails on two winners", () => {
     expect(() => expectExactlyOneWinner([winner(1), winner(2)], "DUP")).toThrow(/2 kazanan/)
   })
 
-  it("sıfır kazananda kırılır", () => {
+  it("fails on zero winners", () => {
     expect(() => expectExactlyOneWinner([loser("DUP"), loser("DUP")], "DUP")).toThrow(/0 kazanan/)
   })
 
-  it("kaybeden başka kodla dönerse kırılır", () => {
+  it("fails when a loser rejects with another code", () => {
     expect(() => expectExactlyOneWinner([winner(1), loser("OTHER")], "DUP")).toThrow(/OTHER/)
   })
 })
 
 const ALREADY = "SETUP_ALREADY_COMPLETED"
 
-/** markSetupCompleted benzeri: oku, await, yaz. Koşul ON CONFLICT DO NOTHING'de; okuma tek başına korumaz. */
+/** markSetupCompleted-like: read, await, write. Guarding lives in ON CONFLICT DO NOTHING; the read alone does not protect. */
 async function markSetupCompleted(db: Database.Database, now: number): Promise<number> {
   const done = db
     .prepare("SELECT 1 FROM settings WHERE scope = 'global' AND key = 'setup.completed_at'")
     .get()
-  await Promise.resolve() // iki çağrı burada iç içe geçer: ikisi de "yok" okumuş olur
+  await Promise.resolve() // both calls interleave here: each has already read "absent"
   if (done) throw Object.assign(new Error("kurulum tamam"), { code: ALREADY })
   const { changes } = db
     .prepare(
@@ -47,8 +47,8 @@ async function markSetupCompleted(db: Database.Database, now: number): Promise<n
   return now
 }
 
-describe("expectExactlyOneWinner (gerçek: dosya veritabanı, iki bağlantı)", () => {
-  it("INSERT ... ON CONFLICT DO NOTHING yarışında tam bir kazanan", async () => {
+describe("expectExactlyOneWinner (real: file database, two connections)", () => {
+  it("yields exactly one winner in an INSERT ... ON CONFLICT DO NOTHING race", async () => {
     const file = openTestDb({ file: true })
     try {
       const [a, b] = [file.connect(), file.connect()]

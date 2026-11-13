@@ -1,6 +1,6 @@
 import { cva, type VariantProps } from "class-variance-authority"
 
-// Medusa UI heading.tsx (MIT).
+// Ported from an MIT-licensed UI kit; see NOTICE.
 export const headingVariants = cva("font-sans font-medium", {
   variants: {
     level: {

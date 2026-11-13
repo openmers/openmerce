@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest"
 import { NOW, seeder } from "../testing/commerce"
 import { openMigratedDb } from "../testing/sqlite"
 
-// 0006_catalog: gerçek better-sqlite3 :memory:, foreign_keys=ON, her test taze DB.
+// 0006_catalog: real better-sqlite3 :memory:, foreign_keys=ON, fresh DB per test.
 let db: Database.Database
 let s: ReturnType<typeof seeder>
 beforeEach(() => {
@@ -25,7 +25,7 @@ const translation = (productId: number, lang: string, slug: string, channelId: n
   )
 
 describe("sqlite_master", () => {
-  it("benzersiz, kısmi ve ifade indeksleri var", () => {
+  it("unique, partial and expression indexes exist", () => {
     expect(s.indexSql("product_variants_sku_uq")).toMatch(
       /UNIQUE INDEX .*WHERE .*deleted_at.* IS NULL/,
     )
@@ -63,7 +63,7 @@ describe("sqlite_master", () => {
 })
 
 describe("product_variants", () => {
-  it("SKU yalnız silinmemiş varyantlar arasında benzersiz", () => {
+  it("SKU is unique only among non-deleted variants", () => {
     const p = s.product()
     const v = s.variant(p, "A-1")
     expect(() => s.variant(p, "A-1")).toThrow(/UNIQUE constraint failed/)
@@ -71,7 +71,7 @@ describe("product_variants", () => {
     s.variant(p, "A-1")
   })
 
-  it("unit_factor ≥ 1, backorder_floor ≤ 0, taban kendisi olamaz", () => {
+  it("unit_factor ≥ 1, backorder_floor ≤ 0, base cannot be itself", () => {
     const v = s.variant(s.product())
     expect(() => s.run("UPDATE product_variants SET unit_factor = 0 WHERE id = ?", v)).toThrow(
       /product_variants_unit_factor_ck/,
@@ -84,14 +84,14 @@ describe("product_variants", () => {
     )
   })
 
-  it("FK: olmayan ürün ve vergi kategorisi reddedilir", () => {
+  it("FK: missing product and tax category rejected", () => {
     expect(() => s.variant(999)).toThrow(/FOREIGN KEY constraint failed/)
     expect(() => s.variant(s.product(), "X", 999)).toThrow(/FOREIGN KEY constraint failed/)
   })
 })
 
 describe("product_translations", () => {
-  it("(ürün, dil, kanal) NULL kanalda da tek; slug dil başına benzersiz", () => {
+  it("(product, language, channel) unique even with NULL channel; slug unique per language", () => {
     const p = s.product()
     const c = s.channel()
     translation(p, "en", "shirt", null)
@@ -105,8 +105,8 @@ describe("product_translations", () => {
   })
 })
 
-describe("bağlantı tabloları", () => {
-  it("çift (ürün, kanal) reddedilir; kanal FK'si", () => {
+describe("link tables", () => {
+  it("duplicate (product, channel) rejected; channel FK", () => {
     const p = s.product()
     const c = s.channel()
     const link = (channelId: number) =>
@@ -123,7 +123,7 @@ describe("bağlantı tabloları", () => {
 })
 
 describe("product_assets", () => {
-  it("varyant ve seçenek değeri aynı anda dolu olamaz; medya FK'si", () => {
+  it("variant and option value cannot both be set; media FK", () => {
     const p = s.product()
     const v = s.variant(p)
     const o = s.run(

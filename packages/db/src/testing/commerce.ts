@@ -1,6 +1,6 @@
 import type Database from "better-sqlite3"
 
-// Ticaret şema testleri (0006-0016) için en küçük satırlar; yalnız testler kullanır.
+// Smallest rows for the commerce schema tests (0006-0016); used by tests only.
 
 export const NOW = 1_700_000_000_000
 
@@ -15,7 +15,7 @@ export function seeder(db: Database.Database) {
       .prepare("SELECT sql FROM sqlite_master WHERE type = 'index' AND name = ?")
       .pluck()
       .get(name) as string | undefined
-  /** EXPLAIN QUERY PLAN satırları; `assertNoFullScan` test-utils'te (db → test-utils döngüsü). */
+  /** EXPLAIN QUERY PLAN rows; `assertNoFullScan` lives in test-utils (db → test-utils cycle). */
   const plan = (sql: string, ...args: unknown[]) =>
     (db.prepare(`EXPLAIN QUERY PLAN ${sql}`).all(...args) as { detail: string }[]).map(
       (r) => r.detail,

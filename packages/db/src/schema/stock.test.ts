@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest"
 import { NOW, seeder } from "../testing/commerce"
 import { openMigratedDb } from "../testing/sqlite"
 
-// 0009_stock: gerçek better-sqlite3 :memory:, foreign_keys=ON, her test taze DB.
+// 0009_stock: real better-sqlite3 :memory:, foreign_keys=ON, fresh DB per test.
 let db: Database.Database
 let s: ReturnType<typeof seeder>
 beforeEach(() => {
@@ -22,12 +22,12 @@ const level = (variantId: number, locationId: number, onHand = 5) =>
     NOW,
     NOW,
   )
-// 02-ticaret `stock_levels` koşullu ayırma
+// 02-ticaret `stock_levels` conditional reservation
 const RESERVE = `UPDATE stock_levels SET reserved = reserved + :n, version = version + 1
   WHERE variant_id = :v AND location_id = :l AND on_hand - reserved - safety >= :n`
 
 describe("sqlite_master", () => {
-  it("indeksler var", () => {
+  it("indexes exist", () => {
     expect(s.indexSql("stock_locations_public_id_uq")).toMatch(/UNIQUE INDEX/)
     expect(s.indexSql("stock_movements_level_idx")).toMatch(/INDEX/)
     expect(s.indexSql("stock_movements_ref_idx")).toMatch(/INDEX/)
@@ -35,7 +35,7 @@ describe("sqlite_master", () => {
 })
 
 describe("stock_levels", () => {
-  it("çift (varyant, depo) reddedilir; FK", () => {
+  it("duplicate (variant, warehouse) rejected; FK", () => {
     const v = s.variant(s.product())
     const l = s.location()
     level(v, l)
@@ -44,7 +44,7 @@ describe("stock_levels", () => {
     expect(() => level(v, 999)).toThrow(/FOREIGN KEY constraint failed/)
   })
 
-  it("sayaçlar eksiye inemez", () => {
+  it("counters cannot go negative", () => {
     const v = s.variant(s.product())
     const l = s.location()
     expect(() => level(v, l, -1)).toThrow(/stock_levels_counts_ck/)
@@ -54,7 +54,7 @@ describe("stock_levels", () => {
     ).toThrow(/stock_levels_counts_ck/)
   })
 
-  it("koşullu ayırma son adedi bir kez verir", () => {
+  it("conditional reservation grants the last unit once", () => {
     const v = s.variant(s.product())
     const l = s.location()
     level(v, l, 1)
@@ -63,7 +63,7 @@ describe("stock_levels", () => {
     expect(stmt.run({ n: 1, v, l }).changes).toBe(0)
   })
 
-  it("kanal depo sorgusu PK ile aranır (tam tarama yok)", () => {
+  it("channel warehouse query uses the PK (no full scan)", () => {
     const detail = s.plan(
       "SELECT * FROM stock_levels WHERE variant_id IN (?, ?) AND location_id IN (?, ?)",
       1,
@@ -77,7 +77,7 @@ describe("stock_levels", () => {
 })
 
 describe("stock_movements / channel_stock_locations", () => {
-  it("tür check'i; çift (kanal, depo) reddedilir", () => {
+  it("type check; duplicate (channel, warehouse) rejected", () => {
     const v = s.variant(s.product())
     const l = s.location()
     const move = (kind: string) =>

@@ -4,7 +4,7 @@ import { textSnippet } from "../../test/snippet"
 import Command from "./Command.svelte"
 
 describe("Command", () => {
-  it("renders a code command bar with the Medusa styles", () => {
+  it("renders a code command bar with the kit styles", () => {
     render(Command, {
       props: { children: textSnippet("<code>pnpm install</code>") },
     })

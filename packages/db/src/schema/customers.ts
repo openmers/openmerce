@@ -14,8 +14,8 @@ import { channels } from "./channels"
 import { createdAt, publicId, updatedAt } from "./columns"
 import { users } from "./customer-auth"
 
-// 02-ticaret.md bölüm 1 (`customer_channels`) ve 12 (müşteriler), 03 G (`customer_payment_methods`),
-// 0011. Silme anonimleştirmedir (`deleted_at` yok); adres pazardan bağımsız (00-genel).
+// 02-ticaret.md section 1 (`customer_channels`) and 12 (customers), 03 G (`customer_payment_methods`),
+// 0011. Delete means anonymize (no `deleted_at`); address is market-independent (00-genel).
 
 type Json = Record<string, unknown>
 
@@ -27,9 +27,9 @@ export const customers = sqliteTable(
   {
     id: integer("id").primaryKey(),
     publicId: publicId(),
-    // anonimleştirmede `anon+<id>@invalid`
+    // `anon+<id>@invalid` on anonymization
     email: text("email").notNull(),
-    // küçük harf, kırpılmış; e-posta başına tek kayıt
+    // lowercase, trimmed; one record per e-mail
     emailNormalized: text("email_normalized").notNull(),
     emailVerifiedAt: integer("email_verified_at"),
     firstName: text("first_name"),
@@ -38,7 +38,7 @@ export const customers = sqliteTable(
     // E.164
     phone: text("phone"),
     locale: text("locale"),
-    // e-posta doğrulandıktan sonra `UPDATE ... WHERE user_id IS NULL`
+    // after e-mail verification `UPDATE ... WHERE user_id IS NULL`
     userId: integer("user_id").references(() => users.id),
     assignedAdminId: integer("assigned_admin_id").references(() => adminUsers.id),
     source: text("source", { enum: customerSources }).notNull(),
@@ -76,7 +76,7 @@ export const customers = sqliteTable(
   ],
 )
 
-// bağlantı satırı güncellenmez
+// link rows are never updated
 export const customerChannels = sqliteTable(
   "customer_channels",
   {
@@ -94,7 +94,7 @@ export const customerChannels = sqliteTable(
   ],
 )
 
-// müşteri başına en çok 20: koşullu INSERT ... SELECT; anonimleştirmede sert silinir
+// at most 20 per customer: conditional INSERT ... SELECT; hard-deleted on anonymization
 export const addresses = sqliteTable(
   "addresses",
   {
@@ -118,7 +118,7 @@ export const addresses = sqliteTable(
     phone: text("phone"),
     taxId: text("tax_id"),
     taxIdType: text("tax_id_type"),
-    // ülkeye özgü alanlar (ülke paketi, e-fatura modülü)
+    // country-specific fields (country pack, e-invoice module)
     customFields: text("custom_fields", { mode: "json" }).$type<Json>(),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
@@ -131,7 +131,7 @@ export const addresses = sqliteTable(
   ],
 )
 
-// kart numarası saklanmaz (PCI); yumuşak silmede belirteç boşaltılır
+// card number is not stored (PCI); token cleared on soft delete
 export const customerPaymentMethods = sqliteTable(
   "customer_payment_methods",
   {
@@ -140,14 +140,14 @@ export const customerPaymentMethods = sqliteTable(
     customerId: integer("customer_id")
       .notNull()
       .references(() => customers.id),
-    // PaymentHandler kodu
+    // PaymentHandler code
     handler: text("handler").notNull(),
     providerToken: text("provider_token").notNull(),
     brand: text("brand"),
     last4: text("last4"),
     expMonth: integer("exp_month"),
     expYear: integer("exp_year"),
-    // müşteri başına bir: uygulama kuralı
+    // one per customer: application rule
     isDefault: integer("is_default", { mode: "boolean" }).notNull().default(false),
     createdAt: createdAt(),
     updatedAt: updatedAt(),

@@ -12,7 +12,7 @@ import { adminUsers } from "./admin-auth"
 import { createdAt, publicId, updatedAt } from "./columns"
 import { customers } from "./customers"
 
-// 02-ticaret.md bölüm 12: gruplar, etiketler, notlar, izinler (0011, customers.ts'den bölündü).
+// 02-ticaret.md section 12: groups, tags, notes, permissions (0011, split from customers.ts).
 
 export const consentChannels = ["email", "sms", "call", "push"] as const
 export const consentPurposes = ["marketing", "analytics"] as const
@@ -31,7 +31,7 @@ const customerId = () =>
     .notNull()
     .references(() => customers.id)
 
-// en çok 20 akıllı grup; kural değişince rule_version artar (uygulama kuralı)
+// at most 20 smart groups; rule_version increases when the rule changes (application rule)
 export const customerGroups = sqliteTable(
   "customer_groups",
   {
@@ -40,7 +40,7 @@ export const customerGroups = sqliteTable(
     name: text("name").notNull(),
     description: text("description"),
     kind: text("kind", { enum: ["manual", "smart"] }).notNull(),
-    // kapalı şema; en çok 12 koşul, 2 düzey
+    // closed schema; at most 12 conditions, 2 levels
     rule: text("rule", { mode: "json" }).$type<Record<string, unknown>>(),
     affectsCommerce: integer("affects_commerce", { mode: "boolean" }).notNull(),
     ruleVersion: integer("rule_version").notNull().default(0),
@@ -76,7 +76,7 @@ export const customerTags = sqliteTable(
   "customer_tags",
   {
     customerId: customerId(),
-    // kırpılmış, küçük harf
+    // trimmed, lowercase
     tag: text("tag").notNull(),
   },
   (t) => [
@@ -106,7 +106,7 @@ export const customerNotes = sqliteTable(
   ],
 )
 
-// yalnız eklenir; anonimleştirmeden sonra kanıt olarak kalır
+// append-only; kept as evidence after anonymization
 export const consents = sqliteTable(
   "consents",
   {
@@ -118,7 +118,7 @@ export const consents = sqliteTable(
     source: text("source", { enum: consentSources }).notNull(),
     reason: text("reason"),
     textVersion: text("text_version"),
-    // ham IP saklanmaz
+    // raw IP is not stored
     ipHash: text("ip_hash"),
     createdAt: createdAt(),
   },
@@ -131,12 +131,12 @@ export const consents = sqliteTable(
       "consents_source_ck",
       sql`${t.source} IN ('checkout', 'account', 'admin', 'import', 'unsubscribe', 'bounce')`,
     ),
-    // admin kaynağında gerekçe zorunlu
+    // reason required for admin source
     check("consents_reason_ck", sql`${t.source} <> 'admin' OR ${t.reason} IS NOT NULL`),
   ],
 )
 
-// consents yazımıyla aynı atomic() içinde güncellenir
+// updated inside the same atomic() as the consents write
 export const customerConsentState = sqliteTable(
   "customer_consent_state",
   {

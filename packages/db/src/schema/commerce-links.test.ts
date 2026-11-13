@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest"
 import { NOW, seeder } from "../testing/commerce"
 import { openMigratedDb } from "../testing/sqlite"
 
-// 0017_commerce-links: kanal bağlantıları ve sipariş numarası sayacı. Gerçek SQLite.
+// 0017_commerce-links: channel links and order number counter. Real SQLite.
 let db: Database.Database
 let s: ReturnType<typeof seeder>
 beforeEach(() => {
@@ -33,7 +33,7 @@ const nextNumber = (channelId: number, period: number) =>
     .get(channelId, period, NOW) as number
 
 describe("promotion_channels", () => {
-  it("aynı bağlantı iki kez yazılamaz, olmayan kanal reddedilir", () => {
+  it("the same link cannot be written twice, missing channel rejected", () => {
     const p = promotion()
     const c = s.channel()
     const link = (channelId: number) =>
@@ -48,14 +48,14 @@ describe("promotion_channels", () => {
     expect(() => link(9999)).toThrow(/FOREIGN KEY/)
   })
 
-  it("kanaldan promosyona arama ters indeksi kullanır", () => {
+  it("channel-to-promotion lookup uses the reverse index", () => {
     const detail = s.plan("SELECT promotion_id FROM promotion_channels WHERE channel_id = ?", 1)
     expect(detail.join(" ")).toMatch(/promotion_channels_channel_idx/)
   })
 })
 
 describe("order_number_counters", () => {
-  it("kanal + dönem başına boşluksuz artar, kanallar birbirini etkilemez", () => {
+  it("increments gap-free per channel + period, channels do not affect each other", () => {
     const a = s.channel()
     const b = s.channel()
     expect([nextNumber(a, 2026), nextNumber(a, 2026), nextNumber(a, 2026)]).toEqual([1, 2, 3])

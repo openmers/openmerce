@@ -13,10 +13,10 @@ import { createdAt, publicId, updatedAt } from "./columns"
 import { returns } from "./fulfillment"
 import { orders } from "./orders"
 
-// 02-ticaret.md bölüm 7, 0014. `payments.order_id`, `refunds.order_id` (0015) ve
-// `refunds.return_id` (0016) ileri FK'dır (02 B7). Ödeme ve iade silinmez; webhook tekilliği
-// settlement_token, (yöntem, sağlayıcı referansı) ve kümülatif refunded_amount koşuluyla.
-// Kanal bağlantısı `payment_method_channels` 0017'de (`commerce-links.ts`).
+// 02-ticaret.md section 7, 0014. `payments.order_id`, `refunds.order_id` (0015) and
+// `refunds.return_id` (0016) are forward FKs (02 B7). Payments and refunds are never deleted;
+// webhook uniqueness via settlement_token, (method, provider reference) and cumulative refunded_amount.
+// Channel link `payment_method_channels` in 0017 (`commerce-links.ts`).
 
 type Json = Record<string, unknown>
 
@@ -25,17 +25,17 @@ export const pendingPaymentStates = ["pending", "confirmed", "cancelled", "expir
 export const refundStates = ["pending", "settled", "failed", "unknown"] as const
 export const refundSources = ["admin", "provider", "manual"] as const
 
-// küçük tablo, bellekte; sağlayıcı anahtarları kasada (`secrets`), satırda değil
+// small table, in memory; provider keys live in the vault (`secrets`), not on the row
 export const paymentMethods = sqliteTable(
   "payment_methods",
   {
     id: integer("id").primaryKey(),
-    // dışa açık kimlik (public_id yerine)
+    // externally visible id (instead of public_id)
     code: text("code").notNull(),
     name: text("name").notNull(),
     position: integer("position").notNull(),
     handlerCode: text("handler_code").notNull(),
-    // sır içermez
+    // contains no secret
     handlerArgs: text("handler_args", { mode: "json" }).$type<Json>(),
     checkerCode: text("checker_code"),
     checkerArgs: text("checker_args", { mode: "json" }).$type<Json>(),
@@ -64,9 +64,9 @@ export const payments = sqliteTable(
     currency: text("currency").notNull(),
     state: text("state", { enum: paymentStates }).notNull(),
     providerReference: text("provider_reference"),
-    // elle kaydedilen (sağlayıcıya dokunmayan) iadelerin eklemeli toplamı
+    // additive total of manually recorded (provider-untouched) refunds
     externalRefundedAmount: integer("external_refunded_amount").notNull().default(0),
-    // sağlayıcının bildirdiği kümülatif iade; `WHERE refunded_amount < :kümülatif`
+    // cumulative refund reported by the provider; `WHERE refunded_amount < :cumulative`
     refundedAmount: integer("refunded_amount").notNull().default(0),
     statementDescriptor: text("statement_descriptor"),
     createdAt: createdAt(),
@@ -75,7 +75,7 @@ export const payments = sqliteTable(
   (t) => [
     uniqueIndex("payments_public_id_uq").on(t.publicId),
     index("payments_order_idx").on(t.orderId),
-    // webhook eşlemesi ve çift kayıt engeli
+    // webhook matching and double-write guard
     uniqueIndex("payments_provider_reference_uq")
       .on(t.paymentMethodId, t.providerReference)
       .where(sql`${t.providerReference} IS NOT NULL`),
@@ -85,7 +85,7 @@ export const payments = sqliteTable(
     ),
     check("payments_currency_ck", sql`length(${t.currency}) = 3`),
     check("payments_amount_ck", sql`typeof(${t.amount}) = 'integer' AND ${t.amount} >= 0`),
-    // iade üst sınırı; yazma yine `UPDATE ... WHERE` koşuluyla, check son savunma
+    // refund upper bound; the write still uses `UPDATE ... WHERE`, check is the last defense
     check(
       "payments_refunded_ck",
       sql`typeof(${t.refundedAmount}) = 'integer' AND typeof(${t.externalRefundedAmount}) = 'integer' AND ${t.refundedAmount} >= 0 AND ${t.externalRefundedAmount} >= 0 AND ${t.refundedAmount} + ${t.externalRefundedAmount} <= ${t.amount}`,
@@ -93,7 +93,7 @@ export const payments = sqliteTable(
   ],
 )
 
-// havale/EFT ve kapıda ödeme; admin onayı rezervasyonun rsv_ kimliğiyle (public_id yok)
+// bank transfer/EFT and cash on delivery; admin approval via the reservation's rsv_ id (no public_id)
 export const pendingPayments = sqliteTable(
   "pending_payments",
   {
@@ -102,11 +102,11 @@ export const pendingPayments = sqliteTable(
       .notNull()
       .references(() => checkoutReservations.id),
     paymentMethodId: paymentMethodId(),
-    // beklenen tutar
+    // expected amount
     amount: integer("amount").notNull(),
     currency: text("currency").notNull(),
     state: text("state", { enum: pendingPaymentStates }).notNull().default("pending"),
-    // kapıda ödemede boş
+    // empty for cash on delivery
     expiresAt: integer("expires_at"),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
@@ -123,7 +123,7 @@ export const pendingPayments = sqliteTable(
   ],
 )
 
-// `unknown` yeniden denenmez (uzlaştırma, sonra admin); e-fatura iadesi outbox adımı
+// `unknown` is not retried (reconciliation, then admin); e-invoice refund is an outbox step
 export const refunds = sqliteTable(
   "refunds",
   {
@@ -132,7 +132,7 @@ export const refunds = sqliteTable(
     paymentId: integer("payment_id")
       .notNull()
       .references(() => payments.id),
-    // ciro raporu ödeme join'i olmadan
+    // revenue report without joining payments
     orderId: integer("order_id")
       .notNull()
       .references(() => orders.id),
@@ -141,14 +141,14 @@ export const refunds = sqliteTable(
     currency: text("currency").notNull(),
     reason: text("reason"),
     state: text("state", { enum: refundStates }).notNull(),
-    // satır dökümü; vergi satırlarına oransal dağıtım
+    // line breakdown; proportional allocation to tax lines
     lines: text("lines", { mode: "json" }).$type<Json[]>(),
     source: text("source", { enum: refundSources }).notNull(),
     providerEventId: text("provider_event_id"),
     providerRefundId: text("provider_refund_id"),
-    // yönetici iadesinde istemci anahtarı; sağlayıcıya da iletilir
+    // client key on admin refund; also forwarded to the provider
     idempotencyKey: text("idempotency_key"),
-    // ters kayıt; bir iade yalnız bir kez iptal edilir
+    // reversal entry; a refund is cancelled only once
     reversesRefundId: integer("reverses_refund_id").references((): AnySQLiteColumn => refunds.id),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
@@ -169,7 +169,7 @@ export const refunds = sqliteTable(
     uniqueIndex("refunds_reverses_uq")
       .on(t.reversesRefundId)
       .where(sql`${t.reversesRefundId} IS NOT NULL`),
-    // uzlaştırma
+    // reconciliation
     index("refunds_unknown_idx").on(t.state).where(sql`${t.state} = 'unknown'`),
     index("refunds_created_idx").on(t.createdAt),
     check("refunds_state_ck", sql`${t.state} IN ('pending', 'settled', 'failed', 'unknown')`),

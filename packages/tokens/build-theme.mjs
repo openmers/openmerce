@@ -1,4 +1,4 @@
-// tokens.json -> packages/ui/src/theme.css (Tailwind 4). Bağımlılıksız, yalnız Node.
+// tokens.json -> packages/ui/src/theme.css (Tailwind 4). No dependencies, Node only.
 import { readFileSync, writeFileSync } from "node:fs"
 
 const here = new URL(".", import.meta.url)
@@ -38,8 +38,8 @@ const keyframes = Object.entries(tokens.keyframes)
   })
   .join("\n\n")
 
-const css = `/* ÜRETİLDİ, elle düzenleme. Kaynak: packages/tokens/src/tokens.json, komut: pnpm --filter @openmers/tokens build:theme */
-/* Değerler Medusa @medusajs/ui-preset'ten (MIT), bkz. kök NOTICE. */
+const css = `/* GENERATED, do not edit by hand. Source: packages/tokens/src/tokens.json, command: pnpm --filter @openmers/tokens build:theme */
+/* Values come from an MIT-licensed design token preset; see the root NOTICE. */
 
 @custom-variant dark (&:where(.dark, .dark *, [data-mode="dark"], [data-mode="dark"] *));
 
@@ -73,7 +73,7 @@ ${vars(tokens.shadows.dark)}
     border-color: var(--border);
   }
 
-  /* Medusa ikonları 15px "mini"; lucide varsayılanı 24px. Sınıfla verilen boyut (size-*) bunu ezer. */
+  /* Icons are 15px "mini" upstream; lucide defaults to 24px. An explicit size class (size-*) overrides this. */
   svg.lucide {
     width: 15px;
     height: 15px;

@@ -4,8 +4,8 @@ import type { HTMLAttributes } from "svelte/elements"
 import { cn } from "../../utils/cn"
 import { dropdownMenuLabelVariants } from "./variants"
 
-// Radix `DropdownMenu.Label` bağımsız bir div'dir; bits-ui karşılığı `GroupHeading`
-// yalnız `Group`/`RadioGroup` içinde çalıştığı için div olarak bırakıldı.
+// Radix `DropdownMenu.Label` is a standalone div; the bits-ui counterpart `GroupHeading`
+// only works inside `Group`/`RadioGroup`, so it was left as a div.
 type Props = HTMLAttributes<HTMLDivElement> & {
   children?: Snippet
 }

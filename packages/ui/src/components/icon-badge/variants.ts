@@ -1,6 +1,6 @@
 import { cva, type VariantProps } from "class-variance-authority"
 
-// Medusa UI icon-badge.tsx (MIT).
+// Ported from an MIT-licensed UI kit; see NOTICE.
 export const iconBadgeVariants = cva(
   "flex items-center justify-center overflow-hidden rounded-md border",
   {

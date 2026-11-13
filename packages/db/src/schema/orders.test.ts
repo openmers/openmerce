@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest"
 import { NOW, seeder } from "../testing/commerce"
 import { openMigratedDb } from "../testing/sqlite"
 
-// 0015_orders: gerçek better-sqlite3 :memory:, foreign_keys=ON, her test taze DB.
+// 0015_orders: real better-sqlite3 :memory:, foreign_keys=ON, fresh DB per test.
 let db: Database.Database
 let s: ReturnType<typeof seeder>
 beforeEach(() => {
@@ -16,7 +16,7 @@ const noScan = (table: string, detail: string[]) =>
   expect(detail.some((d) => new RegExp(`^SCAN ${table}\\b`).test(d))).toBe(false)
 
 describe("sqlite_master", () => {
-  it("benzersiz, kısmi ve sıralı indeksler var", () => {
+  it("unique, partial and ordered indexes exist", () => {
     expect(s.indexSql("orders_reservation_uq")).toMatch(/UNIQUE INDEX/)
     expect(s.indexSql("orders_number_uq")).toMatch(/\(`channel_id`,`number`\)/)
     expect(s.indexSql("orders_open_idx")).toMatch(/WHERE "orders"."state" = 'placed'/)
@@ -26,14 +26,14 @@ describe("sqlite_master", () => {
 })
 
 describe("orders", () => {
-  it("kanal içinde çift sipariş numarası reddedilir, başka kanalda serbest", () => {
+  it("duplicate order number rejected within a channel, allowed in another", () => {
     const c = s.channel()
     s.order(c, "2026-1")
     expect(() => s.order(c, "2026-1")).toThrow(/UNIQUE constraint failed: orders.channel_id/)
     s.order(s.channel(), "2026-1")
   })
 
-  it("settlement: ON CONFLICT(reservation_id) ikinci siparişi yazmaz", () => {
+  it("settlement: ON CONFLICT(reservation_id) writes no second order", () => {
     const c = s.channel()
     const r = s.reservation("active", c)
     s.order(c, "2026-1", r)
@@ -49,7 +49,7 @@ describe("orders", () => {
     expect(settle.run(s.customer(), r).changes).toBe(0)
   })
 
-  it("settlement_token yalnız bir çağrıya verilir", () => {
+  it("settlement_token is granted to only one call", () => {
     const o = s.order()
     const r = db.prepare("SELECT reservation_id FROM orders WHERE id = ?").pluck().get(o)
     const claim = db.prepare(
@@ -60,7 +60,7 @@ describe("orders", () => {
     expect(db.prepare("SELECT settlement_token FROM orders").pluck().get()).toBe("uuid-a")
   })
 
-  it("durum check'leri; toplamlar tamsayı; rezervasyon FK", () => {
+  it("status checks; totals are integers; reservation FK", () => {
     const o = s.order()
     expect(() => s.run("UPDATE orders SET state = 'open' WHERE id = ?", o)).toThrow(
       /orders_state_ck/,
@@ -74,7 +74,7 @@ describe("orders", () => {
     expect(() => s.order(s.channel(), "x", 999)).toThrow(/FOREIGN KEY constraint failed/)
   })
 
-  it("müşteri ve kanal listeleri indeksle, sıralama için ayrı sıralama yok", () => {
+  it("customer and channel lists use the index, no separate sort column", () => {
     const byCustomer = s.plan(
       "SELECT id FROM orders WHERE customer_id = ? ORDER BY placed_at DESC LIMIT 20",
       1,
@@ -94,8 +94,8 @@ describe("orders", () => {
   })
 })
 
-describe("sipariş alt tabloları", () => {
-  it("indirim hedefi satır kimliğiyle tutarlı", () => {
+describe("order subtables", () => {
+  it("discount target consistent with the line id", () => {
     const o = s.order()
     const line = s.orderLine(o)
     const adjust = (target: string, lineId: number | null) =>
@@ -113,13 +113,13 @@ describe("sipariş alt tabloları", () => {
     expect(() => adjust("order", line)).toThrow(/order_adjustments_line_ck/)
   })
 
-  it("satır adedi pozitif; FK", () => {
+  it("line quantity positive; FK", () => {
     const o = s.order()
     expect(() => s.orderLine(o, 0)).toThrow(/order_lines_quantity_ck/)
     expect(() => s.orderLine(999)).toThrow(/FOREIGN KEY constraint failed/)
   })
 
-  it("not 5000 karakter sınırı; zaman çizelgesi indeksi sıralamayı karşılar", () => {
+  it("note limited to 5000 chars; timeline index covers the sort", () => {
     const o = s.order()
     const note = (body: string) =>
       s.run(
@@ -140,7 +140,7 @@ describe("sipariş alt tabloları", () => {
     expect(detail.join("\n")).not.toMatch(/TEMP B-TREE/)
   })
 
-  it("misafir erişim token özeti benzersiz", () => {
+  it("guest access token digest unique", () => {
     const o = s.order()
     const grant = (hash: string) =>
       s.run(

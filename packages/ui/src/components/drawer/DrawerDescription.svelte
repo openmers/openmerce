@@ -10,7 +10,7 @@ type Props = DialogPrimitive.DescriptionProps & {
 let { class: className, children, ...rest }: Props = $props()
 </script>
 
-// Medusa `Text` varsayılanı (size=base) `txt-small`.
+// the kit default `Text` (size=base) is `txt-small`.
 <DialogPrimitive.Description class={cn("txt-small", className)} {...rest}>
   {@render children?.()}
 </DialogPrimitive.Description>

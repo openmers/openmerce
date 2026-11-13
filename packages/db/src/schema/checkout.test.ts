@@ -4,7 +4,7 @@ import { NOW, seeder } from "../testing/commerce"
 import { openMigratedDb } from "../testing/sqlite"
 
 // `checkout_reservations` (0013), `promotion_usage` (0012), `payment_methods`, `pending_payments`
-// (0014): rezervasyon ancak ödeme yöntemi tablosuyla yazılabildiği için ayrı dosya.
+// (0014): separate file because a reservation can only be written with the payment method table.
 let db: Database.Database
 let s: ReturnType<typeof seeder>
 beforeEach(() => {
@@ -13,12 +13,12 @@ beforeEach(() => {
 })
 afterEach(() => db.close())
 
-// 02-ticaret `checkout_reservations`: bırakma yalnız active/payment_pending'den
+// 02-ticaret `checkout_reservations`: release only from active/payment_pending
 const RELEASE = `UPDATE checkout_reservations SET status = 'released', updated_at = ?
   WHERE id = ? AND status IN ('active', 'payment_pending')`
 
 describe("checkout_reservations", () => {
-  it("durum ve kaynak check'i; kaynak varsayılanı web", () => {
+  it("status and source check; source defaults to web", () => {
     const r = s.reservation()
     expect(db.prepare("SELECT source FROM checkout_reservations").pluck().get()).toBe("web")
     expect(() => s.reservation("pending")).toThrow(/checkout_reservations_status_ck/)
@@ -27,7 +27,7 @@ describe("checkout_reservations", () => {
     )
   })
 
-  it("bırakma tek kez kazanır; settled bırakılamaz", () => {
+  it("release wins once; settled cannot be released", () => {
     const r = s.reservation()
     const release = db.prepare(RELEASE)
     expect(release.run(NOW, r).changes).toBe(1)
@@ -35,7 +35,7 @@ describe("checkout_reservations", () => {
     expect(release.run(NOW, s.reservation("settled")).changes).toBe(0)
   })
 
-  it("süpürme sorgusu kısmi indeksi kullanır", () => {
+  it("sweep query uses the partial index", () => {
     const detail = s.plan(
       `SELECT id FROM checkout_reservations
        WHERE status IN ('active', 'payment_pending') AND expires_at < ?`,
@@ -45,7 +45,7 @@ describe("checkout_reservations", () => {
     expect(detail.some((d) => /^SCAN checkout_reservations\b/.test(d))).toBe(false)
   })
 
-  it("ödeme yöntemi FK'si zorunlu; yöntem kodu benzersiz", () => {
+  it("payment method FK required; method code unique", () => {
     s.paymentMethod("cod")
     expect(() => s.paymentMethod("cod")).toThrow(/UNIQUE constraint failed: payment_methods.code/)
     expect(() =>
@@ -68,7 +68,7 @@ describe("promotion_usage", () => {
       NOW,
     )
 
-  it("(promosyon, rezervasyon) tek satır; rezervasyon FK", () => {
+  it("one row per (promotion, reservation); reservation FK", () => {
     const p = s.promotion()
     const r = s.reservation()
     use(p, r, null)
@@ -76,7 +76,7 @@ describe("promotion_usage", () => {
     expect(() => use(p, 999, null)).toThrow(/FOREIGN KEY constraint failed/)
   })
 
-  it("müşteri başına sınır koşullu INSERT'le; sayım indeksle", () => {
+  it("per-customer limit via conditional INSERT; count via index", () => {
     const p = s.promotion()
     s.run("UPDATE promotions SET per_customer_limit = 1 WHERE id = ?", p)
     const c = s.customer()
@@ -109,7 +109,7 @@ describe("pending_payments", () => {
       NOW,
     )
 
-  it("rezervasyon başına tek bekleyen ödeme; durum ve tutar check'i", () => {
+  it("one pending payment per reservation; status and amount check", () => {
     const r = s.reservation("payment_pending")
     pending(r)
     expect(() => pending(r)).toThrow(/UNIQUE constraint failed: pending_payments.reservation_id/)
@@ -119,7 +119,7 @@ describe("pending_payments", () => {
     ).toThrow(/pending_payments_amount_ck/)
   })
 
-  it("süpürme kısmi indeksle", () => {
+  it("sweep uses the partial index", () => {
     const detail = s.plan(
       "SELECT id FROM pending_payments WHERE state = 'pending' AND expires_at < ?",
       NOW,

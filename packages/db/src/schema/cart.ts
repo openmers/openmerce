@@ -7,9 +7,9 @@ import { customers } from "./customers"
 import { paymentMethods } from "./payments"
 import { shippingMethods } from "./tax-shipping"
 
-// 02-ticaret.md bölüm 6, 0013. Sepet tutar saklamaz, süresi dolunca sert silinir; sipariş
-// rezervasyon anlık görüntüsüne dayanır. `checkout_reservations.payment_method_id` (0014) ileri
-// FK; `carts.company_id` hedefi 0023'de: FK'sız.
+// 02-ticaret.md section 6, 0013. Carts store no totals and are hard-deleted on expiry; orders
+// rely on the checkout reservation snapshot. `checkout_reservations.payment_method_id` (0014) is a
+// forward FK; `carts.company_id` target is 0023: no FK.
 
 type Json = Record<string, unknown>
 
@@ -34,17 +34,17 @@ export const carts = sqliteTable(
       .references(() => channels.id),
     customerId: integer("customer_id").references(() => customers.id),
     companyId: integer("company_id"),
-    // B2B adlandırılmış sepet
+    // B2B named cart
     name: text("name"),
     status: text("status", { enum: cartStatuses }).notNull().default("active"),
     currency: text("currency").notNull(),
-    // genel adres anahtarları (address_line1/2, city, region, district?, postal_code, country_code;
-    // faturada tax_id, tax_id_type); misafir adresi tablo satırı değildir
+    // generic address keys (address_line1/2, city, region, district?, postal_code, country_code;
+    // on invoices tax_id, tax_id_type); guest address is not a table row
     shippingAddress: text("shipping_address", { mode: "json" }).$type<Json>(),
     billingAddress: text("billing_address", { mode: "json" }).$type<Json>(),
     shippingMethodId: integer("shipping_method_id").references(() => shippingMethods.id),
     couponCodes: text("coupon_codes", { mode: "json" }).$type<string[]>(),
-    // dijital ve misafir checkout'ta zorunlu (checkout doğrulaması)
+    // required for digital and guest checkout (checkout validation)
     email: text("email"),
     version: integer("version").notNull().default(0),
     expiresAt: integer("expires_at").notNull(),
@@ -61,7 +61,7 @@ export const carts = sqliteTable(
   ],
 )
 
-// ekleme tek koşullu yazma (ON CONFLICT ... DO UPDATE); düzenleme "sil + ekle"
+// insert is a single conditional write (ON CONFLICT ... DO UPDATE); edit is "delete + insert"
 export const cartLines = sqliteTable(
   "cart_lines",
   {
@@ -73,10 +73,10 @@ export const cartLines = sqliteTable(
       .notNull()
       .references(() => productVariants.id),
     quantity: integer("quantity").notNull(),
-    // line_key'e girmez
+    // not part of line_key
     customFields: text("custom_fields", { mode: "json" }).$type<Json>(),
     personalization: text("personalization", { mode: "json" }).$type<Json>(),
-    // kanonik kişiselleştirme JSON'unun SHA-256 ilk 16 baytı (32 küçük hex); yoksa ''
+    // first 16 bytes of the canonical personalization JSON's SHA-256 (32 lowercase hex); '' if none
     lineKey: text("line_key").notNull(),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
@@ -91,19 +91,19 @@ export const cartLines = sqliteTable(
   ],
 )
 
-// INSERT ... SELECT ... WHERE <kalemler yeterli> AND <sepet version değişmedi>; geçişler
-// `WHERE status = :beklenen` (version yok). settled silinmez; released/expired/failed 30 gün sonra.
+// INSERT ... SELECT ... WHERE <lines sufficient> AND <cart version unchanged>; transitions
+// `WHERE status = :expected` (no version). settled is not deleted; released/expired/failed after 30 days.
 export const checkoutReservations = sqliteTable(
   "checkout_reservations",
   {
     id: integer("id").primaryKey(),
     publicId: publicId(),
-    // FK yok: sepet sert silinir, rezervasyon kalır
+    // no FK: the cart is hard-deleted, the reservation stays
     cartId: integer("cart_id").notNull(),
     channelId: integer("channel_id")
       .notNull()
       .references(() => channels.id),
-    // satırlar, fiyatlar, indirim, vergi, kargo, adresler, depo dağılımı, atıf verisi
+    // lines, prices, discount, tax, shipping, addresses, stock allocation, attribution data
     snapshot: text("snapshot", { mode: "json" }).$type<Json>().notNull(),
     paymentMethodId: integer("payment_method_id")
       .notNull()
@@ -116,7 +116,7 @@ export const checkoutReservations = sqliteTable(
   },
   (t) => [
     uniqueIndex("checkout_reservations_public_id_uq").on(t.publicId),
-    // uzlaştırma ve süpürme
+    // reconciliation and sweeping
     index("checkout_reservations_open_idx")
       .on(t.status, t.expiresAt)
       .where(sql`${t.status} IN ('active', 'payment_pending')`),

@@ -4,12 +4,12 @@ import { openTestDb } from "./sqlite"
 
 type Target = { name: string; open: () => Database.Database }
 
-// Hedef eklemek yalnız bu listeye satır eklemektir; her hedef her testi kendi önekiyle kaydeder.
-// shortcut: d1 hedefi yok, madde 4.13 — D1 kurulmadı; testler şimdilik yalnız sqlite'ta koşar.
-// D1 eklendiğinde ortamda yoksa testi atlamamalı, kırmalı (plan §2.3).
+// Adding a target is just another entry here; each target registers every test with its own prefix.
+// shortcut: no d1 target, item 4.13 — D1 is not set up; tests currently run on sqlite only.
+// Once D1 is added, a missing environment must fail the test rather than skip it (plan §2.3).
 const TARGETS: readonly Target[] = [{ name: "sqlite", open: () => openTestDb() }]
 
-/** Aynı test gövdesini her hedefte taze veritabanıyla koşar; bağlantı her testten sonra kapanır. */
+/** Runs the same test body on every target with a fresh database; the connection closes after each test. */
 export function describeOnTargets(
   name: string,
   fn: (getDb: () => Database.Database) => void,

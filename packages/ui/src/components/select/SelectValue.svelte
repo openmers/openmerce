@@ -3,7 +3,7 @@ import { Select as SelectPrimitive } from "bits-ui"
 import type { Snippet } from "svelte"
 
 type Props = SelectPrimitive.ValueProps & {
-  /** bits-ui `Value` alt içerik verilirse yer tutucuyu kendi çizer; boş dilim göndermeyiz. */
+  /** bits-ui `Value` renders the placeholder itself when given children; we never send an empty snippet. */
   placeholder?: string
   children?: Snippet
 }

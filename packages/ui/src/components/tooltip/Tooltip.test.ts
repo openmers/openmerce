@@ -5,7 +5,7 @@ import { textSnippet } from "../../test/snippet"
 import TooltipCustomTrigger from "./fixtures/TooltipCustomTrigger.svelte"
 import Tooltip from "./Tooltip.svelte"
 
-// bits-ui içerik öğesine `role="tooltip"` eklemez; veri özniteliği üzerinden sorgularız.
+// bits-ui does not add `role="tooltip"` to the content element; we query it through its data attribute.
 const tooltipContent = () => document.querySelector<HTMLElement>("[data-tooltip-content]")
 
 describe("Tooltip", () => {
@@ -18,7 +18,7 @@ describe("Tooltip", () => {
     expect(tooltipContent()).toBeNull()
   })
 
-  it("opens the tooltip on hover with the Medusa styles", async () => {
+  it("opens the tooltip on hover with the kit styles", async () => {
     const user = userEvent.setup()
     render(Tooltip, {
       props: { content: textSnippet("Kaydet"), children: textSnippet("Kaydet") },

@@ -2,7 +2,7 @@ import { cva } from "class-variance-authority"
 
 export type ProgressStatus = "not-started" | "in-progress" | "completed"
 
-// Medusa UI progress-tabs.tsx (MIT). `bg-ui-bg-subtle` → `bg-background`, `bg-ui-bg-base` → `bg-card`.
+// Ported from an MIT-licensed UI kit; see NOTICE. `bg-ui-bg-subtle` → `bg-background`, `bg-ui-bg-base` → `bg-card`.
 export const progressTabsListVariants = cva("flex items-center")
 
 export const progressTabsTriggerVariants = cva([

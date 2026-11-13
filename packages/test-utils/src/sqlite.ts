@@ -6,13 +6,13 @@ import Database from "better-sqlite3"
 
 export type TestDbFile = {
   path: string
-  /** Aynı dosyaya yeni, bağımsız bağlantı (foreign_keys=ON). */
+  /** New independent connection to the same file (foreign_keys=ON). */
   connect(): Database.Database
-  /** Açılan bütün bağlantıları kapatır, geçici dizini siler. */
+  /** Closes every opened connection and removes the temp directory. */
   close(): void
 }
 
-// Migration'lar test dosyası başına bir kez uygulanır; testler bu tamponun kopyasını açar.
+// Migrations are applied once per test file; tests open a copy of this buffer.
 let template: Buffer | undefined
 
 function migratedTemplate(): Buffer {
@@ -33,8 +33,8 @@ function withPragmas(db: Database.Database): Database.Database {
 }
 
 /**
- * Taze, migration'ları uygulanmış veritabanı. Varsayılan: şablonun bellekteki kopyası.
- * `{ file: true }`: geçici dosya; iki ayrı bağlantıyla yarış testi için.
+ * Fresh database with all migrations applied. Default: an in-memory copy of the template.
+ * `{ file: true }`: temp file, for race tests over two separate connections.
  */
 export function openTestDb(): Database.Database
 export function openTestDb(opts: { file: true }): TestDbFile

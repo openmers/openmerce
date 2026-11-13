@@ -9,9 +9,9 @@ import {
 import { storeReactivityBindings } from "@tanstack/table-core/store-reactivity-bindings"
 
 /**
- * DataTable'ın kullandığı tablo çekirdeği özellikleri. Sunucu taraflı veri
- * kullandığımız için sıralama/süzme/pagination "manual" çalışır; tablo yalnız
- * durum ve satır modeli üretir.
+ * The table-core features DataTable uses. Since we use server-side data,
+ * sorting/filtering/pagination run "manual"; the table only produces
+ * state and the row model.
  */
 export const dataTableFeatures = tableFeatures({
   coreReactivityFeature: storeReactivityBindings(),

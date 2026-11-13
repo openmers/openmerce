@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest"
 import { NOW, seeder } from "../testing/commerce"
 import { openMigratedDb } from "../testing/sqlite"
 
-// 0016_fulfillment: gerçek better-sqlite3 :memory:, foreign_keys=ON, her test taze DB.
+// 0016_fulfillment: real better-sqlite3 :memory:, foreign_keys=ON, fresh DB per test.
 let db: Database.Database
 let s: ReturnType<typeof seeder>
 beforeEach(() => {
@@ -22,14 +22,14 @@ const fulfillment = (orderId: number, state = "pending") =>
     NOW,
     NOW,
   )
-// 02-ticaret `fulfillment_lines`: gönderilen adet sipariş adedini aşamaz, iptal sayılmaz
+// 02-ticaret `fulfillment_lines`: shipped quantity cannot exceed the ordered quantity, cancelled does not count
 const SHIP = `INSERT INTO fulfillment_lines (fulfillment_id, order_line_id, quantity)
   SELECT :f, ol.id, :q FROM order_lines ol WHERE ol.id = :l AND (SELECT coalesce(sum(fl.quantity), 0)
     FROM fulfillment_lines fl JOIN fulfillments f ON f.id = fl.fulfillment_id
     WHERE fl.order_line_id = :l AND f.state <> 'cancelled') + :q <= ol.quantity`
 
 describe("fulfillments", () => {
-  it("gönderilen adet sipariş adedini aşmaz; iptal edilen sayılmaz", () => {
+  it("shipped quantity does not exceed the ordered quantity; cancelled does not count", () => {
     const o = s.order()
     const l = s.orderLine(o, 2)
     const ship = db.prepare(SHIP)
@@ -39,7 +39,7 @@ describe("fulfillments", () => {
     expect(ship.run({ f: fulfillment(o), l, q: 1 }).changes).toBe(0)
   })
 
-  it("durum check'i; (gönderim, satır) tek; taşıyıcı eşleşmesi indeksle", () => {
+  it("status check; (fulfillment, line) unique; carrier match via index", () => {
     const o = s.order()
     expect(() => fulfillment(o, "lost")).toThrow(/fulfillments_state_ck/)
     const f = fulfillment(o)
@@ -62,7 +62,7 @@ describe("fulfillments", () => {
 })
 
 describe("returns", () => {
-  it("satırlar JSON dizi; tür ve durum check'i; bekleyen kuyruğu indeksle", () => {
+  it("lines are a JSON array; type and status check; pending queue via index", () => {
     const o = s.order()
     const ret = (lines: string, kind = "withdrawal") =>
       s.run(
@@ -88,7 +88,7 @@ describe("returns", () => {
 })
 
 describe("digital_entitlements", () => {
-  it("son indirme hakkı bir kez; token özeti benzersiz", () => {
+  it("last download right used once; token digest unique", () => {
     const l = s.orderLine(s.order())
     const grant = (hash: string) =>
       s.run(

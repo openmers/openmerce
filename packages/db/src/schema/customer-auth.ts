@@ -2,8 +2,8 @@ import { sql } from "drizzle-orm"
 import { check, index, integer, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core"
 import { customers } from "./customers"
 
-// 01-cekirdek-isletme.md C: Better Auth müşteri örneği (karar 13), 0011. Kalıp admin-auth.ts ile
-// aynı: generateId "serial" tamsayı id, tarih alanları timestamp_ms (SQL'de integer epoch ms).
+// 01-cekirdek-isletme.md C: Better Auth customer instance (decision 13), 0011. Same pattern as
+// admin-auth.ts: generateId "serial" integer ids, date fields timestamp_ms (integer epoch ms in SQL).
 const ts = (name: string) => integer(name, { mode: "timestamp_ms" })
 const baCreatedAt = () => ts("created_at").notNull()
 const baUpdatedAt = () => ts("updated_at").notNull()
@@ -18,7 +18,7 @@ export const users = sqliteTable(
     email: text("email").notNull(),
     emailVerified: integer("email_verified", { mode: "boolean" }).notNull().default(false),
     image: text("image"),
-    // phoneNumber eklentisi
+    // phoneNumber plugin
     phoneNumber: text("phone_number"),
     phoneNumberVerified: integer("phone_number_verified", { mode: "boolean" }),
     twoFactorEnabled: integer("two_factor_enabled", { mode: "boolean" }).notNull().default(false),
@@ -32,7 +32,7 @@ export const users = sqliteTable(
   ],
 )
 
-// kişisel veri silmede users satırıyla kimlik satırları gider (01 `users` kuralı)
+// on personal data deletion the identity rows go with the users row (01 `users` rule)
 const userId = () =>
   integer("user_id")
     .notNull()
@@ -43,7 +43,7 @@ export const sessions = sqliteTable(
   {
     id: integer("id").primaryKey(),
     userId: userId(),
-    // yalnız SHA-256 özeti yazılır (karar 13, yönetici örneğiyle aynı sarmalayıcı)
+    // only the SHA-256 digest is written (decision 13, same wrapper as the admin instance)
     token: text("token").notNull(),
     expiresAt: ts("expires_at").notNull(),
     ipAddress: text("ip_address"),
@@ -52,14 +52,14 @@ export const sessions = sqliteTable(
       .notNull()
       .references(() => customers.id),
     groupIds: text("group_ids", { mode: "json" }).$type<number[]>().notNull(),
-    // companies 0023'de: FK'sız
+    // companies in 0023: no FK
     activeCompanyId: integer("active_company_id"),
     companyRole: text("company_role", { enum: companyRoles }),
-    // öncelik sırasıyla
+    // in priority order
     priceListIds: text("price_list_ids", { mode: "json" }).$type<number[]>().notNull(),
-    // açılıştaki users.session_version kopyası; uyuşmazsa red
+    // copy of users.session_version at sign-in; reject on mismatch
     sessionVersion: integer("session_version").notNull(),
-    // satırın iyimser kilit sayacı (etkin şirket değişimi)
+    // row's optimistic lock counter (active company switch)
     version: integer("version").notNull().default(0),
     createdAt: baCreatedAt(),
     updatedAt: baUpdatedAt(),
@@ -98,12 +98,12 @@ export const accounts = sqliteTable(
   ],
 )
 
-// tek kullanım: DELETE ... WHERE identifier = ? AND value = ? AND expires_at > ?
+// single use: DELETE ... WHERE identifier = ? AND value = ? AND expires_at > ?
 export const authVerifications = sqliteTable(
   "auth_verifications",
   {
     id: integer("id").primaryKey(),
-    // `<amaç>:<hedef>`
+    // `<purpose>:<target>`
     identifier: text("identifier").notNull(),
     value: text("value").notNull(),
     expiresAt: ts("expires_at").notNull(),
@@ -116,7 +116,7 @@ export const authVerifications = sqliteTable(
   ],
 )
 
-// twoFactor eklentisi 1.7.23 created_at/updated_at yazmaz (karar 13; 01 katalog satırından sapma)
+// twoFactor plugin 1.7.23 writes no created_at/updated_at (decision 13; deviates from the 01 catalog row)
 export const twoFactors = sqliteTable(
   "two_factors",
   {

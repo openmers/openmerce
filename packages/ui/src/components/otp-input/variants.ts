@@ -1,7 +1,7 @@
 import { cva } from "class-variance-authority"
 
-// Medusa UI otp-input.tsx (MIT). Kutular bits-ui `PinInput.Cell` üzerine aynı sınıflarla uygulanır;
-// Radix'teki gerçek `<input>` yerine `data-active` durumu odak görünümünü taşır.
+// Ported from an MIT-licensed UI kit; see NOTICE. The cells apply the same classes onto bits-ui `PinInput.Cell`;
+// instead of the real `<input>` in Radix, the `data-active` state carries the focus look.
 export const otpInputVariants = cva("flex items-center justify-center gap-x-3")
 
 export const otpGroupVariants = cva("flex")

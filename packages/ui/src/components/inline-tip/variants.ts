@@ -1,6 +1,6 @@
 import { cva, type VariantProps } from "class-variance-authority"
 
-// Medusa UI inline-tip.tsx (MIT).
+// Ported from an MIT-licensed UI kit; see NOTICE.
 export const inlineTipBarVariants = cva("bg-tag-neutral-icon h-full w-1 rounded-full", {
   variants: {
     variant: {

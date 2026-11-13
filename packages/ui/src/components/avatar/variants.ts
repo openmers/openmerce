@@ -1,6 +1,6 @@
 import { cva, type VariantProps } from "class-variance-authority"
 
-// Medusa UI avatar.tsx (MIT). Radix Avatar yerine yerel img/fallback durumu kullanılıyor.
+// Ported from an MIT-licensed UI kit; see NOTICE. Uses a native img/fallback state instead of Radix Avatar.
 export const avatarVariants = cva(
   "flex shrink-0 items-center justify-center overflow-hidden shadow-borders-base bg-card",
   {

@@ -13,8 +13,8 @@ import { productVariants } from "./catalog-products"
 import { channels } from "./channels"
 import { createdAt, publicId, updatedAt } from "./columns"
 
-// 02-ticaret.md bölüm 4 (fiyat listeleri, hedefler, fiyatlar, `currency_rates` karar 10), 0008.
-// `price_list_targets` hedefleri sonra açılır (`customer_groups` 0011, `companies` 0023): FK'sız.
+// 02-ticaret.md section 4 (price lists, targets, prices, `currency_rates` decision 10), 0008.
+// `price_list_targets` targets open later (`customer_groups` 0011, `companies` 0023): no FK.
 
 export const priceLists = sqliteTable(
   "price_lists",
@@ -25,7 +25,7 @@ export const priceLists = sqliteTable(
     channelId: integer("channel_id")
       .notNull()
       .references(() => channels.id),
-    // oluşturulduktan sonra değişmez; prices.currency bununla aynı
+    // immutable after creation; prices.currency matches this
     currency: text("currency").notNull(),
     type: text("type", { enum: ["base", "sale", "contract"] }).notNull(),
     priority: integer("priority").notNull(),
@@ -35,11 +35,11 @@ export const priceLists = sqliteTable(
     status: text("status", { enum: ["active", "expired"] })
       .notNull()
       .default("active"),
-    // doluysa kur dönüşümü görevinin hedefi
+    // if set, target of the rate conversion job
     fxSourcePriceListId: integer("fx_source_price_list_id").references(
       (): AnySQLiteColumn => priceLists.id,
     ),
-    // ör. { "mode": "ceil", "step": 100, "ending": 99 }
+    // e.g. { "mode": "ceil", "step": 100, "ending": 99 }
     fxRounding: text("fx_rounding", { mode: "json" }).$type<Record<string, unknown>>(),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
@@ -47,7 +47,7 @@ export const priceLists = sqliteTable(
   (t) => [
     uniqueIndex("price_lists_public_id_uq").on(t.publicId),
     index("price_lists_channel_type_idx").on(t.channelId, t.type),
-    // kanal ve para birimi başına tek base liste
+    // one base list per channel and currency
     uniqueIndex("price_lists_base_uq").on(t.channelId, t.currency).where(sql`${t.type} = 'base'`),
     index("price_lists_fx_source_idx").on(t.fxSourcePriceListId),
     check("price_lists_currency_ck", sql`length(${t.currency}) = 3`),
@@ -56,7 +56,7 @@ export const priceLists = sqliteTable(
   ],
 )
 
-// ikisi de boşsa hedef "herkes"; satır güncellenmez (sil + ekle)
+// both empty means target "everyone"; rows are never updated (delete + insert)
 export const priceListTargets = sqliteTable(
   "price_list_targets",
   {
@@ -69,7 +69,7 @@ export const priceListTargets = sqliteTable(
     createdAt: createdAt(),
   },
   (t) => [
-    // NULL tekrarını önler (NULL'lar benzersiz indekste eşit sayılmaz)
+    // prevents NULL duplicates (NULLs are not equal in a unique index)
     uniqueIndex("price_list_targets_uq").on(
       t.priceListId,
       sql`ifnull(${t.customerGroupId}, 0)`,
@@ -94,7 +94,7 @@ export const prices = sqliteTable(
       .notNull()
       .references(() => productVariants.id),
     minQty: integer("min_qty").notNull().default(1),
-    // küçük birim
+    // minor unit
     amount: integer("amount").notNull(),
     compareAtAmount: integer("compare_at_amount"),
     currency: text("currency").notNull(),
@@ -102,10 +102,10 @@ export const prices = sqliteTable(
     updatedAt: updatedAt(),
   },
   (t) => [
-    // vitrin `variant_id IN (...) AND price_list_id IN (...)` sorgusunu karşılar
+    // serves the storefront `variant_id IN (...) AND price_list_id IN (...)` query
     primaryKey({ name: "prices_pk", columns: [t.priceListId, t.variantId, t.minQty] }),
     check("prices_min_qty_ck", sql`${t.minQty} >= 1`),
-    // INTEGER yakınlığı 1.5'i REAL bırakır; para yalnız tamsayı
+    // INTEGER affinity leaves 1.5 as REAL; money is integer only
     check("prices_amount_ck", sql`typeof(${t.amount}) = 'integer' AND ${t.amount} >= 0`),
     check(
       "prices_compare_at_amount_ck",
@@ -115,23 +115,23 @@ export const prices = sqliteTable(
   ],
 )
 
-// 1 base = rate_e9 / 10^9 quote; istek anında kullanılmaz
+// 1 base = rate_e9 / 10^9 quote; not used at request time
 export const currencyRates = sqliteTable(
   "currency_rates",
   {
-    // YYYY-MM-DD, UTC takvim günü
+    // YYYY-MM-DD, UTC calendar day
     day: text("day").notNull(),
     base: text("base").notNull(),
     quote: text("quote").notNull(),
     rateE9: integer("rate_e9").notNull(),
-    // `manual` ya da RateProvider kodu
+    // `manual` or a RateProvider code
     source: text("source").notNull(),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
   (t) => [
     primaryKey({ name: "currency_rates_pk", columns: [t.day, t.base, t.quote] }),
-    // çiftin en son kuru
+    // latest rate of the pair
     index("currency_rates_pair_idx").on(t.base, t.quote, t.day),
     check("currency_rates_day_ck", sql`${t.day} GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]'`),
     check(

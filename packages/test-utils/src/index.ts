@@ -1,5 +1,5 @@
-// Medusa'daki medusaIntegrationTestRunner'ın karşılığı: aynı test gövdesi her hedefte taze veritabanıyla.
-// Şimdilik yalnız SQLite hedefi var (runner.ts); D1 ve Platform (madde 5) sonra.
+// Counterpart of the upstream integration test runner: same test body, fresh database per target.
+// Only the SQLite target exists for now (runner.ts); D1 and Platform (item 5) come later.
 export { loadMigrations, type Migration } from "./migrations"
 export { assertNoFullScan, type PlannedQuery } from "./queryPlan/assertNoFullScan"
 export { parseQueryPlan, type QueryPlanRow } from "./queryPlan/parseQueryPlan"

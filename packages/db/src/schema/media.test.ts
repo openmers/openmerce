@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest"
 import { NOW, seeder } from "../testing/commerce"
 import { openMigratedDb } from "../testing/sqlite"
 
-// 0007_media: gerçek better-sqlite3 :memory:, foreign_keys=ON, her test taze DB.
+// 0007_media: real better-sqlite3 :memory:, foreign_keys=ON, fresh DB per test.
 let db: Database.Database
 let s: ReturnType<typeof seeder>
 beforeEach(() => {
@@ -13,7 +13,7 @@ beforeEach(() => {
 afterEach(() => db.close())
 
 describe("media", () => {
-  it("indeksler var", () => {
+  it("indexes exist", () => {
     expect(s.indexSql("media_public_id_uq")).toMatch(/UNIQUE INDEX/)
     expect(s.indexSql("media_bucket_key_uq")).toMatch(/UNIQUE INDEX/)
     for (const idx of [
@@ -26,7 +26,7 @@ describe("media", () => {
     }
   })
 
-  it("(bucket, key) benzersiz; durum ve kova check'i", () => {
+  it("(bucket, key) unique; status and bucket check", () => {
     s.media("a/1")
     expect(() => s.media("a/1")).toThrow(/UNIQUE constraint failed/)
     const insert = (status: string, bucket: string) =>
@@ -42,7 +42,7 @@ describe("media", () => {
     expect(() => insert("ready", "cdn")).toThrow(/media_bucket_ck/)
   })
 
-  it("kullanılan medya NOT EXISTS ile silinmez, kullanılmayan silinir", () => {
+  it("used media is not deleted via NOT EXISTS, unused is deleted", () => {
     const used = s.media()
     const free = s.media()
     s.run(

@@ -61,7 +61,7 @@ describe("ProgressTabs", () => {
     await user.keyboard("{ArrowRight}")
     expect(screen.getByRole("tab", { name: /Fiyat/ })).toHaveAttribute("aria-selected", "true")
 
-    // Devre dışı "Stok" atlanır ve başa dönülür.
+    // The disabled "Stok" step is skipped and move wraps back to the start.
     await user.keyboard("{ArrowRight}")
     expect(screen.getByRole("tab", { name: /Genel/ })).toHaveAttribute("aria-selected", "true")
     expect(screen.getByRole("tab", { name: /Stok/ })).toHaveAttribute("aria-selected", "false")

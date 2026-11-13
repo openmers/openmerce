@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest"
 import { NOW, seeder } from "../testing/commerce"
 import { openMigratedDb } from "../testing/sqlite"
 
-// 0012_promotions: gerçek better-sqlite3 :memory:, foreign_keys=ON, her test taze DB.
+// 0012_promotions: real better-sqlite3 :memory:, foreign_keys=ON, fresh DB per test.
 let db: Database.Database
 let s: ReturnType<typeof seeder>
 beforeEach(() => {
@@ -12,19 +12,19 @@ beforeEach(() => {
 })
 afterEach(() => db.close())
 
-// 02-ticaret `promotions` koşullu sayaç (NULL sınır düzeltmesiyle)
+// 02-ticaret `promotions` conditional counter (with the NULL limit fix)
 const INCREMENT = `UPDATE promotions SET used = used + 1
   WHERE id = ? AND (usage_limit IS NULL OR used < usage_limit)`
 
 describe("promotions", () => {
-  it("kupon kodu yalnız doluyken benzersiz", () => {
+  it("coupon code unique only when set", () => {
     s.promotion("SUMMER")
     expect(() => s.promotion("SUMMER")).toThrow(/UNIQUE constraint failed: promotions.coupon_code/)
     s.promotion(null)
     s.promotion(null)
   })
 
-  it("sınırlı kuponun son kullanımı bir kez; sınırsız hep artar", () => {
+  it("a limited coupon's last use succeeds once; unlimited always increments", () => {
     const limited = s.promotion("ONE", 1)
     const free = s.promotion(null)
     const inc = db.prepare(INCREMENT)
@@ -37,7 +37,7 @@ describe("promotions", () => {
     )
   })
 
-  it("koşul ve eylemler JSON dizi", () => {
+  it("conditions and actions are JSON arrays", () => {
     expect(() =>
       s.run(
         `INSERT INTO promotions (public_id, name, enabled, priority, conditions, actions, stackable,

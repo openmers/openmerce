@@ -1,6 +1,6 @@
 import { cva, type VariantProps } from "class-variance-authority"
 
-// Medusa UI badge.tsx (MIT). Renk sınıfları mapping.md "Tailwind adı" sütunundan.
+// Ported from an MIT-licensed UI kit; see NOTICE. Color classes come from the "Tailwind name" column of mapping.md.
 export const badgeColorVariants = cva("", {
   variants: {
     color: {

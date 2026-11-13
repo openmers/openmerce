@@ -28,6 +28,6 @@ describe("theme.css", () => {
   })
 
   it("is marked as generated", () => {
-    expect(css.startsWith("/* ÜRETİLDİ")).toBe(true)
+    expect(css.startsWith("/* GENERATED")).toBe(true)
   })
 })

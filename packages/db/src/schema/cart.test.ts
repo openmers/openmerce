@@ -3,8 +3,8 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest"
 import { seeder } from "../testing/commerce"
 import { openMigratedDb } from "../testing/sqlite"
 
-// 0013_cart (sepet ve satırları): gerçek better-sqlite3 :memory:, foreign_keys=ON, her test taze DB.
-// `checkout_reservations` testleri checkout.test.ts'te (payment_method_id FK'si 0014'e bağlı).
+// 0013_cart (carts and lines): real better-sqlite3 :memory:, foreign_keys=ON, fresh DB per test.
+// `checkout_reservations` tests live in checkout.test.ts (payment_method_id FK depends on 0014).
 let db: Database.Database
 let s: ReturnType<typeof seeder>
 beforeEach(() => {
@@ -14,13 +14,13 @@ beforeEach(() => {
 afterEach(() => db.close())
 
 const KEY = "0123456789abcdef0123456789abcdef"
-// 02-ticaret `cart_lines`: ekleme tek koşullu yazma
+// 02-ticaret `cart_lines`: insert is a single conditional write
 const ADD = `INSERT INTO cart_lines (cart_id, variant_id, quantity, line_key, created_at, updated_at)
   VALUES (?, ?, ?, ?, 0, 0)
   ON CONFLICT (cart_id, variant_id, line_key) DO UPDATE SET quantity = quantity + excluded.quantity`
 
 describe("sqlite_master", () => {
-  it("indeksler var, rezervasyonda kısmi indeks", () => {
+  it("indexes exist, partial index on reservation", () => {
     expect(s.indexSql("cart_lines_uq")).toMatch(/UNIQUE INDEX/)
     expect(s.indexSql("carts_customer_status_idx")).toMatch(/INDEX/)
     expect(s.indexSql("checkout_reservations_open_idx")).toMatch(
@@ -30,7 +30,7 @@ describe("sqlite_master", () => {
 })
 
 describe("carts", () => {
-  it("durum ve para birimi check'i; FK", () => {
+  it("status and currency check; FK", () => {
     const c = s.cart()
     expect(() => s.run("UPDATE carts SET status = 'open' WHERE id = ?", c)).toThrow(
       /carts_status_ck/,
@@ -41,7 +41,7 @@ describe("carts", () => {
     expect(() => s.cart(s.channel(), 999)).toThrow(/FOREIGN KEY constraint failed/)
   })
 
-  it("activeCart sorgusu indeksle aranır", () => {
+  it("activeCart query uses the index", () => {
     const detail = s.plan("SELECT id FROM carts WHERE customer_id = ? AND status = 'active'", 1)
     expect(detail.join("\n")).toMatch(/carts_customer_status_idx/)
     expect(detail.some((d) => /^SCAN carts\b/.test(d))).toBe(false)
@@ -49,7 +49,7 @@ describe("carts", () => {
 })
 
 describe("cart_lines", () => {
-  it("(sepet, varyant, line_key) tek satır; ON CONFLICT adedi toplar", () => {
+  it("one row per (cart, variant, line_key); ON CONFLICT adds quantities", () => {
     const c = s.cart()
     const v = s.variant(s.product())
     const add = db.prepare(ADD)
@@ -72,7 +72,7 @@ describe("cart_lines", () => {
     ).toThrow(/UNIQUE constraint failed/)
   })
 
-  it("line_key biçimi ve adet check'i", () => {
+  it("line_key format and quantity check", () => {
     const c = s.cart()
     const v = s.variant(s.product())
     const add = db.prepare(ADD)
@@ -82,7 +82,7 @@ describe("cart_lines", () => {
     expect(() => add.run(c, 999, 1, "")).toThrow(/FOREIGN KEY constraint failed/)
   })
 
-  it("sepet sert silinince satırlar da silinir", () => {
+  it("hard-deleting a cart deletes its lines", () => {
     const c = s.cart()
     db.prepare(ADD).run(c, s.variant(s.product()), 1, "")
     s.run("DELETE FROM carts WHERE id = ?", c)

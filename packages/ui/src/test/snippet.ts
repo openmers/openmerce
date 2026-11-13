@@ -1,6 +1,6 @@
 import { createRawSnippet } from "svelte"
 
-/** Testlerde `children` dilimi yerine düz metin/HTML üretir. */
+/** Produces plain text/HTML instead of a `children` snippet in tests. */
 export function textSnippet(html: string) {
   return createRawSnippet(() => ({ render: () => html }))
 }

@@ -98,7 +98,7 @@ const commands = [
 let sorting = $state<{ id: string; desc: boolean } | null>(null)
 let filtering = $state<Record<string, unknown>>({})
 let selection = $state<Record<string, boolean>>({})
-// Örnek bileşen, denetimli durumun başlangıç değerlerini props'tan alır.
+// The example component takes the initial controlled-state values from props.
 // svelte-ignore state_referenced_locally
 let search = $state(initialSearch)
 // svelte-ignore state_referenced_locally

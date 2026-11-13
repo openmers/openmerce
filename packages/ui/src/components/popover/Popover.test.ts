@@ -13,7 +13,7 @@ describe("Popover", () => {
     expect(content()).toBeNull()
   })
 
-  it("opens on click and applies the Medusa content styles", async () => {
+  it("opens on click and applies the kit content styles", async () => {
     const user = userEvent.setup()
     render(PopoverExample)
 

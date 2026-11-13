@@ -25,7 +25,7 @@ type Props = {
   minValue?: DateValue
   maxValue?: DateValue
   isDateUnavailable?: (date: DateValue) => boolean
-  /** Medusa `shouldCloseOnSelect`. */
+  /** The kit's `shouldCloseOnSelect`. */
   shouldCloseOnSelect?: boolean
   granularity?: "day" | "hour" | "minute" | "second"
   locale?: string

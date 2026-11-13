@@ -6,7 +6,7 @@ import { popoverContentVariants } from "./variants"
 
 type Props = PopoverPrimitive.ContentProps & {
   children?: Snippet
-  /** Medusa `Popover.Anchor` karşılığı: bits-ui konumlandırmayı `customAnchor` ile yapar. */
+  /** the kit's `Popover.Anchor` counterpart: bits-ui positions through `customAnchor`. */
   anchor?: HTMLElement | string | null
 }
 

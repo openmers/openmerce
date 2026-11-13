@@ -1,6 +1,6 @@
 import { cva } from "class-variance-authority"
 
-// Medusa UI progress-accordion.tsx (MIT). `border-ui-border-base` → `border-border`.
+// Ported from an MIT-licensed UI kit; see NOTICE. `border-ui-border-base` → `border-border`.
 export const progressAccordionItemVariants = cva("border-border border-b last-of-type:border-b-0")
 
 export const progressAccordionHeaderVariants = cva(

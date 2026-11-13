@@ -13,7 +13,7 @@ type Props = {
 
 let { instance, class: className, children }: Props = $props()
 
-// Kök bağlamı bileşen ömrü boyunca aynı örnekle bir kez kurulur.
+// The root context is set up once with the same instance for the component's lifetime.
 // svelte-ignore state_referenced_locally
 setDataTableContext(instance)
 </script>

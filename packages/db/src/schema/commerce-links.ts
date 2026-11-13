@@ -5,8 +5,8 @@ import { paymentMethods } from "./payments"
 import { promotions } from "./promotions"
 import { shippingMethods } from "./tax-shipping"
 
-// 0017: katalogda adı geçip tanımı olmayan üç kanal bağlantısı (02 Denetim B, `<varlık>_channels`
-// kalıbı: iki sütunlu PK + `(channel_id, …)` ters indeks) ve sipariş numarası sayacı (07 bölüm 6).
+// 0017: the three channel links named in the catalog but never defined (02 Audit B, `<entity>_channels`
+// pattern: two-column PK + `(channel_id, …)` reverse index) and the order number counter (07 section 6).
 
 export const promotionChannels = sqliteTable(
   "promotion_channels",
@@ -66,9 +66,9 @@ export const paymentMethodChannels = sqliteTable(
 )
 
 /**
- * Kanal + dönem başına boşluksuz sıra. Settlement `atomic()`'i içinde
- * `INSERT … ON CONFLICT DO UPDATE SET last_value = last_value + 1` ile alınır; dönem stratejiye
- * bağlıdır (varsayılan yıl, ör. 2026; dönemsiz strateji 0 yazar). Satır silinmez.
+ * Gap-free sequence per channel + period. Taken inside settlement's `atomic()`
+ * with `INSERT … ON CONFLICT DO UPDATE SET last_value = last_value + 1`; the period depends on
+ * the strategy (default year, e.g. 2026; a periodless strategy writes 0). Rows are never deleted.
  */
 export const orderNumberCounters = sqliteTable(
   "order_number_counters",

@@ -12,8 +12,8 @@ import { adminUsers } from "./admin-auth"
 import { channels } from "./channels"
 import { createdAt, publicId, updatedAt } from "./columns"
 
-// 01-cekirdek-isletme.md D (makine kimlikleri, sırlar, idempotency) ve F (denetim). Token'lar
-// yalnız SHA-256 hex özetiyle saklanır (08-kimlik-dogrulama bölüm 6).
+// 01-cekirdek-isletme.md D (machine identities, secrets, idempotency) and F (audit). Tokens are
+// stored only as a SHA-256 hex digest (08-kimlik-dogrulama section 6).
 
 export const secretScopes = ["global", "channel", "built_in_app", "app_installation"] as const
 
@@ -22,7 +22,7 @@ export const secrets = sqliteTable(
   {
     id: integer("id").primaryKey(),
     scope: text("scope", { enum: secretScopes }).notNull(),
-    // settings ile aynı kural: global ve built_in_app = 0; FK yok (çok biçimli)
+    // same rule as settings: global and built_in_app = 0; no FK (polymorphic)
     scopeId: integer("scope_id").notNull().default(0),
     key: text("key").notNull(),
     ciphertext: blob("ciphertext", { mode: "buffer" }).notNull(),
@@ -42,7 +42,7 @@ export const secrets = sqliteTable(
       "secrets_scope_id_ck",
       sql`(${t.scope} IN ('global', 'built_in_app')) = (${t.scopeId} = 0)`,
     ),
-    // AES-256-GCM IV 12 bayt
+    // AES-256-GCM IV 12 bytes
     check("secrets_iv_ck", sql`length(${t.iv}) = 12`),
   ],
 )
@@ -56,7 +56,7 @@ export const apiKeys = sqliteTable(
     keyPrefix: text("key_prefix").notNull(),
     keyHash: text("key_hash").notNull(),
     permissions: text("permissions", { mode: "json" }).$type<string[]>().notNull(),
-    // NULL = tüm kanallar
+    // NULL = all channels
     channelIds: text("channel_ids", { mode: "json" }).$type<number[]>(),
     createdByAdminId: integer("created_by_admin_id")
       .notNull()
@@ -87,7 +87,7 @@ export const channelPublishableKeys = sqliteTable(
     keyHash: text("key_hash").notNull(),
     lastUsedAt: integer("last_used_at"),
     revokedAt: integer("revoked_at"),
-    // döndürmede eski anahtarın grace bitişi; NULL = süresiz
+    // end of the old key's grace on rotation; NULL = no expiry
     expiresAt: integer("expires_at"),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
@@ -106,7 +106,7 @@ export const idempotencyKeys = sqliteTable(
   {
     id: integer("id").primaryKey(),
     actorType: text("actor_type", { enum: idempotencyActorTypes }).notNull(),
-    // anonimde 0; FK yok (çok biçimli)
+    // 0 for anonymous; no FK (polymorphic)
     actorId: integer("actor_id").notNull().default(0),
     key: text("key").notNull(),
     requestHash: text("request_hash").notNull(),
@@ -128,14 +128,14 @@ export const idempotencyKeys = sqliteTable(
   ],
 )
 
-// audit_log satırları değişmez; yalnız prev_hash/row_hash mühürlemede bir kez yazılır, updated_at
-// yok. Aktör sütunları çok biçimli: FK yok.
+// audit_log rows are immutable; prev_hash/row_hash are written once at sealing, no updated_at.
+// Actor columns are polymorphic: no FK.
 export const auditActorTypes = ["admin", "app", "apiKey", "agent", "system"] as const
 
 export const auditLog = sqliteTable(
   "audit_log",
   {
-    // INTEGER PRIMARY KEY = rowid; mühürleme sırası
+    // INTEGER PRIMARY KEY = rowid; sealing order
     seq: integer("seq").primaryKey(),
     publicId: publicId(),
     actorType: text("actor_type", { enum: auditActorTypes }).notNull(),
@@ -151,7 +151,7 @@ export const auditLog = sqliteTable(
     requestId: text("request_id"),
     createdAt: createdAt(),
     prevHash: text("prev_hash"),
-    // SHA-256(prev_hash ‖ kanonik(satır)); NULL = mühürlenmemiş
+    // SHA-256(prev_hash ‖ canonical(row)); NULL = unsealed
     rowHash: text("row_hash"),
   },
   (t) => [
@@ -172,11 +172,11 @@ export const auditAnchors = sqliteTable(
   "audit_anchors",
   {
     id: integer("id").primaryKey(),
-    // UTC gün başlangıcı, epoch ms
+    // UTC day start, epoch ms
     day: integer("day").notNull(),
     lastSeq: integer("last_seq").notNull(),
     lastHash: text("last_hash").notNull(),
-    // KEK'ten türetilen anahtarla HMAC
+    // HMAC with a key derived from the KEK
     signature: text("signature").notNull(),
     createdAt: createdAt(),
   },

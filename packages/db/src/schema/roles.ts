@@ -12,8 +12,8 @@ import { adminUsers } from "./admin-auth"
 import { channels } from "./channels"
 import { createdAt, publicId, updatedAt } from "./columns"
 
-// 01-cekirdek-isletme.md B: rol, izin, kanal başına atama (karar 1), kayıt düzeyi politika.
-// Migration 0003'ün parçası; admin-auth.ts 250 satırı aşmasın diye ayrı dosya.
+// 01-cekirdek-isletme.md B: role, permission, per-channel assignment (decision 1), record-level policy.
+// Part of migration 0003; separate file so admin-auth.ts stays under 250 lines.
 export const roles = sqliteTable(
   "roles",
   {
@@ -38,7 +38,7 @@ export const rolePermissions = sqliteTable(
     roleId: integer("role_id")
       .notNull()
       .references(() => roles.id, { onDelete: "cascade" }),
-    // <varlık>:<eylem>; sözlük kodda
+    // <entity>:<action>; dictionary in code
     permission: text("permission").notNull(),
     createdAt: createdAt(),
   },
@@ -55,12 +55,12 @@ export const adminRoleAssignments = sqliteTable(
     roleId: integer("role_id")
       .notNull()
       .references(() => roles.id),
-    // NULL = tüm kanallar, sonradan açılanlar dahil
+    // NULL = all channels, including ones opened later
     channelId: integer("channel_id").references(() => channels.id),
     createdAt: createdAt(),
   },
   (t) => [
-    // NULL tekrarını önler (NULL'lar benzersiz indekste eşit sayılmaz)
+    // prevents NULL duplicates (NULLs are not equal in a unique index)
     uniqueIndex("admin_role_assignments_uq").on(
       t.adminUserId,
       t.roleId,

@@ -1,6 +1,6 @@
 import { cva, type VariantProps } from "class-variance-authority"
 
-// Medusa UI hint.tsx (MIT).
+// Ported from an MIT-licensed UI kit; see NOTICE.
 export const hintVariants = cva("txt-small", {
   variants: {
     variant: {

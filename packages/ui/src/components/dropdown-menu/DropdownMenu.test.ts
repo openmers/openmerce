@@ -18,7 +18,7 @@ describe("DropdownMenu", () => {
     expect(menu()).toBeNull()
   })
 
-  it("opens on click and applies the Medusa content styles", async () => {
+  it("opens on click and applies the kit content styles", async () => {
     const user = userEvent.setup()
     render(DropdownMenuExample)
 
@@ -78,7 +78,7 @@ describe("DropdownMenu", () => {
     expect(screen.getByText("Günlük")).toHaveAttribute("data-state", "checked")
 
     await user.click(screen.getByText("Haftalık"))
-    // Seçim menüyü kapatır; yeniden açıp yeni seçimin kalıcı olduğunu doğrularız.
+    // Selecting closes the menu; reopening verifies the new selection persisted.
     await waitFor(() => expect(menu()).toBeNull())
     await openMenu(user)
     expect(screen.getByText("Haftalık")).toHaveAttribute("data-state", "checked")

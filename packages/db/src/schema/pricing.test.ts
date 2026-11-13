@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest"
 import { NOW, seeder } from "../testing/commerce"
 import { openMigratedDb } from "../testing/sqlite"
 
-// 0008_pricing: gerçek better-sqlite3 :memory:, foreign_keys=ON, her test taze DB.
+// 0008_pricing: real better-sqlite3 :memory:, foreign_keys=ON, fresh DB per test.
 let db: Database.Database
 let s: ReturnType<typeof seeder>
 beforeEach(() => {
@@ -48,7 +48,7 @@ const rate = (day: string, base: string, quote: string, rateE9: unknown) =>
   )
 
 describe("sqlite_master", () => {
-  it("benzersiz, kısmi ve ifade indeksleri var", () => {
+  it("unique, partial and expression indexes exist", () => {
     expect(s.indexSql("price_lists_public_id_uq")).toMatch(/UNIQUE INDEX/)
     expect(s.indexSql("price_lists_base_uq")).toMatch(/UNIQUE INDEX .*WHERE .*type.* = 'base'/)
     expect(s.indexSql("price_list_targets_uq")).toMatch(
@@ -65,14 +65,14 @@ describe("sqlite_master", () => {
     }
   })
 
-  it("channels.default_price_list_id price_lists'e FK", () => {
+  it("channels.default_price_list_id FK to price_lists", () => {
     const fks = db.prepare("SELECT `from`, `table` FROM pragma_foreign_key_list('channels')").all()
     expect(fks).toContainEqual({ from: "default_price_list_id", table: "price_lists" })
   })
 })
 
 describe("price_lists", () => {
-  it("kanal ve para birimi başına tek base; sale serbest", () => {
+  it("one base per channel and currency; sale is free", () => {
     const c = s.channel()
     priceList(c)
     expect(() => priceList(c)).toThrow(/UNIQUE constraint failed/)
@@ -84,7 +84,7 @@ describe("price_lists", () => {
 })
 
 describe("price_list_targets", () => {
-  it("NULL hedefte de çift reddedilir; grup ve şirket birlikte olamaz", () => {
+  it("duplicate rejected even with NULL target; group and company cannot combine", () => {
     const pl = priceList(s.channel())
     const target = (group: number | null, company: number | null) =>
       s.run(
@@ -104,7 +104,7 @@ describe("price_list_targets", () => {
 })
 
 describe("prices", () => {
-  it("çift (liste, varyant, kademe) reddedilir; tutar tamsayı ve ≥ 0", () => {
+  it("duplicate (list, variant, tier) rejected; amount is integer and ≥ 0", () => {
     const pl = priceList(s.channel())
     const v = s.variant(s.product())
     price(pl, v, 1999)
@@ -115,7 +115,7 @@ describe("prices", () => {
     expect(() => price(pl, 999, 100)).toThrow(/FOREIGN KEY constraint failed/)
   })
 
-  it("vitrin sorgusu PK ile aranır (tam tarama yok)", () => {
+  it("storefront query uses the PK (no full scan)", () => {
     const detail = s.plan(
       "SELECT * FROM prices WHERE variant_id IN (?, ?) AND price_list_id IN (?, ?)",
       1,
@@ -129,7 +129,7 @@ describe("prices", () => {
 })
 
 describe("currency_rates", () => {
-  it("(day, base, quote) benzersiz; rate_e9 pozitif tamsayı; gün biçimi", () => {
+  it("(day, base, quote) unique; rate_e9 positive integer; day format", () => {
     rate("2026-11-13", "USD", "EUR", 920_000_000)
     expect(() => rate("2026-11-13", "USD", "EUR", 921_000_000)).toThrow(/UNIQUE constraint failed/)
     rate("2026-11-14", "USD", "EUR", 921_000_000)
@@ -138,7 +138,7 @@ describe("currency_rates", () => {
     expect(() => rate("2026-11-15", "USD", "USD", 1)).toThrow(/currency_rates_pair_ck/)
   })
 
-  it("çiftin son kuru indeksle bulunur", () => {
+  it("latest rate of the pair found via index", () => {
     const detail = s.plan(
       "SELECT rate_e9 FROM currency_rates WHERE base = ? AND quote = ? ORDER BY day DESC LIMIT 1",
       "USD",

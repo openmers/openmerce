@@ -19,7 +19,7 @@ describe("FocusModal", () => {
     expect(dialog()).toBeNull()
   })
 
-  it("opens as a full screen panel with the Medusa content styles", async () => {
+  it("opens as a full screen panel with the kit content styles", async () => {
     const user = userEvent.setup()
     render(FocusModalExample)
 

@@ -2,14 +2,14 @@ import { index, integer, primaryKey, sqliteTable, text, uniqueIndex } from "driz
 import { products, productVariants } from "./catalog-products"
 import { createdAt, updatedAt } from "./columns"
 
-// 02-ticaret.md bölüm 2 (`facets`, `facet_values`, çevirileri, ürün/varyant–değer bağlantısı), 0006.
+// 02-ticaret.md section 2 (`facets`, `facet_values`, their translations, product/variant–value link), 0006.
 
 export const facets = sqliteTable(
   "facets",
   {
     id: integer("id").primaryKey(),
     code: text("code").notNull(),
-    // 1 ise yalnız admin; okuma modeline yazılmaz
+    // 1 = admin only; not written to the read model
     private: integer("private", { mode: "boolean" }).notNull().default(false),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
@@ -59,7 +59,7 @@ export const facetValueTranslations = sqliteTable(
   (t) => [primaryKey({ name: "facet_value_translations_pk", columns: [t.facetValueId, t.lang] })],
 )
 
-// bağlantı satırları güncellenmez (sil + ekle)
+// link rows are never updated (delete + insert)
 export const productFacetValues = sqliteTable(
   "product_facet_values",
   {

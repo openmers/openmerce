@@ -5,10 +5,10 @@ import { cn } from "../../utils/cn"
 import { tooltipContentVariants } from "./variants"
 
 type Props = {
-  /** Tooltip gövdesi. */
+  /** Tooltip body. */
   content: Snippet | string
   children?: Snippet
-  /** Radix `asChild` karşılığı: tetikleyici öğeye props'ları kendin uygularsın. */
+  /** Radix `asChild` counterpart: you apply the props to the trigger element yourself. */
   child?: Snippet<[{ props: Record<string, unknown> }]>
   class?: string
   side?: "bottom" | "left" | "top" | "right"

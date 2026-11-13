@@ -13,9 +13,9 @@ import { channels } from "./channels"
 import { createdAt, publicId, updatedAt } from "./columns"
 import { taxCategories } from "./tax-shipping"
 
-// 02-ticaret.md bölüm 1-2 (ürün, varyant, ürün çevirisi, ürün/varyant kanal bağlantısı), 0006.
-// `tax_category_id` hedefi 0010'da açılır: SQLite FK hedefini CREATE'te denetlemez (02 B7),
-// sütun NOT NULL kalsın diye FK ileri başvurudur; 0010'dan önce varyant yazılmaz.
+// 02-ticaret.md sections 1-2 (product, variant, product translation, product/variant channel link), 0006.
+// `tax_category_id` target opens in 0010: SQLite does not check the FK target at CREATE (02 B7),
+// so the FK is a forward reference to keep the column NOT NULL; no variant is written before 0010.
 
 type Json = Record<string, unknown>
 
@@ -24,12 +24,12 @@ export const products = sqliteTable(
   {
     id: integer("id").primaryKey(),
     publicId: publicId(),
-    // kapalı şema, en çok 10 alan (kodda doğrulanır)
+    // closed schema, at most 10 fields (validated in code)
     personalization: text("personalization", { mode: "json" }).$type<Json>(),
-    // boş = istisna yok; değer seçili legal_policy listesinden
+    // empty = no exception; value comes from the selected legal_policy list
     withdrawalExemptKind: text("withdrawal_exempt_kind"),
     robots: text("robots"),
-    // içe aktarılan kanonik içeriğin SHA-256 hex'i
+    // SHA-256 hex of the imported canonical content
     contentHash: text("content_hash"),
     customFields: text("custom_fields", { mode: "json" }).$type<Json>(),
     metadata: text("metadata", { mode: "json" }).$type<Json>(),
@@ -55,7 +55,7 @@ export const productVariants = sqliteTable(
       .references(() => products.id),
     sku: text("sku").notNull(),
     barcode: text("barcode"),
-    // gram / milimetre (tamsayı küçük birim deseni)
+    // gram / millimetre (integer minor-unit pattern)
     weight: integer("weight"),
     length: integer("length"),
     width: integer("width"),
@@ -65,7 +65,7 @@ export const productVariants = sqliteTable(
       .references(() => taxCategories.id),
     trackInventory: integer("track_inventory", { mode: "boolean" }).notNull().default(true),
     allowBackorder: integer("allow_backorder", { mode: "boolean" }).notNull().default(false),
-    // ≤ 0; boşsa sınır yok
+    // ≤ 0; empty means no limit
     backorderFloor: integer("backorder_floor"),
     minOrderQty: integer("min_order_qty"),
     orderMultiple: integer("order_multiple"),
@@ -73,7 +73,7 @@ export const productVariants = sqliteTable(
       .notNull()
       .default("physical"),
     leadTimeDays: integer("lead_time_days"),
-    // null = üründen devral, {enabled:false} = kapalı
+    // null = inherit from product, {enabled:false} = disabled
     personalization: text("personalization", { mode: "json" }).$type<Json>(),
     baseVariantId: integer("base_variant_id").references((): AnySQLiteColumn => productVariants.id),
     unitFactor: integer("unit_factor").notNull().default(1),
@@ -88,7 +88,7 @@ export const productVariants = sqliteTable(
   },
   (t) => [
     uniqueIndex("product_variants_public_id_uq").on(t.publicId),
-    // silinen varyantın SKU'su yeniden kullanılabilir
+    // a deleted variant's SKU can be reused
     uniqueIndex("product_variants_sku_uq").on(t.sku).where(sql`${t.deletedAt} IS NULL`),
     index("product_variants_product_idx").on(t.productId),
     index("product_variants_base_idx").on(t.baseVariantId),
@@ -98,7 +98,7 @@ export const productVariants = sqliteTable(
       sql`${t.fulfillmentType} IN ('physical', 'digital')`,
     ),
     check("product_variants_backorder_floor_ck", sql`${t.backorderFloor} <= 0`),
-    // taban varyant kendisi olamaz; zincir ve aynı ürün kuralı kodda (04 bölüm 8)
+    // base variant cannot be itself; chain and same-product rules in code (04 section 8)
     check("product_variants_base_ck", sql`${t.baseVariantId} <> ${t.id}`),
   ],
 )
@@ -111,7 +111,7 @@ export const productTranslations = sqliteTable(
       .notNull()
       .references(() => products.id),
     lang: text("lang").notNull(),
-    // boş = tüm kanallar; dolu = o kanal için geçersiz kılma
+    // empty = all channels; set = override for that channel
     channelId: integer("channel_id").references(() => channels.id),
     name: text("name").notNull(),
     slug: text("slug").notNull(),
@@ -123,7 +123,7 @@ export const productTranslations = sqliteTable(
     updatedAt: updatedAt(),
   },
   (t) => [
-    // NULL tekrarını önler (NULL'lar benzersiz indekste eşit sayılmaz)
+    // prevents NULL duplicates (NULLs are not equal in a unique index)
     uniqueIndex("product_translations_uq").on(t.productId, t.lang, sql`ifnull(${t.channelId}, 0)`),
     uniqueIndex("product_translations_slug_uq").on(t.lang, t.slug),
   ],

@@ -3,8 +3,8 @@ import { check, integer, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqli
 import { createdAt, publicId, updatedAt } from "./columns"
 import { stockLocations } from "./stock"
 
-// 02-ticaret.md bölüm 10 (vergi) ve 11 (`shipping_methods`), 0010. Bölge ve yöntem tabloları
-// bellekte. `tax_rates.customer_group_id` hedefi 0011'de açılır: FK'sız.
+// 02-ticaret.md section 10 (tax) and 11 (`shipping_methods`), 0010. Zone and method tables
+// in memory. `tax_rates.customer_group_id` target opens in 0011: no FK.
 
 export const zones = sqliteTable(
   "zones",
@@ -26,11 +26,11 @@ export const zoneMembers = sqliteTable(
       .references(() => zones.id),
     // ISO 3166-1 alpha-2
     country: text("country").notNull(),
-    // ISO 3166-2 alt bölge; NULL = tüm ülke
+    // ISO 3166-2 subdivision; NULL = whole country
     region: text("region"),
   },
   (t) => [
-    // NULL tekrarını önler (NULL'lar benzersiz indekste eşit sayılmaz)
+    // prevents NULL duplicates (NULLs are not equal in a unique index)
     uniqueIndex("zone_members_uq").on(t.zoneId, t.country, sql`coalesce(${t.region}, '')`),
     check("zone_members_country_ck", sql`length(${t.country}) = 2`),
   ],
@@ -40,7 +40,7 @@ export const taxCategories = sqliteTable(
   "tax_categories",
   {
     id: integer("id").primaryKey(),
-    // API dış anahtarı; standard, reduced, food, book, shipping ... (kapalı liste değil)
+    // API external key; standard, reduced, food, book, shipping ... (not a closed list)
     code: text("code").notNull(),
     name: text("name").notNull(),
     createdAt: createdAt(),
@@ -60,9 +60,9 @@ export const taxRates = sqliteTable(
     taxCategoryId: integer("tax_category_id")
       .notNull()
       .references(() => taxCategories.id),
-    // NULL = herkes
+    // NULL = everyone
     customerGroupId: integer("customer_group_id"),
-    // baz puan (%20 = 2000)
+    // basis points (20% = 2000)
     rateBp: integer("rate_bp").notNull(),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
@@ -89,13 +89,13 @@ export const shippingMethods = sqliteTable(
     zoneId: integer("zone_id").references(() => zones.id),
     checkerCode: text("checker_code"),
     checkerArgs: text("checker_args", { mode: "json" }).$type<Json>(),
-    // canlı fiyat app'inin zaman aşımı ve yedek ücreti (tutar + para birimi) args içinde
+    // live-price app timeout and fallback fee (amount + currency) inside args
     calculatorCode: text("calculator_code").notNull(),
     calculatorArgs: text("calculator_args", { mode: "json" }).$type<Json>().notNull(),
     taxCategoryId: integer("tax_category_id")
       .notNull()
       .references(() => taxCategories.id),
-    // mağazadan teslim yöntemi
+    // in-store pickup method
     pickupLocationId: integer("pickup_location_id").references(() => stockLocations.id),
     createdAt: createdAt(),
     updatedAt: updatedAt(),

@@ -15,8 +15,8 @@ import { orderLines } from "./order-lines"
 import { orders } from "./orders"
 import { stockLocations } from "./stock"
 
-// 02-ticaret.md bölüm 11 (gönderim, gönderim satırı, ürün iadesi, dijital hak), 0016. Durum
-// geçişleri koşullu (`UPDATE ... WHERE state = ?`), version yok.
+// 02-ticaret.md section 11 (fulfillment, fulfillment line, product return, digital entitlement), 0016. State
+// transitions are conditional (`UPDATE ... WHERE state = ?`), no version.
 
 export const fulfillmentStates = ["pending", "shipped", "delivered", "cancelled"] as const
 export const returnStates = ["requested", "approved", "received", "rejected"] as const
@@ -29,19 +29,19 @@ export const fulfillments = sqliteTable(
     orderId: integer("order_id")
       .notNull()
       .references(() => orders.id),
-    // dijitalde boş
+    // empty for digital
     locationId: integer("location_id").references(() => stockLocations.id),
     kind: text("kind", { enum: ["physical", "digital"] })
       .notNull()
       .default("physical"),
     state: text("state", { enum: fulfillmentStates }).notNull().default("pending"),
-    // FulfillmentHandler kodu
+    // FulfillmentHandler code
     handlerCode: text("handler_code").notNull().default("manual"),
     carrier: text("carrier"),
     trackingNumber: text("tracking_number"),
     trackingUrlTemplate: text("tracking_url_template"),
     labelMediaId: integer("label_media_id").references(() => media.id),
-    // cayma süresinin başlangıcı
+    // start of the withdrawal period
     deliveredAt: integer("delivered_at"),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
@@ -49,7 +49,7 @@ export const fulfillments = sqliteTable(
   (t) => [
     uniqueIndex("fulfillments_public_id_uq").on(t.publicId),
     index("fulfillments_order_idx").on(t.orderId),
-    // taşıyıcı webhook eşleşmesi
+    // carrier webhook match
     index("fulfillments_tracking_idx").on(t.carrier, t.trackingNumber),
     check("fulfillments_kind_ck", sql`${t.kind} IN ('physical', 'digital')`),
     check(
@@ -59,7 +59,7 @@ export const fulfillments = sqliteTable(
   ],
 )
 
-// gönderilen adet sipariş adedini aşamaz: koşullu INSERT ... SELECT (iptal gönderim sayılmaz)
+// shipped quantity cannot exceed the ordered quantity: conditional INSERT ... SELECT (cancelled does not count)
 export const fulfillmentLines = sqliteTable(
   "fulfillment_lines",
   {
@@ -78,7 +78,7 @@ export const fulfillmentLines = sqliteTable(
   ],
 )
 
-// teslim alınınca satılabilir satırlar için on_hand +, para iadesi ayrı adım
+// on receipt, on_hand + for sellable lines; refund is a separate step
 export const returns = sqliteTable(
   "returns",
   {
@@ -87,7 +87,7 @@ export const returns = sqliteTable(
     orderId: integer("order_id")
       .notNull()
       .references(() => orders.id),
-    // [{order_line_id, quantity, restockable}]; ayrı return_lines yok
+    // [{order_line_id, quantity, restockable}]; no separate return_lines
     lines: text("lines", { mode: "json" })
       .$type<{ order_line_id: number; quantity: number; restockable: boolean }[]>()
       .notNull(),
@@ -96,7 +96,7 @@ export const returns = sqliteTable(
     kind: text("kind", { enum: ["withdrawal", "other"] }).notNull(),
     noticeChannel: text("notice_channel", { enum: ["form", "email", "written"] }),
     noticeAt: integer("notice_at"),
-    // taşıyıcı app'inden iade kargo kodu
+    // return shipping code from the carrier app
     returnCode: text("return_code"),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
@@ -104,7 +104,7 @@ export const returns = sqliteTable(
   (t) => [
     uniqueIndex("returns_public_id_uq").on(t.publicId),
     index("returns_order_idx").on(t.orderId),
-    // bekleyen iadeler kuyruğu
+    // pending returns queue
     index("returns_state_idx").on(t.state, t.createdAt),
     check("returns_lines_ck", sql`json_type(${t.lines}) = 'array'`),
     check("returns_state_ck", sql`${t.state} IN ('requested', 'approved', 'received', 'rejected')`),
@@ -113,8 +113,8 @@ export const returns = sqliteTable(
   ],
 )
 
-// indirme: `downloads = downloads + 1 WHERE downloads < download_limit AND revoked_at IS NULL
-// AND expires_at > ?`; bağlantı ve jeton sipariş alanı olarak dönmez
+// download: `downloads = downloads + 1 WHERE downloads < download_limit AND revoked_at IS NULL
+// AND expires_at > ?`; the link and token are never returned as order fields
 export const digitalEntitlements = sqliteTable(
   "digital_entitlements",
   {
@@ -123,12 +123,12 @@ export const digitalEntitlements = sqliteTable(
     orderLineId: integer("order_line_id")
       .notNull()
       .references(() => orderLines.id),
-    // misafirde boş
+    // empty for guest
     customerId: integer("customer_id").references(() => customers.id),
     mediaId: integer("media_id")
       .notNull()
       .references(() => media.id),
-    // yalnız özet
+    // digest only
     tokenHash: text("token_hash").notNull(),
     expiresAt: integer("expires_at").notNull(),
     downloadLimit: integer("download_limit").notNull(),

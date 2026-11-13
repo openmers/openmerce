@@ -12,9 +12,9 @@ import { productVariants } from "./catalog-products"
 import { channels } from "./channels"
 import { createdAt, publicId, updatedAt } from "./columns"
 
-// 02-ticaret.md bölüm 1 (`channel_stock_locations`) ve 5 (stok), 0009. Ayırma koşullu UPDATE'tir
-// (`on_hand - reserved - safety >= :n`, backorder'da `backorder_floor`); satılabilir eksiye
-// inebilir, sayaçlar inemez.
+// 02-ticaret.md section 1 (`channel_stock_locations`) and 5 (stock), 0009. Reservation is a conditional
+// UPDATE (`on_hand - reserved - safety >= :n`, `backorder_floor` for backorder); sellable can go
+// negative, counters cannot.
 
 export const stockLocations = sqliteTable(
   "stock_locations",
@@ -50,7 +50,7 @@ export const channelStockLocations = sqliteTable(
     locationId: integer("location_id")
       .notNull()
       .references(() => stockLocations.id),
-    // küçük önce
+    // smallest first
     priority: integer("priority").notNull(),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
@@ -58,7 +58,7 @@ export const channelStockLocations = sqliteTable(
   (t) => [primaryKey({ name: "channel_stock_locations_pk", columns: [t.channelId, t.locationId] })],
 )
 
-// yalnız taban varyant; paket varyantının satırı olmaz (kodda)
+// base variant only; a bundle variant has no row (code)
 export const stockLevels = sqliteTable(
   "stock_levels",
   {
@@ -102,27 +102,27 @@ export const stockMovementRefTypes = [
   "manual",
 ] as const
 
-// yalnız eklenir; silinmez, güncellenmez
+// append-only; never deleted or updated
 export const stockMovements = sqliteTable(
   "stock_movements",
   {
     id: integer("id").primaryKey(),
-    // taban varyant
+    // base variant
     variantId: integer("variant_id")
       .notNull()
       .references(() => productVariants.id),
-    // satılan paket varyantı; paketsizde boş
+    // sold bundle variant; empty when not a bundle
     soldVariantId: integer("sold_variant_id").references(() => productVariants.id),
     locationId: integer("location_id")
       .notNull()
       .references(() => stockLocations.id),
     kind: text("kind", { enum: stockMovementKinds }).notNull(),
-    // işaretli, satılan varyantın biriminde
+    // signed, in the unit of the sold variant
     quantity: integer("quantity").notNull(),
-    // işaretli taban birim farkı
+    // signed base unit delta
     units: integer("units").notNull(),
     refType: text("ref_type", { enum: stockMovementRefTypes }),
-    // ilgili tablonun iç id'si; FK yok (çok biçimli)
+    // internal id of the related table; no FK (polymorphic)
     refId: integer("ref_id"),
     createdAt: createdAt(),
   },

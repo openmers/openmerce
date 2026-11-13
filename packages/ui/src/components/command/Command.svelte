@@ -4,7 +4,7 @@ import type { HTMLAttributes } from "svelte/elements"
 import { cn } from "../../utils/cn"
 import { commandVariants } from "./variants"
 
-// Medusa `Command.Copy` alt bileşeni B1 `Copy` bileşenine bağlı; burada yalnız gövde var.
+// The kit's `Command.Copy` subcomponent maps to the B1 `Copy` component; only the body lives here.
 type Props = HTMLAttributes<HTMLDivElement> & {
   children?: Snippet
 }

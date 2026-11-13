@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from "vitest"
 import ToasterExample from "./fixtures/ToasterExample.svelte"
 import Toast from "./Toast.svelte"
 
-// jsdom `window.matchMedia` sağlamaz; svelte-sonner tema tercihini bununla okur.
+// jsdom does not provide `window.matchMedia`; svelte-sonner reads the theme preference through it.
 if (!window.matchMedia) {
   window.matchMedia = ((query: string) => ({
     matches: false,
@@ -19,7 +19,7 @@ if (!window.matchMedia) {
 }
 
 describe("Toast", () => {
-  it("renders the title with the Medusa card styles", () => {
+  it("renders the title with the kit card styles", () => {
     render(Toast, { props: { id: "t1", title: "Kaydedildi" } })
 
     const toast = screen.getByRole("status")

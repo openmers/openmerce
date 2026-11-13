@@ -32,7 +32,7 @@ let {
 
 const current = $derived(filter as DataTableDateComparisonOperator | undefined)
 const granularity = $derived(format === "date-time" ? "minute" : "day")
-// Özel aralık seçimi başlangıçta dışarıdan gelen değerle belirlenir.
+// The custom range selection is initialized from the incoming value.
 // svelte-ignore state_referenced_locally
 let isCustom = $state(isCustomRange)
 

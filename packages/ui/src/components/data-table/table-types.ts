@@ -50,7 +50,7 @@ export interface DataTableOptions<TData extends DataTableRowData> {
     onPaginationChange: (state: DataTablePaginationState) => void
   }
   onRowClick?: (event: MouseEvent, row: TData) => void
-  /** İmleç tabanlı sayfalamada verilmez; o zaman yalnız önceki/sonraki gösterilir. */
+  /** Not provided in cursor-based pagination; then only previous/next are shown. */
   rowCount?: number
   columnVisibility?: {
     state: DataTableVisibilityState

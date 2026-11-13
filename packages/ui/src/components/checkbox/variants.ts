@@ -1,7 +1,7 @@
 import { cva } from "class-variance-authority"
 
-// Medusa UI checkbox.tsx (MIT). `bg-ui-bg-base` → `bg-card`, `bg-ui-bg-base-hover` → `bg-accent`.
-// Radix `Indicator` yerine bits-ui `Checkbox.Root` snippet'i kullanılır.
+// Ported from an MIT-licensed UI kit; see NOTICE. `bg-ui-bg-base` → `bg-card`, `bg-ui-bg-base-hover` → `bg-accent`.
+// Uses a bits-ui `Checkbox.Root` snippet instead of Radix `Indicator`.
 export const checkboxVariants = cva(
   "group inline-flex h-5 w-5 items-center justify-center outline-hidden",
 )

@@ -4,12 +4,12 @@ import { fileURLToPath } from "node:url"
 import Database from "better-sqlite3"
 import { planMigrations } from "../migrator/plan.ts"
 
-// Geçici yardımcı (bölüm A): packages/test-utils gelince oraya taşınır. node:fs yalnız burada.
-// shortcut: Node çalıştırıcının (apps/api, bölüm B) yerine geçmez; yalnız test ve db:migrate:local.
+// Temporary helper (part A): moves to packages/test-utils once it exists. node:fs only here.
+// shortcut: does not replace the Node runner (apps/api, part B); only tests and db:migrate:local.
 
 export const MIGRATIONS_DIR = fileURLToPath(new URL("../../migrations", import.meta.url))
 
-// wrangler d1 migrations ile aynı kayıt tablosu (biçim D1'de doğrulanacak, plan §1.3).
+// same record table as wrangler d1 migrations (format verified on D1, plan §1.3).
 const D1_MIGRATIONS = `CREATE TABLE IF NOT EXISTS d1_migrations (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   name TEXT UNIQUE,
@@ -20,7 +20,7 @@ export function migrationFiles(dir = MIGRATIONS_DIR): string[] {
   return readdirSync(dir).filter((f) => f.endsWith(".sql"))
 }
 
-/** Bekleyen migration'ları uygular; her dosya ve kaydı tek transaction'da. Uygulananları döner. */
+/** Applies pending migrations; each file and its record in a single transaction. Returns the applied ones. */
 export function applyMigrations(db: Database.Database, dir = MIGRATIONS_DIR): string[] {
   db.exec(D1_MIGRATIONS)
   const applied = db.prepare("SELECT name FROM d1_migrations ORDER BY id").pluck().all() as string[]
@@ -36,7 +36,7 @@ export function applyMigrations(db: Database.Database, dir = MIGRATIONS_DIR): st
   return pending
 }
 
-/** Taze :memory: veritabanı, foreign_keys=ON, bütün migration'lar uygulanmış. */
+/** Fresh :memory: database, foreign_keys=ON, all migrations applied. */
 export function openMigratedDb(filename = ":memory:"): Database.Database {
   const db = new Database(filename)
   db.pragma("foreign_keys = ON")

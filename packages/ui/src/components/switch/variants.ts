@@ -1,6 +1,6 @@
 import { cva } from "class-variance-authority"
 
-// Medusa UI switch.tsx (MIT). `after:bg-switch-off-hover-gradient` theme.css'te yok, çıkarıldı.
+// Ported from an MIT-licensed UI kit; see NOTICE. `after:bg-switch-off-hover-gradient` is absent from theme.css, so it was dropped.
 export const switchVariants = cva(
   [
     "bg-bg-switch-off hover:bg-bg-switch-off-hover focus-visible:shadow-details-switch-background-focus data-[state=checked]:bg-bg-interactive disabled:opacity-50",

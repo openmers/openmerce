@@ -5,11 +5,11 @@ const plan = (...details: string[]): QueryPlanRow[] =>
   details.map((detail, id) => ({ id, parent: 0, notused: 0, detail }))
 
 describe("parseQueryPlan", () => {
-  it("indekssiz SCAN ihlaldir", () => {
+  it("an unindexed SCAN is a violation", () => {
     expect(parseQueryPlan(plan("SCAN channels"))).toEqual(["SCAN channels"])
   })
 
-  it("indeksli taramalar ihlal değil", () => {
+  it("indexed scans are not violations", () => {
     expect(
       parseQueryPlan(
         plan(
@@ -22,11 +22,11 @@ describe("parseQueryPlan", () => {
     ).toEqual([])
   })
 
-  it("SCAN CONSTANT ROW ve TEMP B-TREE ihlal değil", () => {
+  it("SCAN CONSTANT ROW and TEMP B-TREE are not violations", () => {
     expect(parseQueryPlan(plan("SCAN CONSTANT ROW", "USE TEMP B-TREE FOR ORDER BY"))).toEqual([])
   })
 
-  it("allow listesindeki tablo ihlal değil, diğeri ihlal", () => {
+  it("a table on the allow list is not a violation, the other one is", () => {
     expect(parseQueryPlan(plan("SCAN channels", "SCAN settings"), ["channels"])).toEqual([
       "SCAN settings",
     ])

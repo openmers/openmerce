@@ -1,10 +1,10 @@
-// Yarış testi (plan §2.5, karar 7): Promise.allSettled sonuçlarında tam bir kazanan,
-// kaybedenler belgelenen hata koduyla. Son DB durumu kontrolü testin kendisindedir.
+// Race test (plan §2.5, decision 7): exactly one winner among Promise.allSettled results,
+// every loser with its documented error code. The final DB state is asserted by the test itself.
 
 const codeOf = (reason: unknown): unknown =>
   typeof reason === "object" && reason !== null && "code" in reason ? reason.code : undefined
 
-/** Tam bir `fulfilled` ve kalan her `rejected`'ın `code`'u `loserCode` değilse kırılır. Kazananın değerini döner. */
+/** Fails unless exactly one `fulfilled` result and every other `rejected` carries `loserCode`. Returns the winner's value. */
 export function expectExactlyOneWinner<T>(
   results: readonly PromiseSettledResult<T>[],
   loserCode: string,

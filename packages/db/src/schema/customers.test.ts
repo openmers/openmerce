@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest"
 import { NOW, seeder } from "../testing/commerce"
 import { openMigratedDb } from "../testing/sqlite"
 
-// 0011_customers: gerçek better-sqlite3 :memory:, foreign_keys=ON, her test taze DB.
+// 0011_customers: real better-sqlite3 :memory:, foreign_keys=ON, fresh DB per test.
 let db: Database.Database
 let s: ReturnType<typeof seeder>
 beforeEach(() => {
@@ -43,7 +43,7 @@ const address = (customerId: number, country = "DE") =>
   )
 
 describe("sqlite_master", () => {
-  it("benzersiz ve kısmi indeksler var", () => {
+  it("unique and partial indexes exist", () => {
     expect(s.indexSql("customers_email_normalized_uq")).toMatch(/UNIQUE INDEX/)
     expect(s.indexSql("customers_user_uq")).toMatch(/WHERE "customers"."user_id" IS NOT NULL/)
     expect(s.indexSql("customers_deletion_idx")).toMatch(/WHERE .*deletion_requested_at/)
@@ -54,7 +54,7 @@ describe("sqlite_master", () => {
 })
 
 describe("users / sessions", () => {
-  it("e-posta benzersiz; telefon yalnız doluyken benzersiz", () => {
+  it("e-mail unique; phone unique only when set", () => {
     user("a@x.io", "+491")
     expect(() => user("a@x.io")).toThrow(/UNIQUE constraint failed: users.email/)
     user("b@x.io")
@@ -62,7 +62,7 @@ describe("users / sessions", () => {
     expect(() => user("d@x.io", "+491")).toThrow(/UNIQUE constraint failed: users.phone_number/)
   })
 
-  it("kullanıcı silinince oturum ve hesaplar gider; müşteri FK'si zorunlu", () => {
+  it("deleting a user removes sessions and accounts; customer FK required", () => {
     const u = user("a@x.io")
     const c = s.customer()
     session(u, c, "t1")
@@ -80,7 +80,7 @@ describe("users / sessions", () => {
     expect(db.prepare("SELECT count(*) FROM accounts").pluck().get()).toBe(0)
   })
 
-  it("company_role kapalı liste; grup kimlikleri JSON dizi", () => {
+  it("company_role closed list; group ids are a JSON array", () => {
     const u = user("a@x.io")
     const c = s.customer()
     const id = session(u, c, "t1")
@@ -94,14 +94,14 @@ describe("users / sessions", () => {
 })
 
 describe("customers", () => {
-  it("normalize e-posta başına tek kayıt", () => {
+  it("one record per normalized e-mail", () => {
     s.customer("Ali@X.io")
     expect(() => s.customer(" ali@x.io")).toThrow(
       /UNIQUE constraint failed: customers.email_normalized/,
     )
   })
 
-  it("bir hesap tek müşteriye bağlanır; bağlama koşullu", () => {
+  it("an account binds to one customer; binding is conditional", () => {
     const u = user("a@x.io")
     const a = s.customer()
     const b = s.customer()
@@ -111,7 +111,7 @@ describe("customers", () => {
     expect(() => link.run(u, b)).toThrow(/UNIQUE constraint failed: customers.user_id/)
   })
 
-  it("durum ve kaynak check'i; varsayılan adres FK", () => {
+  it("status and source check; default address FK", () => {
     const c = s.customer()
     expect(() => s.run("UPDATE customers SET state = 'deleted' WHERE id = ?", c)).toThrow(
       /customers_state_ck/,
@@ -123,7 +123,7 @@ describe("customers", () => {
     s.run("UPDATE customers SET default_shipping_address_id = ? WHERE id = ?", a, c)
   })
 
-  it("en çok 20 adres koşullu eklemesi", () => {
+  it("conditional insert caps at 20 addresses", () => {
     const c = s.customer()
     const add = db.prepare(
       `INSERT INTO addresses (public_id, customer_id, address_line1, city, country, created_at, updated_at)
@@ -134,7 +134,7 @@ describe("customers", () => {
     expect(() => address(c, "DEU")).toThrow(/addresses_country_ck/)
   })
 
-  it("liste kanal süzgeci indeksle aranır", () => {
+  it("list channel filter uses the index", () => {
     const detail = s.plan(
       "SELECT customer_id FROM customer_channels WHERE channel_id = ? ORDER BY customer_id",
       1,
@@ -144,8 +144,8 @@ describe("customers", () => {
   })
 })
 
-describe("gruplar, notlar, izinler", () => {
-  it("grup üyeliği çift reddedilir; FK", () => {
+describe("groups, notes, permissions", () => {
+  it("duplicate group membership rejected; FK", () => {
     const g = s.run(
       `INSERT INTO customer_groups (public_id, name, kind, affects_commerce, created_at, updated_at)
        VALUES ('cgr_1', 'VIP', 'manual', 1, ?, ?)`,
@@ -165,7 +165,7 @@ describe("gruplar, notlar, izinler", () => {
     expect(() => member(999)).toThrow(/FOREIGN KEY constraint failed/)
   })
 
-  it("admin kaynaklı izin gerekçe ister; durum PK ile tek", () => {
+  it("admin-sourced permission requires a reason; status unique via PK", () => {
     const c = s.customer()
     const consent = (source: string, reason: string | null) =>
       s.run(

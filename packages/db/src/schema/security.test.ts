@@ -2,7 +2,7 @@ import type Database from "better-sqlite3"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 import { openMigratedDb } from "../testing/sqlite"
 
-// 0004_security: gerçek better-sqlite3 :memory:, foreign_keys=ON, her test taze DB.
+// 0004_security: real better-sqlite3 :memory:, foreign_keys=ON, fresh DB per test.
 let db: Database.Database
 beforeEach(() => {
   db = openMigratedDb()
@@ -66,7 +66,7 @@ const insertAudit = (publicId: string, actorType = "admin") =>
   )
 
 describe("sqlite_master", () => {
-  it("benzersiz ve kısmi indeksler var", () => {
+  it("unique and partial indexes exist", () => {
     for (const uq of [
       "secrets_scope_key_uq",
       "api_keys_public_id_uq",
@@ -94,7 +94,7 @@ describe("sqlite_master", () => {
 })
 
 describe("secrets", () => {
-  it("(scope, scope_id, key) benzersiz; scope_id kuralı; IV 12 bayt", () => {
+  it("(scope, scope_id, key) unique; scope_id rule; IV 12 bytes", () => {
     insertSecret("global", 0)
     insertSecret("app_installation", 3)
     expect(() => insertSecret("global", 0)).toThrow(/UNIQUE constraint failed/)
@@ -105,14 +105,14 @@ describe("secrets", () => {
 })
 
 describe("api_keys", () => {
-  it("çift public_id ve çift key_hash reddedilir", () => {
+  it("duplicate public_id and duplicate key_hash rejected", () => {
     const a = insertAdmin()
     insertApiKey("apk_1", "h1", a)
     expect(() => insertApiKey("apk_1", "h2", a)).toThrow(/api_keys.public_id/)
     expect(() => insertApiKey("apk_2", "h1", a)).toThrow(/api_keys.key_hash/)
   })
 
-  it("FK: olmayan yönetici reddedilir; permissions/channel_ids JSON dizi", () => {
+  it("FK: missing admin rejected; permissions/channel_ids are JSON arrays", () => {
     expect(() => insertApiKey("apk_1", "h1", 999)).toThrow(/FOREIGN KEY constraint failed/)
     const id = insertApiKey("apk_1", "h1", insertAdmin())
     expect(() => run("UPDATE api_keys SET channel_ids = '{}' WHERE id = ?", id)).toThrow(
@@ -125,7 +125,7 @@ describe("api_keys", () => {
 })
 
 describe("channel_publishable_keys", () => {
-  it("çift key_hash ve olmayan kanal reddedilir; expires_at boş olabilir", () => {
+  it("duplicate key_hash and missing channel rejected; expires_at may be empty", () => {
     const channel = run(
       `INSERT INTO channels (public_id, code, default_currency, currencies, langs, created_at, updated_at)
        VALUES ('chn_a', 'a', 'USD', '["USD"]', '["en"]', ?, ?)`,
@@ -150,28 +150,28 @@ describe("channel_publishable_keys", () => {
 })
 
 describe("idempotency_keys", () => {
-  it("anahtar + aktör benzersiz; farklı aktör aynı anahtarı kullanabilir", () => {
+  it("key + actor unique; a different actor may use the same key", () => {
     insertIdem("app", 1, "k1")
     insertIdem("app", 2, "k1")
     insertIdem("anonymous", 0, "k1")
     expect(() => insertIdem("app", 1, "k1")).toThrow(/UNIQUE constraint failed/)
   })
 
-  it("geçersiz actor_type ve status reddedilir", () => {
+  it("invalid actor_type and status rejected", () => {
     expect(() => insertIdem("robot", 1, "k")).toThrow(/idempotency_keys_actor_type_ck/)
     expect(() => insertIdem("app", 1, "k", "failed")).toThrow(/idempotency_keys_status_ck/)
   })
 })
 
 describe("audit_log / audit_anchors", () => {
-  it("seq rowid sırası, çift public_id ve geçersiz aktör reddedilir", () => {
+  it("seq follows rowid order, duplicate public_id and invalid actor rejected", () => {
     expect(insertAudit("aud_1")).toBe(1)
     expect(insertAudit("aud_2")).toBe(2)
     expect(() => insertAudit("aud_1")).toThrow(/audit_log.public_id/)
     expect(() => insertAudit("aud_3", "customer")).toThrow(/audit_log_actor_type_ck/)
   })
 
-  it("gün başına tek çapa", () => {
+  it("one anchor per day", () => {
     const anchor = () =>
       run(
         `INSERT INTO audit_anchors (day, last_seq, last_hash, signature, created_at)

@@ -9,8 +9,8 @@ import type {
 } from "./types"
 
 /**
- * Sütun tanımlarını Medusa'daki meta sözleşmesiyle üretir. `enableSorting`
- * varsayılan olarak kapalıdır; sunucu taraflı sıralamada sütun açıkça açar.
+ * Builds column definitions with the kit's meta contract. `enableSorting`
+ * is off by default; a column turns it on explicitly for server-side sorting.
  */
 export function createDataTableColumnHelper<
   TData extends DataTableRowData,

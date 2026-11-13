@@ -1,6 +1,6 @@
 import { cva } from "class-variance-authority"
 
-// Medusa UI toast.tsx (MIT). `bg-ui-bg-component` → `bg-popover`, `text-ui-fg-subtle` → `text-muted-foreground`.
+// Ported from an MIT-licensed UI kit; see NOTICE. `bg-ui-bg-component` → `bg-popover`, `text-ui-fg-subtle` → `text-muted-foreground`.
 export const toastVariants = cva(
   "flex w-fit min-w-[360px] max-w-[440px] gap-x-3 overflow-hidden rounded-lg bg-popover p-3 shadow-elevation-flyout",
 )

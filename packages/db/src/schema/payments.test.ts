@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest"
 import { NOW, seeder } from "../testing/commerce"
 import { openMigratedDb } from "../testing/sqlite"
 
-// 0014_payments (`payments`, `refunds`): order_id 0015'e, return_id 0016'ya bağlı.
+// 0014_payments (`payments`, `refunds`): order_id depends on 0015, return_id on 0016.
 let db: Database.Database
 let s: ReturnType<typeof seeder>
 beforeEach(() => {
@@ -43,12 +43,12 @@ const refund = (paymentId: number, orderId: number, extra: Record<string, unknow
       ...extra,
     }).lastInsertRowid as number
 
-// 02-ticaret `refunds`: kümülatif sağlayıcı iadesi
+// 02-ticaret `refunds`: cumulative provider refund
 const CUMULATIVE = `UPDATE payments SET refunded_amount = :n
   WHERE id = :id AND refunded_amount < :n AND :n + external_refunded_amount <= amount`
 
 describe("payments", () => {
-  it("(yöntem, sağlayıcı referansı) tek ödeme; referanssız serbest", () => {
+  it("one payment per (method, provider reference); no-reference is free", () => {
     const o = s.order()
     const m = s.paymentMethod()
     payment(o, m, "pi_1")
@@ -59,7 +59,7 @@ describe("payments", () => {
     expect(() => payment(999, m, null)).toThrow(/FOREIGN KEY constraint failed/)
   })
 
-  it("kümülatif iade çift ve sırasız teslimatta etkisiz", () => {
+  it("cumulative refund is a no-op on duplicate and out-of-order delivery", () => {
     const p = payment(s.order(), s.paymentMethod(), null)
     const apply = db.prepare(CUMULATIVE)
     expect(apply.run({ id: p, n: 300 }).changes).toBe(1)
@@ -68,7 +68,7 @@ describe("payments", () => {
     expect(apply.run({ id: p, n: 1001 }).changes).toBe(0)
   })
 
-  it("iade toplamı tutarı aşamaz (check son savunma)", () => {
+  it("refund total cannot exceed the amount (check is the last defense)", () => {
     const p = payment(s.order(), s.paymentMethod(), null)
     s.run(
       "UPDATE payments SET refunded_amount = 600, external_refunded_amount = 400 WHERE id = ?",
@@ -84,7 +84,7 @@ describe("payments", () => {
 })
 
 describe("refunds", () => {
-  it("olay, sağlayıcı iadesi ve idempotency anahtarı tekil", () => {
+  it("event, provider refund and idempotency key are unique", () => {
     const o = s.order()
     const p = payment(o, s.paymentMethod(), null)
     refund(p, o, { ev: "evt_1", rf: "re_1", key: "k1" })
@@ -95,7 +95,7 @@ describe("refunds", () => {
     refund(p, o)
   })
 
-  it("bir iade yalnız bir kez ters kayıtla iptal edilir", () => {
+  it("a refund is cancelled by a reversal entry only once", () => {
     const o = s.order()
     const p = payment(o, s.paymentMethod(), null)
     const r = refund(p, o)
@@ -104,7 +104,7 @@ describe("refunds", () => {
     expect(() => refund(p, o, { state: "done" })).toThrow(/refunds_state_ck/)
   })
 
-  it("uzlaştırma sorgusu kısmi indeksle", () => {
+  it("reconciliation query uses the partial index", () => {
     const detail = s.plan("SELECT id FROM refunds WHERE state = 'unknown'")
     expect(detail.join("\n")).toMatch(/refunds_unknown_idx/)
   })

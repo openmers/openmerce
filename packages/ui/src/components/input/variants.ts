@@ -1,6 +1,6 @@
 import { cva, type VariantProps } from "class-variance-authority"
 
-// Medusa UI input.tsx (MIT). Textarea aynı taban stilleri kullanır.
+// Ported from an MIT-licensed UI kit; see NOTICE. Textarea uses the same base styles.
 export const inputBaseStyles =
   "caret-foreground bg-bg-field hover:bg-bg-field-hover shadow-borders-base placeholder-fg-muted text-foreground transition-fg relative w-full appearance-none rounded-md outline-hidden focus-visible:shadow-borders-interactive-with-active disabled:text-fg-disabled disabled:!bg-muted disabled:placeholder-fg-disabled disabled:cursor-not-allowed aria-[invalid=true]:!shadow-borders-error invalid:!shadow-borders-error"
 

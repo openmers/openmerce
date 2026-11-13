@@ -2,9 +2,9 @@ import { sql } from "drizzle-orm"
 import { check, index, integer, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core"
 import { createdAt, publicId, updatedAt } from "./columns"
 
-// 01-cekirdek-isletme.md E (outbox, zamanlanmış görevler) ve G (`external_refs`, karar 3).
-// Hedefi sonra açılan referanslar FK'sız (outbox.app_installation_id → 0028, scheduled_runs.outbox_id
-// satırı silinir).
+// 01-cekirdek-isletme.md E (outbox, scheduled jobs) and G (`external_refs`, decision 3).
+// References whose target opens later have no FK (outbox.app_installation_id → 0028, scheduled_runs.outbox_id
+// row is deleted).
 
 export const outboxKinds = [
   "event",
@@ -19,7 +19,7 @@ export const outboxKinds = [
 ] as const
 export const outboxStatuses = ["pending", "sending", "sent", "failed", "dead"] as const
 
-// version yok: sahiplenme status koşullu yazımdır
+// no version: claiming is a conditional status write
 export const outbox = sqliteTable(
   "outbox",
   {
@@ -31,7 +31,7 @@ export const outbox = sqliteTable(
     appInstallationId: integer("app_installation_id"),
     status: text("status", { enum: outboxStatuses }).notNull(),
     attempts: integer("attempts").notNull().default(0),
-    // küçük önce
+    // smallest first
     priority: integer("priority").notNull(),
     nextAttemptAt: integer("next_attempt_at").notNull(),
     claimedAt: integer("claimed_at"),
@@ -62,9 +62,9 @@ export const scheduledRuns = sqliteTable(
   "scheduled_runs",
   {
     id: integer("id").primaryKey(),
-    // kodda tanımlı görev adı; built-in app görevleri `<app-id>.` önekli
+    // job name defined in code; built-in app jobs are prefixed `<app-id>.`
     task: text("task").notNull(),
-    // dönemin cron'a göre başlangıcı, epoch ms
+    // period start by cron, epoch ms
     period: integer("period").notNull(),
     status: text("status", { enum: ["running", "done", "failed"] }).notNull(),
     startedAt: integer("started_at").notNull(),
@@ -75,7 +75,7 @@ export const scheduledRuns = sqliteTable(
     updatedAt: updatedAt(),
   },
   (t) => [
-    // çalıştırma INSERT ... ON CONFLICT DO NOTHING'e koşullu; "son çalışmalar" sorgusunu da karşılar
+    // run is conditional on INSERT ... ON CONFLICT DO NOTHING; also serves the "recent runs" query
     uniqueIndex("scheduled_runs_task_period_uq").on(t.task, t.period),
     check("scheduled_runs_status_ck", sql`${t.status} IN ('running', 'done', 'failed')`),
   ],
@@ -85,9 +85,9 @@ export const externalRefs = sqliteTable(
   "external_refs",
   {
     id: integer("id").primaryKey(),
-    // taşımada `shopify` vb., uygulamada app_installations.app_key
+    // e.g. legacy-store during migration; app_installations.app_key at runtime
     source: text("source").notNull(),
-    // NULL benzersizliği bozduğu için boş dize
+    // empty string because NULL would break uniqueness
     connectionId: text("connection_id").notNull().default(""),
     entityType: text("entity_type").notNull(),
     localPublicId: text("local_public_id").notNull(),

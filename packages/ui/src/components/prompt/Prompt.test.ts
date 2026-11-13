@@ -15,7 +15,7 @@ describe("Prompt", () => {
     expect(alert()).toBeNull()
   })
 
-  it("opens as an alert dialog with the Medusa content styles", async () => {
+  it("opens as an alert dialog with the kit content styles", async () => {
     const user = userEvent.setup()
     render(PromptExample)
 
@@ -24,7 +24,7 @@ describe("Prompt", () => {
 
     expect(alert()).toHaveClass("bg-card", "shadow-elevation-flyout", "max-w-[400px]")
     expect(alert()).toHaveClass("rounded-lg", "border", "flex-col")
-    // bits-ui `Title` bir div + role="heading" üretir; Medusa `Heading` görünümü sınıflarla korunur.
+    // bits-ui `Title` renders a div + role="heading"; the kit `Heading` look is preserved through classes.
     expect(screen.getByRole("heading", { name: "Mağazayı sil", hidden: true })).toHaveClass(
       "h2-core",
       "text-foreground",

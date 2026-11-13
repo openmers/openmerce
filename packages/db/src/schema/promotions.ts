@@ -5,9 +5,9 @@ import { createdAt, publicId, updatedAt } from "./columns"
 import { customers } from "./customers"
 import { orders } from "./orders"
 
-// 02-ticaret.md bölüm 9, 0012. `promotion_usage.reservation_id` (0013) ve `order_id` (0015) ileri
-// FK'dır: SQLite FK hedefini CREATE'te denetlemez (02 B7); 0013'ten önce kullanım satırı yazılmaz.
-// Etkin promosyonlar kanal başına bellekte; `promotion_channels` 0017'de (`commerce-links.ts`).
+// 02-ticaret.md section 9, 0012. `promotion_usage.reservation_id` (0013) and `order_id` (0015) are
+// forward FKs: SQLite does not check the FK target at CREATE (02 B7); no usage row before 0013.
+// Active promotions per channel in memory; `promotion_channels` in 0017 (`commerce-links.ts`).
 
 type Rules = { code: string; args: Record<string, unknown> }[]
 
@@ -22,10 +22,10 @@ export const promotions = sqliteTable(
     enabled: integer("enabled", { mode: "boolean" }).notNull(),
     priority: integer("priority").notNull(),
     couponCode: text("coupon_code"),
-    // NULL = sınırsız
+    // NULL = unlimited
     usageLimit: integer("usage_limit"),
     perCustomerLimit: integer("per_customer_limit"),
-    // `used = used + 1 WHERE usage_limit IS NULL OR used < usage_limit`; version'a dokunmaz
+    // `used = used + 1 WHERE usage_limit IS NULL OR used < usage_limit`; does not touch version
     used: integer("used").notNull().default(0),
     conditions: text("conditions", { mode: "json" }).$type<Rules>().notNull(),
     actions: text("actions", { mode: "json" }).$type<Rules>().notNull(),
@@ -37,7 +37,7 @@ export const promotions = sqliteTable(
   },
   (t) => [
     uniqueIndex("promotions_public_id_uq").on(t.publicId),
-    // kupon kodu mağaza genelinde tek promosyonu gösterir
+    // a coupon code points to a single promotion store-wide
     uniqueIndex("promotions_coupon_code_uq")
       .on(t.couponCode)
       .where(sql`${t.couponCode} IS NOT NULL`),
@@ -51,7 +51,7 @@ export const promotions = sqliteTable(
   ],
 )
 
-// rezervasyonda yazılır, bırakmada silinir; 0 indirimde satır yok
+// written on reservation, deleted on release; no row for a 0 discount
 export const promotionUsage = sqliteTable(
   "promotion_usage",
   {
@@ -59,12 +59,12 @@ export const promotionUsage = sqliteTable(
     promotionId: integer("promotion_id")
       .notNull()
       .references(() => promotions.id),
-    // bilinmiyorsa müşteri başına sınır uygulanmaz
+    // if unknown, no per-customer limit is applied
     customerId: integer("customer_id").references(() => customers.id),
     reservationId: integer("reservation_id")
       .notNull()
       .references(() => checkoutReservations.id),
-    // settlement'ta doldurulur
+    // filled at settlement
     orderId: integer("order_id").references(() => orders.id),
     createdAt: createdAt(),
   },

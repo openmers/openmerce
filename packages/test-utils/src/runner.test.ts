@@ -9,7 +9,7 @@ describeOnTargets("runner", (getDb) => {
     expect(getDb().prepare("SELECT 1").pluck().get()).toBe(1)
   })
 
-  it("yazar (sonraki test bu satırı görmemeli)", () => {
+  it("writes (the next test must not see this row)", () => {
     getDb()
       .prepare(
         "INSERT INTO settings (scope, scope_id, key, value, created_at, updated_at) VALUES ('global', 0, 'a.b', '1', ?, ?)",
@@ -18,11 +18,11 @@ describeOnTargets("runner", (getDb) => {
     expect(getDb().prepare("SELECT count(*) FROM settings").pluck().get()).toBe(1)
   })
 
-  it("testler arası veri sızmıyor", () => {
+  it("no data leaks between tests", () => {
     expect(getDb().prepare("SELECT count(*) FROM settings").pluck().get()).toBe(0)
   })
 
-  it("foreign_keys açık", () => {
+  it("foreign_keys is on", () => {
     expect(getDb().pragma("foreign_keys", { simple: true })).toBe(1)
     expect(() =>
       getDb()
@@ -33,7 +33,7 @@ describeOnTargets("runner", (getDb) => {
     ).toThrow(/FOREIGN KEY/)
   })
 
-  it("migration'lar uygulanmış", () => {
+  it("migrations are applied", () => {
     const tables = getDb()
       .prepare("SELECT name FROM sqlite_master WHERE type = 'table'")
       .pluck()

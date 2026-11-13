@@ -2,14 +2,44 @@
   "name": "openmers",
   "private": true,
   "license": "MIT",
-  "packageManager": "pnpm@10",
+  "packageManager": "pnpm@10.34.9",
   "scripts": {
     "bundle-size": "sh scripts/bundle-size.sh",
-    "test": "vitest run",
+    "test": "vitest run --passWithNoTests",
     "lint": "biome check .",
-    "format": "biome check --write ."
+    "format": "biome check --write .",
+    "check:size": "sh scripts/check-file-size.sh",
+    "check:migrations": "sh scripts/check-migrations.sh",
+    "verify": "pnpm lint && pnpm check:size && pnpm check:migrations && pnpm test",
+    "test:e2e": "e2e run",
+    "test:e2e:mobile": "e2e run --config e2e.mobile.config.ts"
   },
   "engines": {
     "node": ">=22"
+  },
+  "devDependencies": {
+    "@ai-sdk/anthropic": "4.0.102",
+    "@ai-sdk/google": "4.0.118",
+    "@ai-sdk/openai": "4.0.115",
+    "@ai-sdk/openai-compatible": "3.0.90",
+    "@biomejs/biome": "2.6.7",
+    "@changesets/cli": "3.0.3",
+    "@e2e-dev/mobile": "0.12.6",
+    "@e2e-dev/web": "^0.15.5",
+    "@sveltejs/vite-plugin-svelte": "^7.3.1",
+    "@tailwindcss/cli": "^4.3.5",
+    "@tailwindcss/vite": "^4.3.5",
+    "@testing-library/jest-dom": "^7.0.1",
+    "@testing-library/svelte": "^5.4.2",
+    "@testing-library/user-event": "^14.6.10",
+    "agent-device": "0.21.36",
+    "ai": "^7.0.170",
+    "e2e": "^0.23.0",
+    "jsdom": "^31.0.0",
+    "playwright-core": "1.64.1",
+    "svelte": "^5.57.3",
+    "tailwindcss": "^4.3.5",
+    "vite": "^8.3.8",
+    "vitest": "5.1.0"
   }
 }

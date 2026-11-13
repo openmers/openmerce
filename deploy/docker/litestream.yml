@@ -3,4 +3,4 @@ dbs:
   - path: ${OPENMERS_DB}
     replicas:
       - url: ${LITESTREAM_REPLICA_URL}
-        retention: 168h   # 7 gün geri alınabilir
+        retention: 168h # 7 gün geri alınabilir

@@ -1,6 +1,18 @@
 {
-  "files": { "includes": ["**", "!docs", "!**/dist", "!**/build", "!**/.wrangler"] },
+  "files": {
+    "includes": [
+      "**",
+      "!docs",
+      "!.claude",
+      "!graphify-out",
+      "!.orkestra",
+      "!pnpm-lock.yaml",
+      "!**/dist",
+      "!**/build",
+      "!**/.wrangler"
+    ]
+  },
   "formatter": { "indentStyle": "space", "indentWidth": 2, "lineWidth": 100 },
   "javascript": { "formatter": { "semicolons": "asNeeded", "quoteStyle": "double" } },
-  "linter": { "enabled": true, "rules": { "recommended": true } }
+  "linter": { "enabled": true, "rules": { "preset": "recommended" } }
 }

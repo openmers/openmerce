@@ -3,5 +3,8 @@ packages:
   - "packages/*"
   - "packages/modules/*"
   - "packages/plugins/*"
-  - "packages/themes/*"
   - "integration-tests/*"
+
+# pnpm 10 kurulum betiklerini varsayılan engeller; better-sqlite3 yerel ikilisini derler/indirir.
+onlyBuiltDependencies:
+  - better-sqlite3

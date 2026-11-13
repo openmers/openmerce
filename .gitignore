@@ -7,3 +7,4 @@ dist
 .playwright-mcp
 graphify-out
 docs/shopify-raporu
+.e2e

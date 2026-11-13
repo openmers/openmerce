@@ -1,9 +1,31 @@
+import { svelte } from "@sveltejs/vite-plugin-svelte"
+import { svelteTesting } from "@testing-library/svelte/vite"
 import { defineConfig } from "vitest/config"
 
 // Birim testleri dosyanın yanında (*.test.ts). Entegrasyon testleri integration-tests/ altında kendi yapılandırmasıyla.
+// `packages/ui` .svelte bileşenlerini jsdom'da test eder; diğer paketler Node ortamında kalır.
 export default defineConfig({
   test: {
-    include: ["packages/**/*.test.ts", "apps/**/*.test.ts"],
-    exclude: ["**/node_modules/**", "**/dist/**"],
+    projects: [
+      {
+        test: {
+          name: "unit",
+          include: ["packages/**/*.test.ts", "apps/**/*.test.ts"],
+          exclude: ["packages/ui/**", "**/node_modules/**", "**/dist/**"],
+        },
+      },
+      {
+        plugins: [svelte(), svelteTesting()],
+        resolve: { conditions: ["browser"] },
+        // bits-ui ve svelte-sonner `.svelte` dosyası taşır; SSR dışlaması kapatılmazsa Node onları çözemez.
+        ssr: { noExternal: ["@lucide/svelte", "bits-ui", "runed", "svelte-sonner"] },
+        test: {
+          name: "ui",
+          environment: "jsdom",
+          include: ["packages/ui/**/*.test.ts"],
+          setupFiles: ["packages/ui/src/test/setup.ts"],
+        },
+      },
+    ],
   },
 })

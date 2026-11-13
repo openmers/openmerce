@@ -1,5 +1,6 @@
 export * from "./ctx"
 export * from "./features/auth"
+export * from "./features/catalog"
 export * from "./features/channels"
 export * from "./features/ids"
 export * from "./features/outbox"

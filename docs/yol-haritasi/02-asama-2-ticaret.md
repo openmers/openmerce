@@ -54,7 +54,7 @@
 - **Yapılacaklar:**
   1. `+` `packages/db/src/schema/catalog-products.ts`, `catalog-options.ts`, `catalog-facets.ts`, `catalog-collections.ts`, `catalog-assets.ts`: yazma tabloları + çeviri tabloları, ayrı migration'lar. (2026-11-13: tek `0006_catalog` migration'ı; dosyalar `catalog-products/options/facets/collections.ts`, `product_assets` `catalog-options.ts`'te. Bağlantılar `variant_option_values`, `product_facet_values`, `variant_facet_values` dahil.)
   2. `-` `packages/db/src/schema/catalog-index.ts`: `catalog_index`, `catalog_index_facets`, `catalog_index_collections`, `product_view`, `catalog_fts` (FTS5 sanal tablo migration'ı D1 ve SQLite'ta).
-  3. `-` `features/catalog/products/{createProduct,updateProduct,deleteProduct}.ts` (`atomic()` + `reindex` olayı); `features/catalog/variants/*.ts` (en az bir varyant kuralı saf `assertHasVariant.ts`).
+  3. `+` `features/catalog/products/{createProduct,updateProduct,deleteProduct}.ts` (`atomic()` + `reindex` olayı); `features/catalog/variants/*.ts` (en az bir varyant kuralı saf `assertHasVariant.ts`). (2026-11-13: yazma tarafı bitti — `products/{create,update,delete}Product.ts`, `variants/{add,update,remove}Variant.ts`, `queries/{getProduct,listProducts}.ts` ve saf `assertHasVariant.ts`/`assertOptionCombinations.ts`; kapsam dışı: fiyat/stok, görsel, koleksiyon, `catalog_index`/`product_view`/FTS. `version` koşullu yazımda sürümü artıran `UPDATE` son ifadedir.)
   4. `-` `features/catalog/collections/resolveFilters.ts` (saf): `inherit_filters` ile kendi + üst filtrelerin kesişimi; `recomputeMembership.ts` (parçalı iş, dal başına).
   5. `-` `features/catalogIndex/text/foldTurkish.ts` (saf, ı/i ş/s …), hem indeksleyici hem arama sorgusu kullanır.
   6. `-` `features/catalogIndex/build/buildIndexRows.ts` + `buildProductView.ts` + `resolveVariantImages.ts` (saf): yazma modeli verisinden satırları, `group_first`, `price_min/max`, `stock_bucket`, hazır `srcset` ve varyant görsel listesini üretir.
@@ -62,7 +62,7 @@
   8. `-` `features/catalogIndex/jobs/fullReindex.ts`: imleçli, parçalı, kaldığı yerden devam eden tam yeniden indeksleme.
   9. `-` `features/catalogIndex/queries/{listCollection,listFiltered,facetCounts,search,getProductView}.ts`: imleçli; filtreli liste en seçici filtreden başlar, diğerleri `EXISTS`.
   10. `-` `features/catalog/import/upsertMany.ts`: CSV ve `products.upsertMany` ortak yolu, içerik özetiyle değişmeyeni atlama, kayıt başına sonuç.
-  11. `-` `packages/contract/src/{shop,admin}/catalog.ts` + `apps/api/src/shop/catalog/*.ts` (yalnız `catalogIndex` import eder) ve `apps/api/src/admin/products/*.ts`.
+  11. `±` `packages/contract/src/{shop,admin}/catalog.ts` + `apps/api/src/shop/catalog/*.ts` (yalnız `catalogIndex` import eder) ve `apps/api/src/admin/products/*.ts`. (2026-11-13: yalnız admin yarısı — sözleşme `packages/contract/src/admin/products.ts` (`list/get/create/update/delete` + `variants/{create,update,remove}`), ince handler'lar `apps/api/src/admin/products/**`; shop uçları okuma modeline bağlı olduğu için yok.)
   12. `-` `SearchProvider` portu tanımı `features/catalogIndex/search/port.ts` (Meilisearch app'i madde 6. aşamada uygular).
 - **Testler:**
   - `features/catalogIndex/text/foldTurkish.test.ts`, `build/*.test.ts` (miras kesişimi, görsel çözüm sırası, `group_first`).

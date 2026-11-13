@@ -23,9 +23,9 @@
 - **Yapılacaklar:**
   1. `+` `packages/db/src/schema/channels.ts`: `channels` (`code`, `public_id`, `type`, para birimleri, diller, `prices_include_tax`, varsayılan bölge/fiyat listesi, erişim, misafir, en az tutar, `sync_prices`, `statement_name`, `settings_version`), `channel_domains`; ilk migration + varsayılan kanal tohumu.
   2. `-` `packages/db/src/schema/channel-links.ts`: `product_channels`, `variant_channels`, `collection_channels` vb. bağlantı tabloları (katalog tablolarıyla aynı migration serisinde, madde 15'e bağlı).
-  3. `-` `packages/core/src/features/channels/types.ts` + `defaultChannel.ts`: kanal domain tipi, varsayılan kanalın silinemez kuralı (saf).
-  4. `-` `features/channels/resolve/resolveChannel.ts` (saf): `Host` veya yayınlanabilir anahtar → kanal; bilinmeyen alan adı için tipli `UNKNOWN_DOMAIN` hatası.
-  5. `-` `features/channels/registry/channelRegistry.ts`: kanal + alan adı tablosunu belleğe yükler, `settings_version` değişince yeniler; sorgu yalnız `queries/loadChannels.ts` içinde.
+  3. `+` `packages/core/src/features/channels/types.ts` + `defaultChannel.ts`: kanal domain tipi, varsayılan kanalın silinemez kuralı (saf).
+  4. `+` `features/channels/resolve/resolveChannel.ts` (saf): `Host` veya yayınlanabilir anahtar → kanal; bilinmeyen alan adı için tipli `UNKNOWN_DOMAIN` hatası.
+  5. `+` `features/channels/registry/channelRegistry.ts`: kanal + alan adı tablosunu belleğe yükler, `settings_version` değişince yeniler; sorgu yalnız `queries/loadChannels.ts` içinde.
   6. `-` `features/channels/assign/assignProductToChannel.ts` (`atomic()`): ürün + tüm varyantların `variant_channels` satırları, varsayılan kanala da atama, `reindex(product_id)` olayı; `removeFromDefaultChannel.ts` tüm kanallardan çıkarır.
   7. `-` `features/channels/pricing/syncPrices.ts` (saf karar + `catalog`/`pricing` `index.ts` üzerinden yazma): `sync_prices` açıkken yalnız aynı para birimli kanalların varsayılan listesine yazar.
   8. `-` `features/channels/queries/listNoPriceVariants.ts`: varsayılan listede fiyatı olmayan varyantları admin uyarısı için döndürür.

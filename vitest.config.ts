@@ -21,6 +21,13 @@ export default defineConfig({
           include: ["integration-tests/contract/__tests__/**/*.test.ts"],
         },
       },
+      // HTTP'siz feature entegrasyon testleri: gerçek SQLite + migration'lar (Node).
+      {
+        test: {
+          name: "core",
+          include: ["integration-tests/core/__tests__/**/*.test.ts"],
+        },
+      },
       {
         plugins: [svelte(), svelteTesting()],
         resolve: { conditions: ["browser"] },

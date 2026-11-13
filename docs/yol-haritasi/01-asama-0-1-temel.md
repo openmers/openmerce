@@ -246,10 +246,10 @@ Kısaltma: `core` = `packages/core/src`, `api` = `apps/api/src`. Her yeni dosya 
   4. `-` `core/config/validateConfig.ts`: Zod şemasıyla doğrulama; geçersizse açılışta anlamlı hata.
   5. `-` Kök `store.config.ts` düz nesneden `defineStore(...)` kullanımına (şu an `builtInApps: []`, `strategies: {}`, `customFields: {}`).
   6. `±` `packages/db/src/schema/settings.ts`: `settings` + benzersiz `(scope, scope_id, key)`; `settings_version` sayacı (tek satır veya kapsam başına).
-  7. `-` `core/features/settings/registry.ts` (veri): anahtar → Zod şema + kod varsayılanı + izinli kapsamlar; built-in app'ler kendi anahtarlarını ekler.
-  8. `-` `core/features/settings/resolveSetting.ts`: saf düşüş (kanal → genel → varsayılan).
-  9. `-` `core/features/settings/queries/loadSettings.ts` (tek sorguda tüm satırlar) + `getSetting.ts` (bellekteki kopyadan okur, ıskada madde 10.7 yükleyicisi).
-  10. `-` `core/features/settings/setSetting.ts`: Zod doğrulama → `atomic([upsert, settings_version + 1, audit_log])` (madde 11); kasa anahtarı gibi görünen anahtarlar reddedilir.
+  7. `+` `core/features/settings/registry.ts` (veri): anahtar → Zod şema + kod varsayılanı + izinli kapsamlar; built-in app'ler kendi anahtarlarını ekler.
+  8. `+` `core/features/settings/resolveSetting.ts`: saf düşüş (kanal → genel → varsayılan).
+  9. `±` `core/features/settings/queries/loadSettings.ts` (tek sorguda tüm satırlar) + `getSetting.ts` (bellekteki kopyadan okur, ıskada madde 10.7 yükleyicisi).
+  10. `±` `core/features/settings/setSetting.ts`: Zod doğrulama → `atomic([upsert, settings_version + 1, audit_log])` (madde 11); kasa anahtarı gibi görünen anahtarlar reddedilir.
   11. `-` `api/platform/env.ts`: ortam değişkenlerini (`OPENMERS_DB`, `OPENMERS_UPLOADS`, `PORT`, KEK) Zod ile yalnız uygulama katmanında okur; `core` ve `db` için Biome `noProcessEnv` (kural adı sürümde teyit edilir).
 - **Testler:** `mergeConfig.test.ts`, `validateConfig.test.ts`, `resolveSetting.test.ts` (üç düşüş durumu); entegrasyon `integration-tests/core/__tests__/settings.test.ts` (iki hedefte: `setSetting` sürümü artırır, geçersiz değer reddedilir, denetim satırı aynı `atomic` içinde; önbellek isabetinde `getSetting` 0 tur).
 - **Bitti sayılır:**

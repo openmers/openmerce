@@ -1,4 +1,5 @@
 import { adminAuthLogin, adminAuthLogout, adminMe, adminSetupCreate } from "./auth"
+import { adminOrders, adminPayments } from "./orders"
 import { adminPriceLists, adminPrices } from "./pricing"
 import { adminProducts } from "./products"
 import { adminStock } from "./stock"
@@ -13,6 +14,8 @@ export const admin = {
   priceLists: adminPriceLists,
   prices: adminPrices,
   stock: adminStock,
+  orders: adminOrders,
+  payments: adminPayments,
 }
 
 export {
@@ -23,6 +26,16 @@ export {
   adminPasswordSchema,
   adminSetupCreate,
 } from "./auth"
+export {
+  adminOrders,
+  adminOrdersCancel,
+  adminOrdersGet,
+  adminOrdersList,
+  adminOrdersTransition,
+  adminPayments,
+  adminPaymentsCapture,
+  adminPaymentsRefund,
+} from "./orders"
 export {
   adminPriceLists,
   adminPriceListsCreate,

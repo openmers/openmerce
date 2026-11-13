@@ -6,7 +6,8 @@ import {
   type Platform,
   sqlStatement,
 } from "../../../platform"
-import { refreshDerivedState } from "../../orders"
+// direct file import: orders/cancel imports the refund ledger (index-to-index cycle)
+import { refreshDerivedState } from "../../orders/derived/refreshDerivedState"
 import { enqueueStatement } from "../../outbox"
 import { PaymentError } from "../types"
 import { allocateRefundTax, type TaxLineShare } from "./allocateRefundTax"

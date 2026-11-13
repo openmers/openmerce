@@ -1,3 +1,8 @@
+export {
+  type AdminPaymentCtx,
+  capturePayment,
+  refundPayment,
+} from "./admin/adminPayments"
 export { bankTransfer, bankTransferArgs } from "./handlers/bankTransfer"
 export { cashOnDelivery, cashOnDeliveryArgs } from "./handlers/cashOnDelivery"
 export type {
@@ -26,6 +31,12 @@ export {
 } from "./refunds/cumulativeDelta"
 export type { RefundCtx } from "./refunds/ledger"
 export { type ManualRefundInput, markManualRefund } from "./refunds/markManualRefund"
+export {
+  listUnknownRefunds,
+  resolveUnknownRefund,
+  type UnknownRefund,
+  type UnknownRefundResult,
+} from "./refunds/resolveUnknownRefund"
 export { type SyncRefundInput, syncRefund } from "./refunds/syncRefund"
 export {
   createPaymentRegistry,
@@ -40,4 +51,5 @@ export {
   paymentStatusSql,
 } from "./state/derivePaymentState"
 export { PaymentError, type PaymentErrorCode } from "./types"
+export { applyNormalized } from "./webhook/applyNormalized"
 export { handleWebhook, type WebhookOutcome } from "./webhook/handleWebhook"

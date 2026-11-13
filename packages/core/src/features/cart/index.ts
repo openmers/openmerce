@@ -6,6 +6,15 @@ export type {
   ShippingTotals,
   TotalsLine,
 } from "./calculate/types"
+export {
+  adoptCart,
+  CART_TTL_MS,
+  type CartPatch,
+  type CreateCartInput,
+  createCart,
+  findCustomerCart,
+  updateCart,
+} from "./carts/carts"
 export { type AddLineInput, addLine } from "./lines/addLine"
 export { type RemoveLineInput, removeLine } from "./lines/removeLine"
 export { MAX_LINE_QUANTITY } from "./lines/shared"

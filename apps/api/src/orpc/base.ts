@@ -11,7 +11,9 @@ import {
 import { implement, ORPCError } from "@orpc/server"
 import type { ResponseHeadersHandlerPluginContext } from "@orpc/server/plugins"
 import type { AdminAuth } from "../auth/adminAuth"
+import type { CartSigner } from "../auth/cartToken"
 import type { CustomerAuth } from "../auth/customerAuth"
+import type { CommerceConfigSource } from "../commerce/config"
 import { loadShopCustomer } from "./customerSession"
 import { type AdminGuardResult, requirePermission } from "./requirePermission"
 
@@ -36,6 +38,10 @@ export type ApiInitialContext = {
   reqHeaders: Headers
   /** Whether the request is HTTPS; `Secure` is added to the session cookie accordingly. */
   https: boolean
+  /** Promotions, shipping, tax, payment methods in memory (cart and checkout). */
+  commerce: CommerceConfigSource
+  /** Signs/verifies the guest cart cookie (`om_c`). */
+  cartSigner: CartSigner
 } & ResponseHeadersHandlerPluginContext
 
 export type ApiContext = ApiInitialContext & {
@@ -60,6 +66,10 @@ export const errorStatusMap: Record<string, number> = {
   SETUP_DONE: 409,
   IDEMPOTENCY_MISMATCH: 409,
   INSUFFICIENT_STOCK: 409,
+  CART_CHANGED: 409,
+  COUPON_EXHAUSTED: 409,
+  INVALID_TRANSITION: 409,
+  REFUND_EXCEEDS: 409,
   RATE_LIMITED: 429,
   INTERNAL: 500,
 }
@@ -98,6 +108,9 @@ function buildRequestCtx(context: ApiInitialContext, customer?: CustomerActor | 
   return built.ctx
 }
 
+/** Shop resources that are per-person (cookie/session bound): never cached. */
+const PRIVATE_SHOP = new Set(["account", "cart", "checkout", "orders"])
+
 export const base = implement(contract)
   .$context<ApiInitialContext>()
   .use(async ({ context, next, path, procedure }) => {
@@ -107,7 +120,7 @@ export const base = implement(contract)
     const isAdmin = path[0] === "admin"
     if (!isAdmin) {
       // Personal pages are never cached (11-musteriler §9), errors included.
-      if (path[1] === "account") context.resHeaders?.set("cache-control", "no-store")
+      if (PRIVATE_SHOP.has(String(path[1]))) context.resHeaders?.set("cache-control", "no-store")
       const customer = await loadShopCustomer(context)
       const ctx = buildRequestCtx({ ...context, api: "shop" }, customer)
       return next({

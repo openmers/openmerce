@@ -2,13 +2,17 @@ import {
   CHANNEL_HEADER,
   type ChannelRegistry,
   type ChannelSnapshot,
+  type PaymentHandler,
   type Platform,
   resolveRequestChannel,
 } from "@openmers/core"
 import type { Context } from "hono"
 import { Hono } from "hono"
 import { createAdminAuth } from "./auth/adminAuth"
+import { createCartSigner } from "./auth/cartToken"
 import { createCustomerAuth } from "./auth/customerAuth"
+import { type CommerceConfigSource, createCommerceConfig } from "./commerce/config"
+import { paymentWebhook } from "./hooks/payments/[method]"
 import type { AppEnv } from "./http/env"
 import { apiError } from "./http/errors"
 import { isHttps, type SecureOptions, secureResponse } from "./http/secure"
@@ -25,8 +29,12 @@ export type AppOptions = SecureOptions & {
   requestId?: () => string
   /** Session signing secret (Better Auth `secret`), at least 32 characters; the customer key is derived from it. */
   authSecret: string
-  /** Rate limiter error log (fail-open); defaults to `console.error`. */
+  /** Rate limiter and webhook error log; defaults to `console.error`. */
   log?: (message: string, error: unknown) => void
+  /** Payment handlers by `handler_code`, added to the built-in manual ones. */
+  paymentHandlers?: Readonly<Record<string, PaymentHandler>>
+  /** Shared commerce configuration (the worker uses the same one); built from the platform if omitted. */
+  commerce?: CommerceConfigSource
 }
 
 /** `Host`: a header on a real server, taken from the URL in `app.request` tests. */
@@ -68,6 +76,10 @@ export function createApp(opts: AppOptions): Hono<AppEnv> {
     secret: opts.authSecret,
     now: opts.now,
   })
+  const commerce =
+    opts.commerce ??
+    createCommerceConfig({ platform: opts.platform, handlers: opts.paymentHandlers })
+  const cartSigner = createCartSigner(opts.authSecret)
 
   // 1) Outermost middleware: request id + security headers (including errors/404).
   app.use("*", async (c, next) => {
@@ -102,6 +114,8 @@ export function createApp(opts: AppOptions): Hono<AppEnv> {
       customerAuth,
       reqHeaders: c.req.raw.headers,
       https: isHttps(c, opts.https),
+      commerce,
+      cartSigner,
     }
     c.set("apiContext", context)
     c.set("channel", resolved.channel.code)
@@ -110,6 +124,11 @@ export function createApp(opts: AppOptions): Hono<AppEnv> {
 
   // 4) Rate limit: bucket = channel + route group + client; passes if the limiter crashes.
   app.use("*", rateLimit({ platform: opts.platform, log: opts.log }))
+
+  app.post(
+    "/hooks/payments/:method",
+    paymentWebhook({ platform: opts.platform, commerce, now: opts.now, log: opts.log }),
+  )
 
   app.all("/api/openapi.json", async (c) => c.json(await openApiDocument()))
 

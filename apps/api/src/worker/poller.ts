@@ -2,6 +2,7 @@ import {
   type JobHandlers,
   MAINTENANCE_PERIOD_MS,
   type OutboxRunCounters,
+  type PaymentRegistry,
   type Platform,
   runMaintenanceOnce,
   runOutboxOnce,
@@ -33,6 +34,8 @@ export type PollerOptions = {
   limit?: number
   now?: () => number
   scheduler?: Scheduler
+  /** Installed payment methods; enables the checkout sweep and reconciliation in maintenance. */
+  payments?: (now: number) => Promise<Pick<PaymentRegistry, "all">>
   /** A tick error does not crash the process; it is reported and the next tick is awaited. */
   onError?: (error: unknown) => void
 }
@@ -68,7 +71,7 @@ export function createPoller(opts: PollerOptions): Poller {
     const counters = await runOutboxOnce(opts.platform, opts.handlers, { now: at, limit })
     if (lastMaintenanceAt === undefined || at - lastMaintenanceAt >= maintenanceEveryMs) {
       lastMaintenanceAt = at
-      await runMaintenanceOnce(opts.platform, { now: at })
+      await runMaintenanceOnce(opts.platform, { now: at, payments: await opts.payments?.(at) })
     }
     return counters
   }

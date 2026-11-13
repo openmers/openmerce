@@ -16,6 +16,8 @@ export type PaymentRegistry = {
   forChannel(channelId: number): PaymentMethod[]
   /** Webhook route lookup; `undefined` = not installed/enabled (route answers 404). */
   byCode(code: string): PaymentMethod | undefined
+  /** Every installed and enabled method (jobs: sweep, reconcile). */
+  all(): readonly PaymentMethod[]
 }
 
 /**
@@ -46,5 +48,6 @@ export function createPaymentRegistry(
   return {
     forChannel: (channelId) => methods.filter((m) => m.channelIds.includes(channelId)),
     byCode: (code) => byCode.get(code),
+    all: () => methods,
   }
 }

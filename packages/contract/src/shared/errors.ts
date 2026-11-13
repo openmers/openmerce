@@ -14,6 +14,11 @@ export const errorCodes = [
   "CHANNEL_UNKNOWN",
   "INSUFFICIENT_STOCK",
   "IDEMPOTENCY_MISMATCH",
+  // Commerce: cart moved under the caller, coupon limit reached, order state, refund cap.
+  "CART_CHANGED",
+  "COUPON_EXHAUSTED",
+  "INVALID_TRANSITION",
+  "REFUND_EXCEEDS",
   // Setup gate (`setupGate`): admin is closed before setup / setup is locked afterwards.
   "SETUP_REQUIRED",
   "SETUP_DONE",

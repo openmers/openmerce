@@ -72,6 +72,8 @@ export interface PaymentHandler {
   /** `manual`: bank transfer, cash on delivery; settled by an admin, not a webhook. */
   readonly kind: "hosted" | "manual"
   readonly merchantOfRecord?: boolean
+  /** Manual method whose order is placed on confirmation without money (cash on delivery). */
+  readonly settleOnConfirm?: boolean
   readonly subscriptions?: BillingCapabilities
   createCheckout(ctx: HandlerCtx, target: CheckoutTarget, args: HandlerArgs): Promise<CheckoutStart>
   /** Verifies the signature (constant time) and normalizes; `null` = not authentic. */

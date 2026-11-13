@@ -7,6 +7,7 @@ import {
   loadChannels,
 } from "@openmers/core"
 import { createApp } from "./app"
+import { createCommerceConfig } from "./commerce/config"
 import { readEnv } from "./platform/env"
 import { createNodePlatform } from "./platform/node"
 import { openNodeSqlite } from "./platform/node/sqlite"
@@ -20,9 +21,13 @@ const workerOnly = process.argv.includes("--worker")
 const sqlite = openNodeSqlite(env.OPENMERS_DB)
 const platform = createNodePlatform({ sqlite, kek: env.OPENMERS_KEK })
 
+// One commerce configuration for API and worker (payment registry for sweep and reconcile).
+const commerce = createCommerceConfig({ platform })
+
 // Handlers arrive with their own features; unregistered topics become `failed`.
 const poller = createPoller({
   platform,
+  payments: async (now) => (await commerce.get(now)).payments,
   handlers: defineHandlers({ ...catalogIndexHandlers }),
   onError: (error) => console.error("iş turu hatası:", error),
 })
@@ -39,7 +44,8 @@ const server = workerOnly
   ? undefined
   : serve(
       {
-        fetch: createApp({ platform, channels, authSecret: env.OPENMERS_AUTH_SECRET }).fetch,
+        fetch: createApp({ platform, channels, commerce, authSecret: env.OPENMERS_AUTH_SECRET })
+          .fetch,
         port: env.PORT,
       },
       (info) => console.log(`openmers api http://localhost:${info.port}`),

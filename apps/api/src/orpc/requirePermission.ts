@@ -15,7 +15,7 @@ import type { ApiInitialContext } from "./base"
 export type AdminGuardResult = { actor: CtxActor; admin?: AdminActor }
 
 type GuardInput = {
-  context: ApiInitialContext
+  context: Pick<ApiInitialContext, "platform" | "adminAuth" | "reqHeaders" | "resHeaders" | "https">
   ctx: Ctx
   /** Router path; the first element is `admin`. */
   path: readonly string[]

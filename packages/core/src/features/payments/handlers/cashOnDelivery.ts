@@ -14,6 +14,7 @@ export const cashOnDeliveryArgs = z.object({
 export const cashOnDelivery: PaymentHandler = {
   code: "cashOnDelivery",
   kind: "manual",
+  settleOnConfirm: true,
   async createCheckout(_ctx, target, args) {
     const a = parseArgs(cashOnDeliveryArgs, args)
     return { pending: true, instructions: { fee: a.fee, currency: target.currency } }

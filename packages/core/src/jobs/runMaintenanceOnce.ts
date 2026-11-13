@@ -1,6 +1,8 @@
+import { reconcileJob, sweepExpired } from "../features/checkout"
 import { purgeExpired } from "../features/idempotency"
 import { purgeSent, requeueStuck } from "../features/outbox"
 import { OUTBOX_LIMITS, type OutboxLimits } from "../features/outbox/types"
+import type { PaymentRegistry } from "../features/payments"
 import { claimRun } from "../features/scheduled"
 import { finishRun } from "../features/scheduled/queries/finishRun"
 import type { Platform } from "../platform"
@@ -14,6 +16,12 @@ export const MAINTENANCE_TASKS = {
   purgeIdempotency: "idempotency.purge_expired",
 } as const
 
+/** Checkout jobs (05-sepet §4, §6); they run only when a payment registry is given. */
+export const CHECKOUT_TASKS = {
+  sweepExpired: "checkout.sweep_expired",
+  reconcile: "checkout.reconcile",
+} as const
+
 export type MaintenanceTaskResult = {
   /** `false` = the period was already claimed by another trigger; the job did not run. */
   ran: boolean
@@ -23,13 +31,16 @@ export type MaintenanceTaskResult = {
 
 export type MaintenanceResult = {
   period: number
-  tasks: Record<keyof typeof MAINTENANCE_TASKS, MaintenanceTaskResult>
+  tasks: Record<keyof typeof MAINTENANCE_TASKS, MaintenanceTaskResult> &
+    Partial<Record<keyof typeof CHECKOUT_TASKS, MaintenanceTaskResult>>
 }
 
 export type RunMaintenanceOnceInput = {
   now: number
   periodMs?: number
   limits?: OutboxLimits
+  /** Installed payment methods; enables the manual-method sweep and reconciliation. */
+  payments?: Pick<PaymentRegistry, "all">
 }
 
 function describeError(error: unknown): string {
@@ -38,7 +49,8 @@ function describeError(error: unknown): string {
 
 /**
  * Sweep jobs: requeue stuck `sending` rows, delete old `sent` rows, delete expired
- * idempotency keys. Each job runs **once per period** via `claimRun`; even if two
+ * idempotency keys; with a payment registry also the manual-method checkout sweep and
+ * reconciliation. Each job runs **once per period** via `claimRun`; even if two
  * consumers trigger at the same time only one takes the row. One job's failure does not stop the others.
  */
 export async function runMaintenanceOnce(
@@ -79,8 +91,25 @@ export async function runMaintenanceOnce(
     purgeExpired(platform, input.now),
   )
 
-  return {
-    period,
-    tasks: { requeueStuck: requeue, purgeSent: sent, purgeIdempotency: idempotency },
+  const tasks: MaintenanceResult["tasks"] = {
+    requeueStuck: requeue,
+    purgeSent: sent,
+    purgeIdempotency: idempotency,
   }
+  const { payments } = input
+  if (payments) {
+    const ctx = { platform, now: input.now }
+    const manual = payments
+      .all()
+      .filter((m) => m.handler.kind === "manual" && !m.handler.settleOnConfirm)
+      .map((m) => m.id)
+    tasks.sweepExpired = await run(CHECKOUT_TASKS.sweepExpired, () =>
+      sweepExpired(ctx, { methodIds: manual }),
+    )
+    tasks.reconcile = await run(CHECKOUT_TASKS.reconcile, async () => {
+      const r = await reconcileJob(ctx, { payments })
+      return r.changed + r.refunds
+    })
+  }
+  return { period, tasks }
 }

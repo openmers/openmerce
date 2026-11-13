@@ -83,7 +83,7 @@ function allHold(op: StockOp, lines: readonly StockLine[], ref: StockRef): SQL {
 }
 
 function assertRef(ref: StockRef): void {
-  if (!Number.isSafeInteger(ref.id) || ref.id < 1) {
+  if (typeof ref.id === "number" && (!Number.isSafeInteger(ref.id) || ref.id < 1)) {
     throw new StockError("INVALID_INPUT", "referans kimliği pozitif tamsayı olmalı")
   }
 }
@@ -94,18 +94,24 @@ export function stockOpGuard(op: StockOp, lines: readonly StockLine[], ref: Stoc
   return allHold(op, aggregate(lines), ref)
 }
 
-/** İki ifade; ikisinin sayısı da ya toplanmış kalem sayısıdır ya 0 (sıra işleme göre, yukarı bkz.). */
+/**
+ * Two statements; each affects either the aggregated line count or 0 (order per op, see above).
+ * `extra`: the caller's additional condition (e.g. "reservation still `active`"); both statements
+ * are bound to it, so it must only read tables neither statement writes.
+ */
 export function stockOpStatements(
   op: StockOp,
   lines: readonly StockLine[],
   ref: StockRef,
   now: number,
+  extra?: SQL,
 ): AtomicStatement[] {
   assertRef(ref)
   const items = aggregate(lines)
   const spec = OPS[op]
   const req = requestTable(items)
-  const guard = allHold(op, items, ref)
+  const holds = allHold(op, items, ref)
+  const guard = extra ? sql`${holds} AND (${extra})` : holds
   const n = `(SELECT req.n FROM ${req} AS req
     WHERE req.variant_id = "stock_levels"."variant_id" AND req.location_id = "stock_levels"."location_id")`
   const movement = sqlStatement(sql`INSERT INTO "stock_movements"
@@ -120,9 +126,9 @@ export function stockOpStatements(
   return spec.ref ? [update, movement] : [movement, update]
 }
 
-export const reserveStatements = (lines: readonly StockLine[], ref: StockRef, now: number) =>
-  stockOpStatements("reserve", lines, ref, now)
-export const releaseStatements = (lines: readonly StockLine[], ref: StockRef, now: number) =>
-  stockOpStatements("release", lines, ref, now)
+type OpArgs = [lines: readonly StockLine[], ref: StockRef, now: number, extra?: SQL]
+
+export const reserveStatements = (...args: OpArgs) => stockOpStatements("reserve", ...args)
+export const releaseStatements = (...args: OpArgs) => stockOpStatements("release", ...args)
 export const commitStatements = (lines: readonly StockLine[], ref: StockRef, now: number) =>
   stockOpStatements("commit", lines, ref, now)

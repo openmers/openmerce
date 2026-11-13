@@ -6,5 +6,8 @@
   "license": "MIT",
   "exports": {
     ".": "./src/index.ts"
+  },
+  "scripts": {
+    "build:theme": "node build-theme.mjs"
   }
 }

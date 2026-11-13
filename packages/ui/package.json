@@ -5,6 +5,21 @@
   "type": "module",
   "license": "MIT",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./theme.css": "./src/theme.css"
+  },
+  "dependencies": {
+    "@internationalized/date": "^3.12.4",
+    "@lucide/svelte": "^1.72.0",
+    "@tanstack/table-core": "^9.3.1",
+    "bits-ui": "^2.21.0",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "dequal": "^2.0.3",
+    "svelte-sonner": "^1.2.3",
+    "tailwind-merge": "^3.7.0"
+  },
+  "scripts": {
+    "playground": "vite --config playground/vite.config.ts"
   }
 }

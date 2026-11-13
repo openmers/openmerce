@@ -6,5 +6,10 @@
   "license": "MIT",
   "exports": {
     ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@openmers/db": "workspace:*",
+    "@types/better-sqlite3": "9.6.0",
+    "better-sqlite3": "13.1.1"
   }
 }

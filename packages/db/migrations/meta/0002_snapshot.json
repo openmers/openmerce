@@ -1,0 +1,406 @@
+{
+  "version": "6",
+  "dialect": "sqlite",
+  "id": "fc0b5486-bdea-41b1-a55c-048b47d9fb28",
+  "prevId": "4c7042fc-2fe5-4fdb-8114-32c1269f4a79",
+  "tables": {
+    "channel_domains": {
+      "name": "channel_domains",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "channel_id": {
+          "name": "channel_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "domain": {
+          "name": "domain",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "default_lang": {
+          "name": "default_lang",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "is_primary": {
+          "name": "is_primary",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": false
+        },
+        "secondary_mode": {
+          "name": "secondary_mode",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "channel_domains_domain_uq": {
+          "name": "channel_domains_domain_uq",
+          "columns": ["domain"],
+          "isUnique": true
+        },
+        "channel_domains_primary_uq": {
+          "name": "channel_domains_primary_uq",
+          "columns": ["channel_id"],
+          "isUnique": true,
+          "where": "\"channel_domains\".\"is_primary\" = 1"
+        },
+        "channel_domains_channel_idx": {
+          "name": "channel_domains_channel_idx",
+          "columns": ["channel_id"],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "channel_domains_channel_id_channels_id_fk": {
+          "name": "channel_domains_channel_id_channels_id_fk",
+          "tableFrom": "channel_domains",
+          "tableTo": "channels",
+          "columnsFrom": ["channel_id"],
+          "columnsTo": ["id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "channel_domains_domain_ck": {
+          "name": "channel_domains_domain_ck",
+          "value": "\"channel_domains\".\"domain\" = lower(\"channel_domains\".\"domain\")"
+        },
+        "channel_domains_secondary_mode_ck": {
+          "name": "channel_domains_secondary_mode_ck",
+          "value": "\"channel_domains\".\"secondary_mode\" IN ('redirect', 'serve')"
+        },
+        "channel_domains_primary_mode_ck": {
+          "name": "channel_domains_primary_mode_ck",
+          "value": "(\"channel_domains\".\"is_primary\" = 1) = (\"channel_domains\".\"secondary_mode\" IS NULL)"
+        }
+      }
+    },
+    "channels": {
+      "name": "channels",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "public_id": {
+          "name": "public_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "code": {
+          "name": "code",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "type": {
+          "name": "type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'b2c'"
+        },
+        "default_currency": {
+          "name": "default_currency",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "currencies": {
+          "name": "currencies",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "default_lang": {
+          "name": "default_lang",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'en'"
+        },
+        "langs": {
+          "name": "langs",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "prices_include_tax": {
+          "name": "prices_include_tax",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": false
+        },
+        "access": {
+          "name": "access",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'public'"
+        },
+        "guest_checkout": {
+          "name": "guest_checkout",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": true
+        },
+        "min_order_amounts": {
+          "name": "min_order_amounts",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "sync_prices": {
+          "name": "sync_prices",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": false
+        },
+        "statement_name": {
+          "name": "statement_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "timezone": {
+          "name": "timezone",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'UTC'"
+        },
+        "is_default": {
+          "name": "is_default",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": false
+        },
+        "settings": {
+          "name": "settings",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'{}'"
+        },
+        "settings_version": {
+          "name": "settings_version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "channels_public_id_uq": {
+          "name": "channels_public_id_uq",
+          "columns": ["public_id"],
+          "isUnique": true
+        },
+        "channels_code_uq": {
+          "name": "channels_code_uq",
+          "columns": ["code"],
+          "isUnique": true
+        },
+        "channels_default_uq": {
+          "name": "channels_default_uq",
+          "columns": ["is_default"],
+          "isUnique": true,
+          "where": "\"channels\".\"is_default\" = 1"
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "channels_code_ck": {
+          "name": "channels_code_ck",
+          "value": "\"channels\".\"code\" = lower(\"channels\".\"code\")"
+        },
+        "channels_type_ck": {
+          "name": "channels_type_ck",
+          "value": "\"channels\".\"type\" IN ('b2c', 'b2b', 'hybrid')"
+        },
+        "channels_default_currency_ck": {
+          "name": "channels_default_currency_ck",
+          "value": "length(\"channels\".\"default_currency\") = 3"
+        },
+        "channels_access_ck": {
+          "name": "channels_access_ck",
+          "value": "\"channels\".\"access\" IN ('public', 'login_required', 'approved_companies_only')"
+        },
+        "channels_min_order_amounts_ck": {
+          "name": "channels_min_order_amounts_ck",
+          "value": "json_type(\"channels\".\"min_order_amounts\") = 'object'"
+        },
+        "channels_settings_ck": {
+          "name": "channels_settings_ck",
+          "value": "json_type(\"channels\".\"settings\") = 'object'"
+        }
+      }
+    },
+    "settings": {
+      "name": "settings",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "scope": {
+          "name": "scope",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "scope_id": {
+          "name": "scope_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
+        },
+        "key": {
+          "name": "key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "value": {
+          "name": "value",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "settings_scope_key_uq": {
+          "name": "settings_scope_key_uq",
+          "columns": ["scope", "scope_id", "key"],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "settings_scope_ck": {
+          "name": "settings_scope_ck",
+          "value": "\"settings\".\"scope\" IN ('global', 'channel', 'admin_user', 'customer', 'built_in_app')"
+        },
+        "settings_scope_id_ck": {
+          "name": "settings_scope_id_ck",
+          "value": "(\"settings\".\"scope\" IN ('global', 'built_in_app')) = (\"settings\".\"scope_id\" = 0)"
+        },
+        "settings_key_ck": {
+          "name": "settings_key_ck",
+          "value": "length(\"settings\".\"key\") > 0"
+        }
+      }
+    }
+  },
+  "views": {},
+  "enums": {},
+  "_meta": {
+    "schemas": {},
+    "tables": {},
+    "columns": {}
+  },
+  "internal": {
+    "indexes": {}
+  }
+}

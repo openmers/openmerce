@@ -1,0 +1,97 @@
+{
+  "version": "6",
+  "dialect": "sqlite",
+  "id": "4c7042fc-2fe5-4fdb-8114-32c1269f4a79",
+  "prevId": "052be83c-2c07-40d0-9cf1-6f5bc3d42c2f",
+  "tables": {
+    "settings": {
+      "name": "settings",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "scope": {
+          "name": "scope",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "scope_id": {
+          "name": "scope_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
+        },
+        "key": {
+          "name": "key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "value": {
+          "name": "value",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "settings_scope_key_uq": {
+          "name": "settings_scope_key_uq",
+          "columns": ["scope", "scope_id", "key"],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "settings_scope_ck": {
+          "name": "settings_scope_ck",
+          "value": "\"settings\".\"scope\" IN ('global', 'channel', 'admin_user', 'customer', 'built_in_app')"
+        },
+        "settings_scope_id_ck": {
+          "name": "settings_scope_id_ck",
+          "value": "(\"settings\".\"scope\" IN ('global', 'built_in_app')) = (\"settings\".\"scope_id\" = 0)"
+        },
+        "settings_key_ck": {
+          "name": "settings_key_ck",
+          "value": "length(\"settings\".\"key\") > 0"
+        }
+      }
+    }
+  },
+  "views": {},
+  "enums": {},
+  "_meta": {
+    "schemas": {},
+    "tables": {},
+    "columns": {}
+  },
+  "internal": {
+    "indexes": {}
+  }
+}

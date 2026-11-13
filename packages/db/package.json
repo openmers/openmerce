@@ -5,6 +5,22 @@
   "type": "module",
   "license": "MIT",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./migrator": "./src/migrator/plan.ts",
+    "./testing": "./src/testing/sqlite.ts"
+  },
+  "scripts": {
+    "db:generate": "drizzle-kit generate --name",
+    "db:custom": "drizzle-kit generate --custom --name",
+    "db:check": "drizzle-kit check",
+    "db:migrate:local": "node scripts/migrate-local.ts"
+  },
+  "dependencies": {
+    "drizzle-orm": "0.45.4"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "9.6.0",
+    "better-sqlite3": "13.1.1",
+    "drizzle-kit": "0.31.11"
   }
 }

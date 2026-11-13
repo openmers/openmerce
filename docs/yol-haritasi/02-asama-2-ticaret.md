@@ -22,7 +22,7 @@
 - **Bağımlılık:** madde 6 (db), 7 (yapılandırma/`settings`), 8 (`Ctx`), 10 (önbellek etiketi), 11 (kanal başına rol).
 - **Yapılacaklar:**
   1. `+` `packages/db/src/schema/channels.ts`: `channels` (`code`, `public_id`, `type`, para birimleri, diller, `prices_include_tax`, varsayılan bölge/fiyat listesi, erişim, misafir, en az tutar, `sync_prices`, `statement_name`, `settings_version`), `channel_domains`; ilk migration + varsayılan kanal tohumu.
-  2. `-` `packages/db/src/schema/channel-links.ts`: `product_channels`, `variant_channels`, `collection_channels` vb. bağlantı tabloları (katalog tablolarıyla aynı migration serisinde, madde 15'e bağlı).
+  2. `+` `packages/db/src/schema/channel-links.ts`: `product_channels`, `variant_channels`, `collection_channels` vb. bağlantı tabloları (katalog tablolarıyla aynı migration serisinde, madde 15'e bağlı). (2026-11-13: `catalog-products.ts`/`catalog-collections.ts` içinde, 0006; `channel_stock_locations` `stock.ts`, 0009.)
   3. `+` `packages/core/src/features/channels/types.ts` + `defaultChannel.ts`: kanal domain tipi, varsayılan kanalın silinemez kuralı (saf).
   4. `+` `features/channels/resolve/resolveChannel.ts` (saf): `Host` veya yayınlanabilir anahtar → kanal; bilinmeyen alan adı için tipli `UNKNOWN_DOMAIN` hatası.
   5. `+` `features/channels/registry/channelRegistry.ts`: kanal + alan adı tablosunu belleğe yükler, `settings_version` değişince yeniler; sorgu yalnız `queries/loadChannels.ts` içinde.
@@ -52,7 +52,7 @@
   - Görsel çözümleme sırası varyant → seçenek değeri → ürün, indeksleme anında; tüm sorgular imleçli ve `EXPLAIN QUERY PLAN` testli.
 - **Bağımlılık:** madde 14 (kanal bağlantıları), 6, 9 (`reindex` işi outbox'ta), 10 (etiket temizliği); fiyat ve stok kovası için 16 ve 17'nin `index.ts` yüzeyi (önce sahte değil, en az `base` fiyat ve kova okuyucusu).
 - **Yapılacaklar:**
-  1. `-` `packages/db/src/schema/catalog-products.ts`, `catalog-options.ts`, `catalog-facets.ts`, `catalog-collections.ts`, `catalog-assets.ts`: yazma tabloları + çeviri tabloları, ayrı migration'lar.
+  1. `+` `packages/db/src/schema/catalog-products.ts`, `catalog-options.ts`, `catalog-facets.ts`, `catalog-collections.ts`, `catalog-assets.ts`: yazma tabloları + çeviri tabloları, ayrı migration'lar. (2026-11-13: tek `0006_catalog` migration'ı; dosyalar `catalog-products/options/facets/collections.ts`, `product_assets` `catalog-options.ts`'te. Bağlantılar `variant_option_values`, `product_facet_values`, `variant_facet_values` dahil.)
   2. `-` `packages/db/src/schema/catalog-index.ts`: `catalog_index`, `catalog_index_facets`, `catalog_index_collections`, `product_view`, `catalog_fts` (FTS5 sanal tablo migration'ı D1 ve SQLite'ta).
   3. `-` `features/catalog/products/{createProduct,updateProduct,deleteProduct}.ts` (`atomic()` + `reindex` olayı); `features/catalog/variants/*.ts` (en az bir varyant kuralı saf `assertHasVariant.ts`).
   4. `-` `features/catalog/collections/resolveFilters.ts` (saf): `inherit_filters` ile kendi + üst filtrelerin kesişimi; `recomputeMembership.ts` (parçalı iş, dal başına).
@@ -84,7 +84,7 @@
   - İstemci fiyatı asla kullanılmaz; kur dönüşümü istek anında değil, zamanlanmış görevle hedef listeye yazılır; `prices.setMany` parçalı ve idempotent.
 - **Bağımlılık:** 14 (kanal varsayılan listesi), 15 (varyant), 12 (oturum kümesi), 10 (`pl:<id>` etiketi ve segment), 7 (strateji kaydı).
 - **Yapılacaklar:**
-  1. `-` `packages/db/src/schema/pricing.ts`: üç tablo + `(variant_id, price_list_id)` indeksi; migration.
+  1. `+` `packages/db/src/schema/pricing.ts`: üç tablo + `(variant_id, price_list_id)` indeksi; migration. (2026-11-13: `0008_pricing`, `currency_rates` dahil dört tablo + `channels.default_price_list_id`; ayrı `(variant_id, price_list_id)` indeksi yok, katalog gereği PK `(price_list_id, variant_id, min_qty)` karşılar, plan testi var.)
   2. `-` `features/pricing/types.ts`: `PriceCandidate`, `SelectedPrice`, strateji tipleri.
   3. `-` `features/pricing/strategies/priceSelection.ts` (saf, varsayılan strateji) ve `linePrice.ts` (saf; kişiselleştirme ek ücreti `amount`/`percent`, para birimi başına).
   4. `-` `features/pricing/queries/loadPrices.ts`: tek `IN` sorgusu (varyantlar × liste kimlikleri).
@@ -113,7 +113,7 @@
   - Paket birimi: `base_variant_id?` + `unit_factor` (≥ 1); paket varyantının `stock_levels` satırı yok, zincir yok; satılabilir `floor(taban / unit_factor)`; sipariş satırında `stock_units` anlık görüntü; çarpan değişikliği açık rezervasyon varken reddedilir. `lead_time_days` yalnız gösterim.
 - **Bağımlılık:** 15 (varyant, `reindex`), 14 (kanal–depo), 5 (`atomic()`); rezervasyon satırı madde 21 ile birlikte biter.
 - **Yapılacaklar:**
-  1. `-` `packages/db/src/schema/stock.ts`: dört tablo + `stock_movements.units`; varyanta `base_variant_id`, `unit_factor`, `allow_backorder`, `lead_time_days` sütunları (katalog migration'ına ek, ayrı migration).
+  1. `+` `packages/db/src/schema/stock.ts`: dört tablo + `stock_movements.units`; varyanta `base_variant_id`, `unit_factor`, `allow_backorder`, `lead_time_days` sütunları (katalog migration'ına ek, ayrı migration). (2026-11-13: `0009_stock`; varyant sütunları 0006 `product_variants`'ta.)
   2. `-` `features/stock/available/computeAvailable.ts` (saf): kanal depoları üzerinden toplam, paket için `floor`, backorder alt sınırı.
   3. `-` `features/stock/strategies/stockDisplay.ts` (saf, kova eşikleri) ve `stockLocation.ts` (saf, öncelik sırası, tek depodan karşılama tercihi).
   4. `-` `features/stock/reserve/buildReserveStatements.ts`: aynı varyant kalemlerini toplar, paket → taban birim çevirir, koşullu `UPDATE` ifadelerini üretir (checkout `atomic()`'ine verilir).
@@ -143,7 +143,7 @@
   - Oran değişikliği yalnız yeni sepetleri etkiler; tevkifat/ÖTV e-fatura app'inde; dış vergi servisi `taxes:handle` senkron kanca, zaman aşımında yerel orana düşer. Türkiye oranları (%1, %10, %20) yalnız veri/tohum, çekirdek koduna gömülmez.
 - **Bağımlılık:** 14 (kanal varsayılan bölgesi), 15 (varyant vergi kategorisi), 7 (strateji kaydı); senkron kanca kısmı aşama 5 (genişletme).
 - **Yapılacaklar:**
-  1. `-` `packages/db/src/schema/tax.ts`: `zones`, `zone_members`, `tax_categories`, `tax_rates`; migration; tohum yalnız tek "standart" kategori (pazara özgü oran yok).
+  1. `±` `packages/db/src/schema/tax.ts`: `zones`, `zone_members`, `tax_categories`, `tax_rates`; migration; tohum yalnız tek "standart" kategori (pazara özgü oran yok). (2026-11-13: tablolar `tax-shipping.ts`, `0010_tax-shipping` + `channels` bölge sütunları; tohum kurulum sihirbazında (00-genel karar 11), yapılmadı.)
   2. `-` `features/tax/registry/taxRegistry.ts`: tabloları belleğe yükler, değişince yeniler; sorgu `queries/loadTaxConfig.ts`.
   3. `-` `features/tax/strategies/taxZone.ts` (saf) ve `taxLine.ts` (saf, varsayılan oran araması, müşteri grubu muafiyeti).
   4. `-` `features/tax/calc/splitGrossNet.ts` (saf): dahil/hariç dönüşüm, satır düzeyi yuvarlama; e-fatura app'inin de kullanacağı tek yardımcı olarak `index.ts`'ten açılır.
@@ -200,7 +200,7 @@
   - Mağazadan teslim: `pickup_enabled` depo, `stockLocation` o depoyu zorlar.
 - **Bağımlılık:** 17 (stok satış ifadeleri, `stockLocation`), 18 (zones, kargo vergi kategorisi), 23 (sipariş, teslimat durumu sütunu), 9 (outbox adımı), 25 (özel kova, dijital dosya), 7 (`legal_policy` ayarı).
 - **Yapılacaklar:**
-  1. `-` `packages/db/src/schema/shipping.ts` (`shipping_methods`, kanal bağlantısı) ve `fulfillment.ts` (`fulfillments`, `fulfillment_lines`), `returns.ts`, `digital.ts`; ayrı migration'lar.
+  1. `±` `packages/db/src/schema/shipping.ts` (`shipping_methods`, kanal bağlantısı) ve `fulfillment.ts` (`fulfillments`, `fulfillment_lines`), `returns.ts`, `digital.ts`; ayrı migration'lar. (2026-11-13: `shipping_methods` `tax-shipping.ts` 0010'da, `digital_assets` `media.ts` 0007'de; kanal bağlantısı, `fulfillment.ts`, `returns.ts` kaldı.)
   2. `-` `features/shipping/calculators/{flat,weightTier,desi,freeOver}.ts` (saf) + `eligibility/*.ts` (saf, bölge, pickup).
   3. `-` `features/shipping/quote/quoteShipping.ts` (saf): sepet ağırlık/desi, yalnız fiziksel kalemler, uygun yöntemler + ücret; canlı oran kancası portu `hooks/shippingRatePort.ts` (zaman aşımı + yedek ücret, sepet özeti anahtarıyla kısa önbellek).
   4. `-` `features/fulfillment/create/createFulfillment.ts` (`atomic()`: satırlar + `stock` satış ifadeleri + olay + durum sütunu) ve `handlers/manualHandler.ts`.
@@ -361,7 +361,7 @@
   - PDF/video önizlemesi yerleşik yok; video için `poster_media_id`.
 - **Bağımlılık:** madde 5 (`storage` portu Platform'da), 6, 11 (imzalı bağlantı, hız sınırı), 9 (süpürme işi).
 - **Yapılacaklar:**
-  1. `-` `packages/db/src/schema/media.ts`: `media` (`status`, `bucket`, `key`, `mime`, boyutlar, `owner_kind/owner_id`, `poster_media_id`), kullanım tabloları için ortak FK deseni; migration.
+  1. `+` `packages/db/src/schema/media.ts`: `media` (`status`, `bucket`, `key`, `mime`, boyutlar, `owner_kind/owner_id`, `poster_media_id`), kullanım tabloları için ortak FK deseni; migration. (2026-11-13: `0007_media`, `digital_assets` dahil.)
   2. `-` `features/media/storage/drivers/{r2,s3,local}.ts`: `storage` portunun üç uygulaması (Platform kurulumunda seçilir; `store.config.ts` `storage:` seçeneği).
   3. `-` `features/media/upload/{createUpload,confirmUpload}.ts`: imzalı URL, bekleyen kayıt; onayda HEAD + `sniffMagic.ts` (saf, ilk baytlardan tür ve boyut).
   4. `-` `features/media/images/sizeLadder.ts` (saf merdiven + `srcset`) ve `ImageProcessor` portu `images/port.ts`.

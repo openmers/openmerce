@@ -1,11 +1,11 @@
 # Veritabanı: genel dizin
 
-Tasarım belgelerindeki tüm tabloların kataloğu. Kod yazılmadan önce tek kaynak budur; şema bu dosyalardan çıkar, karar değişirse önce burası güncellenir. Durum 2026-11-13: `packages/db` kurulu; yazılan migration'lar `0000`-`0005` (`settings`, `channels`, `channel_domains`, yönetici kimliği/rol/politika, sırlar/anahtarlar/idempotency/denetim, outbox/zamanlanmış görev/`external_refs`: 22 tablo). Kalanlar `-`.
+Tasarım belgelerindeki tüm tabloların kataloğu. Kod yazılmadan önce tek kaynak budur; şema bu dosyalardan çıkar, karar değişirse önce burası güncellenir. Durum 2026-11-13: `packages/db` kurulu; yazılan migration'lar `0000`-`0010` (`settings`, `channels`, `channel_domains`, yönetici kimliği/rol/politika, sırlar/anahtarlar/idempotency/denetim, outbox/zamanlanmış görev/`external_refs`: 22 tablo; 0006-0010 katalog, medya, fiyat, stok, vergi-kargo: 36 tablo, toplam 58). 0006-0010 ileri FK'ları (`product_variants.tax_category_id` → 0010, `product_assets.asset_id` → 0007) SQLite'ın CREATE'te FK hedefini denetlememesine dayanır; 0011+ hedefleri (`customer_groups`, `companies`) FK'sız sütundur. Kalanlar `-`.
 
 | Dosya | Kapsam | Tablo |
 |---|---|---|
 | [01-cekirdek-isletme.md](01-cekirdek-isletme.md) | ayarlar, yönetici/rol/izin, kimlik, outbox, denetim, sırlar, idempotency, app kurulumları, kiracılık | 30 |
-| [02-ticaret.md](02-ticaret.md) | kanal, katalog, okuma modeli, fiyat, stok, sepet, checkout, ödeme, sipariş, promosyon, vergi, kargo, müşteri, içerik, bildirim, rapor (`currency_rates` dahil, `notification_types` yok) | 88 |
+| [02-ticaret.md](02-ticaret.md) | kanal, katalog, okuma modeli, fiyat, stok, sepet, checkout, ödeme, sipariş, promosyon, vergi, kargo, müşteri, içerik, bildirim, rapor (`currency_rates` dahil, `notification_types` yok) | 91 |
 | [03-b2b-istemci-genisletme.md](03-b2b-istemci-genisletme.md) | şirket, kredi, onay, teklif, tema, agentic builder, admin tercihleri, built-in app (`bia_`, `bia_efatura_*` dahil), tak-çalıştır app | 62 |
 
 Her tablo için: sahip feature, şema dosyası, kaynak belge, sütunlar, anahtar/indeks, kurallar, ilişkiler, yapılacaklar, açık sorular. "(öneri)" ve "(çıkarım)" işaretli ad ve türler belgede yoktur, kurala göre konmuştur.
@@ -46,7 +46,7 @@ Sıra bağımlılığa göredir (yabancı anahtarın hedefi önce). Numara `pack
 | 0003 | `admin-auth.ts`, `roles.ts` (dosya `0003_admin-auth.sql`) | `admin_users`, `admin_sessions`, `admin_accounts`, `admin_verifications`, `admin_two_factors`, `admin_passkeys`, `roles`, `role_permissions`, `admin_role_assignments`, `access_policies` | 01 |
 | 0004 | `security.ts` | `secrets`, `api_keys`, `channel_publishable_keys`, `idempotency_keys`, `audit_log`, `audit_anchors` | 01 |
 | 0005 | `events.ts` | `outbox`, `scheduled_runs`, `external_refs` | 01 |
-| 0006 | `catalog.ts` | `products`, `product_variants`, `product_options`, `option_values`, `facets`, `facet_values`, `collections`, `collection_variants`, `*_translations`, `product_assets`, `product_channels`, `variant_channels`, `collection_channels` | 02 |
+| 0006 | `catalog-{products,options,facets,collections}.ts` | `products`, `product_variants`, `product_options`, `option_values`, `facets`, `facet_values`, `collections`, `collection_variants`, `*_translations`, `product_assets`, `variant_option_values`, `product_facet_values`, `variant_facet_values`, `product_channels`, `variant_channels`, `collection_channels` | 02 |
 | 0007 | `media.ts` | `media`, `digital_assets` | 02 |
 | 0008 | `pricing.ts` | `price_lists`, `price_list_targets`, `prices`, `currency_rates` | 02 |
 | 0009 | `stock.ts` | `stock_locations`, `channel_stock_locations`, `stock_levels`, `stock_movements` | 02 |

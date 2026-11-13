@@ -43,6 +43,41 @@
       "when": 1794590988105,
       "tag": "0005_events",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1794595701642,
+      "tag": "0006_catalog",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "6",
+      "when": 1794595702390,
+      "tag": "0007_media",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1794595703273,
+      "tag": "0008_pricing",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "6",
+      "when": 1794595704008,
+      "tag": "0009_stock",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "6",
+      "when": 1794595704782,
+      "tag": "0010_tax-shipping",
+      "breakpoints": true
     }
   ]
 }

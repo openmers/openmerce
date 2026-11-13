@@ -34,6 +34,9 @@ const channel: Channel = {
   isDefault: true,
   settings: {},
   settingsVersion: 0,
+  defaultTaxZoneId: null,
+  defaultShippingZoneId: null,
+  defaultPriceListId: null,
   createdAt: 0,
   updatedAt: 0,
   domains: [

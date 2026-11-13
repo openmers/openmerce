@@ -1,9 +1,19 @@
 import { sql } from "drizzle-orm"
-import { check, index, integer, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core"
+import {
+  type AnySQLiteColumn,
+  check,
+  index,
+  integer,
+  sqliteTable,
+  text,
+  uniqueIndex,
+} from "drizzle-orm/sqlite-core"
 import { createdAt, publicId, updatedAt } from "./columns"
+import { priceLists } from "./pricing"
+import { zones } from "./tax-shipping"
 
 // 02-ticaret.md `channels` / `channel_domains`, 04-asama-1-db-plani §3.2. Zone ve fiyat listesi FK
-// sütunları hedef tabloların migration'ında eklemeli gelir (0008, 0010).
+// sütunları hedef tabloların migration'ında eklemeli geldi (0008, 0010).
 export const channels = sqliteTable(
   "channels",
   {
@@ -34,6 +44,15 @@ export const channels = sqliteTable(
       .notNull()
       .default(sql`'{}'`),
     settingsVersion: integer("settings_version").notNull().default(0),
+    // adres yokken kullanılan bölgeler (0010)
+    defaultTaxZoneId: integer("default_tax_zone_id").references((): AnySQLiteColumn => zones.id),
+    defaultShippingZoneId: integer("default_shipping_zone_id").references(
+      (): AnySQLiteColumn => zones.id,
+    ),
+    // kanal listeden önce oluşur; boşken kanal satış yapamaz (0008)
+    defaultPriceListId: integer("default_price_list_id").references(
+      (): AnySQLiteColumn => priceLists.id,
+    ),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },

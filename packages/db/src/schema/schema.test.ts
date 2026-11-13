@@ -79,10 +79,6 @@ describe("sqlite_master", () => {
     }
   })
 
-  it("ertelenen FK sütunları yok", () => {
-    expect(tableSql("channels")).not.toMatch(/zone_id|price_list_id/)
-  })
-
   it("d1_migrations bütün dosyaları kaydetti", () => {
     const names = db.prepare("SELECT name FROM d1_migrations ORDER BY id").pluck().all()
     expect(names).toEqual([
@@ -92,6 +88,11 @@ describe("sqlite_master", () => {
       "0003_admin-auth.sql",
       "0004_security.sql",
       "0005_events.sql",
+      "0006_catalog.sql",
+      "0007_media.sql",
+      "0008_pricing.sql",
+      "0009_stock.sql",
+      "0010_tax-shipping.sql",
     ])
   })
 })

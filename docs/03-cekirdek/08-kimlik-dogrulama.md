@@ -20,7 +20,7 @@ Neden ayrı: yönetici oturumu çalınması mağazanın tamamıdır; müşteri t
 ## 2. Müşteri girişi
 
 - **Yöntemler:** e-posta + parola, e-posta ile tek kullanımlık kod (parolasız), sosyal giriş (Google, Apple; kanal başına açılır). Telefon + SMS kodu isteğe bağlı eklentidir (ör. Türkiye'de yaygın) (SMS portu üzerinden).
-- **Parola:** Workers'ta çalışan bir özet algoritması gerekir (Web Crypto veya saf JS/WASM). *Better Auth'un varsayılanının Workers CPU sınırına uyup uymadığı ölçülmelidir.*
+- **Parola:** Workers'ta çalışan bir özet algoritması gerekir (Web Crypto veya saf JS/WASM). Better Auth 1.7.23 varsayılanı scrypt (N=16384, r=16, p=1, dkLen=64); `@better-auth/utils/password` "node"/"workerd" koşulunda `node:crypto` scrypt, diğer ortamlarda `@noble/hashes` saf JS kullanır — Web Crypto değil. Workers'ta `nodejs_compat` ve CPU/memory maliyeti (128·N·r ≈ 32 MB) ölçülmedi ⚠️.
 - **E-posta doğrulama** kanal ayarıdır; doğrulanmamış hesap sipariş verebilir ama hesap sayfasına giremez (misafir siparişle aynı güven düzeyi).
 - **Parola sıfırlama:** tek kullanımlık, kısa ömürlü token; yalnızca özeti saklanır; e-posta outbox'tan gider. Yanıt, hesabın var olup olmadığını belli etmez.
 - **Misafir → hesap:** müşteri e-posta başına tek kayıttır; kayıt aynı `customers` satırına `user_id` bağlar (yeni satır açılmaz), bağlama e-posta doğrulandıktan **sonra** yapılır. Ayrıntı: [../05-ticaret/11-musteriler.md](../05-ticaret/11-musteriler.md).

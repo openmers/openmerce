@@ -1,12 +1,12 @@
 # Veritabanı kataloğu: ticaret (docs/05-ticaret)
 
-> **Denetim (2026-11-13).** 89 `###` başlığı, 88 tablo (`currency_rates` dahil; `notification_types` kodda sabit liste olduğu için tablo değil). 343 karar işareti. Kalan açık 6, hepsi Denetim B'de ve dosya sonundaki listede. Denetim A'nın bölüm sonu açık soruları (sayaç tablosu, satır toplamı, indirim payları) işaretsiz metin olarak duruyor. Kapatılmamış çıkarım/öneri işareti yok. İki denetçi: **A** kanal–sipariş (bölüm 1–8: kanallar, katalog, okuma modeli, fiyat, stok, sepet/checkout, ödeme, sipariş), **B** promosyon–belge (bölüm 9–son: promosyon, vergi, kargo, iade, dijital, müşteri, medya, içerik, bildirim, günlük özet, belge). `public_id` öneklerinde çakışma yok.
+> **Denetim (2026-11-13).** 92 `###` başlığı, 91 tablo (2026-11-13 ek: üç katalog bağlantı tablosu) (`currency_rates` dahil; `notification_types` kodda sabit liste olduğu için tablo değil). 343 karar işareti. Kalan açık 6, hepsi Denetim B'de ve dosya sonundaki listede. Denetim A'nın bölüm sonu açık soruları (sayaç tablosu, satır toplamı, indirim payları) işaretsiz metin olarak duruyor. Kapatılmamış çıkarım/öneri işareti yok. İki denetçi: **A** kanal–sipariş (bölüm 1–8: kanallar, katalog, okuma modeli, fiyat, stok, sepet/checkout, ödeme, sipariş), **B** promosyon–belge (bölüm 9–son: promosyon, vergi, kargo, iade, dijital, müşteri, medya, içerik, bildirim, günlük özet, belge). `public_id` öneklerinde çakışma yok.
 
 **Kapsam.** `docs/05-ticaret/01..17` belgelerinin hepsi baştan sona okundu. Bu belgelerde geçen her tablo burada; tanımı başka belgede olan tablolar (şirket, kredi, `order_guest_access`, `external_refs`, `audit_log`, outbox, `invoices`, `customer_payment_methods`) yalnızca ilişki olarak anılır, sona "tanımı olmayan" listesine yazılır. Ek kaynak olarak yalnızca `docs/yol-haritasi/02-asama-2-ticaret.md` kullanıldı, o da yalnızca 05-ticaret belgelerinin sütun listesi vermediği yerlerde (`channels`, `media`, `payment_methods`) ve her seferinde "(yol haritası)" diye işaretlendi.
 
 **Grup özeti.** Kanallar ve kanal bağlantıları; katalog yazma modeli (ürün, varyant, seçenek, özellik, koleksiyon, çeviri, medya kullanımı); vitrin okuma modeli (`catalog_index`, iki eşleşme tablosu, FTS5, `product_view`); fiyat listeleri; depo ve stok; sepet ve checkout rezervasyonu; ödeme, bekleyen ödeme, para iadesi; sipariş ve alt tabloları; promosyon; vergi bölgeleri ve oranları; kargo yöntemi, gönderim, dijital ürün, ürün iadesi; müşteri modülü; medya; içerik, menü, yönlendirme; bildirim; günlük özet tabloları; belge sürümleri.
 
-**Tablo sayısı: 88** (`currency_rates` dahil; FTS5 sanal tabloları `catalog_fts` ve `customer_search` dahil. `notification_types` kodda sabit liste olduğu için sayıya girmez, notuna bakın).
+**Tablo sayısı: 91** (`currency_rates` dahil; FTS5 sanal tabloları `catalog_fts` ve `customer_search` dahil. `notification_types` kodda sabit liste olduğu için sayıya girmez, notuna bakın).
 
 ## Ortak kurallar (her tabloda geçerli, tekrar yazılmadı)
 
@@ -213,7 +213,7 @@ Kaynak: `docs/03-cekirdek/03-veri-kurallari.md`, `.claude/skills/database/openme
 
 - **Anahtar ve indeksler:** benzersiz `public_id`; `(deleted_at, updated_at)` (karar: admin listesi ve `updated_since` senkronu).
 - **Kurallar:** Ad, slug, açıklama ve çevrilebilir SEO alanları `product_translations` tablosunda. Ürünün en az bir varyantı olur. Her değişiklik `reindex(product_id)` yazar. Toplu içe aktarma `content_hash` aynıysa kaydı atlar. Silinen üründe ayara göre 301 ya da 410 döner.
-- **İlişkiler:** `product_variants`, `product_options`, `product_translations`, `product_channels`, `product_assets`, ürün–özellik değeri bağlantısı (katalogda yok, "Açık sorular (A)").
+- **İlişkiler:** `product_variants`, `product_options`, `product_translations`, `product_channels`, `product_assets`, `product_facet_values`.
 - **Yapılacaklar:**
   - şema
   - migration
@@ -257,7 +257,7 @@ Kaynak: `docs/03-cekirdek/03-veri-kurallari.md`, `.claude/skills/database/openme
   - Paket zinciri yoktur: taban varyant paket olamaz, taban ile paket aynı üründe olmalıdır. `CHECK (unit_factor >= 1)`.
   - Çarpan yalnızca açık rezervasyon veya sipariş yokken değişir. Paket varyantının `stock_levels` satırı olmaz.
   - Fiyat ve stok her zaman varyanttadır.
-- **İlişkiler:** `products`, `option_values` (kombinasyon bağlantısı katalogda yok, "Açık sorular (A)"), `stock_levels`, `prices`, `variant_channels`, `digital_assets`, `product_assets`, `cart_lines`, `order_lines`.
+- **İlişkiler:** `products`, `option_values` (kombinasyon `variant_option_values` ile), `variant_facet_values`, `stock_levels`, `prices`, `variant_channels`, `digital_assets`, `product_assets`, `cart_lines`, `order_lines`.
 - **Yapılacaklar:**
   - şema
   - migration
@@ -337,7 +337,7 @@ Kaynak: `docs/03-cekirdek/03-veri-kurallari.md`, `.claude/skills/database/openme
 
 - **Anahtar ve indeksler:** benzersiz `(facet_id, code)` (karar; `(facet_id)` aramasını da karşılar).
 - **Kurallar:** Değer ürüne ya da varyanta bağlanır. Filtre `catalog_index_facets` üzerinden çalışır. Ad `facet_value_translations(facet_value_id, lang, name)` tablosunda (karar: veri kuralları bölüm 5; tablo katalogda yok).
-- **İlişkiler:** `facets`, `catalog_index_facets`, ürün/varyant–özellik bağlantısı (katalogda yok, "Açık sorular (A)").
+- **İlişkiler:** `facets`, `catalog_index_facets`, `product_facet_values`, `variant_facet_values`.
 - **Yapılacaklar:**
   - şema
   - migration
@@ -458,6 +458,61 @@ Kaynak: `docs/03-cekirdek/03-veri-kurallari.md`, `.claude/skills/database/openme
   - şema
   - migration
   - yarış testi: medya silme ile atama
+- **Açık sorular:** —
+
+### `variant_option_values`
+- **Sahip:** `features/catalog`, şema `schema/catalog-options.ts` (karar: `00-genel.md` 0006; "Açık sorular (A)" kapandı 2026-11-13).
+- **Kaynak:** `02-katalog-ve-arama.md` bölüm 1.
+
+| ad | tür | boş olabilir mi | açıklama |
+|---|---|---|---|
+| `variant_id` | INTEGER FK `product_variants` | hayır | |
+| `option_id` | INTEGER FK `product_options` | hayır | değerin seçeneği; `(option_value_id, option_id)` bileşik FK ile `option_values(id, option_id)`'ye bağlı (karar: kuralı DB zorlar) |
+| `option_value_id` | INTEGER FK `option_values` | hayır | |
+| `created_at` | INTEGER | hayır | (karar: bağlantı satırı güncellenmez, sil + ekle; `public_id` yok) |
+
+- **Anahtar ve indeksler:** PK `(variant_id, option_value_id)`; benzersiz `(variant_id, option_id)`; ters arama `(option_value_id, variant_id)`. `option_values` üzerinde bileşik FK hedefi için benzersiz `(id, option_id)`. WITHOUT ROWID değil (drizzle-kit üretmiyor).
+- **Kurallar:** Varyantın seçenek değeri kombinasyonu. Bir varyant aynı seçenekten en çok bir değer taşır.
+- **İlişkiler:** `product_variants`, `option_values`.
+- **Yapılacaklar:**
+  - şema
+  - migration
+- **Açık sorular:** —
+
+### `product_facet_values`
+- **Sahip:** `features/catalog`, şema `schema/catalog-facets.ts` (karar: `00-genel.md` 0006; "Açık sorular (A)" kapandı 2026-11-13).
+- **Kaynak:** `02-katalog-ve-arama.md` bölüm 1.
+
+| ad | tür | boş olabilir mi | açıklama |
+|---|---|---|---|
+| `product_id` | INTEGER FK `products` | hayır | |
+| `facet_value_id` | INTEGER FK `facet_values` | hayır | |
+| `created_at` | INTEGER | hayır | (karar: bağlantı satırı güncellenmez, sil + ekle; `public_id` yok) |
+
+- **Anahtar ve indeksler:** PK `(product_id, facet_value_id)`; ters arama `(facet_value_id, product_id)`.
+- **Kurallar:** Ürün düzeyi özellik değeri; değişiklik `reindex` yazar.
+- **İlişkiler:** `products`, `facet_values`.
+- **Yapılacaklar:**
+  - şema
+  - migration
+- **Açık sorular:** —
+
+### `variant_facet_values`
+- **Sahip:** `features/catalog`, şema `schema/catalog-facets.ts` (karar: `00-genel.md` 0006; "Açık sorular (A)" kapandı 2026-11-13).
+- **Kaynak:** `02-katalog-ve-arama.md` bölüm 1.
+
+| ad | tür | boş olabilir mi | açıklama |
+|---|---|---|---|
+| `variant_id` | INTEGER FK `product_variants` | hayır | |
+| `facet_value_id` | INTEGER FK `facet_values` | hayır | |
+| `created_at` | INTEGER | hayır | (karar: bağlantı satırı güncellenmez, sil + ekle; `public_id` yok) |
+
+- **Anahtar ve indeksler:** PK `(variant_id, facet_value_id)`; ters arama `(facet_value_id, variant_id)`.
+- **Kurallar:** Varyant düzeyi özellik değeri; değişiklik `reindex` yazar.
+- **İlişkiler:** `product_variants`, `facet_values`.
+- **Yapılacaklar:**
+  - şema
+  - migration
 - **Açık sorular:** —
 
 ---
@@ -2294,8 +2349,8 @@ Kaynak: `docs/03-cekirdek/03-veri-kurallari.md`, `.claude/skills/database/openme
 | Ad / kavram | Geçtiği yer | Durum |
 |---|---|---|
 | `promotion_channels`, `shipping_method_channels`, `payment_method_channels`, `stock_location` ve rol kanal bağlantıları | 01 bölüm 2 (`<varlık>_channels`), veri kuralları bölüm 4 | Denetim B: `promotion_channels(promotion_id, channel_id)` ve `shipping_method_channels(shipping_method_id, channel_id)` adları karar, PK iki sütun, ek indeks `(channel_id)`; tablo bölümü yazılmalı, 00-genel 0010/0012 listesine eklenmeli. Rol kanal bağlantısı 00-genel karar 1 ile kalktı (`admin_role_assignments.channel_id`) |
-| Ürün/varyant–özellik değeri bağlantısı | 02 bölüm 1 ("ürün veya varyanta bağlanır") | belgede yok |
-| Varyant–seçenek değeri bağlantısı | 02 bölüm 1 ("seçenek değerleri kombinasyonu") | belgede yok |
+| Ürün/varyant–özellik değeri bağlantısı | 02 bölüm 1 ("ürün veya varyanta bağlanır") | kapandı (2026-11-13): `product_facet_values`, `variant_facet_values` |
+| Varyant–seçenek değeri bağlantısı | 02 bölüm 1 ("seçenek değerleri kombinasyonu") | kapandı (2026-11-13): `variant_option_values` |
 | Diğer `*_translations` (varyant, seçenek, özellik, yazı, menü öğesi) | 02 bölüm 1, 13 bölüm 1 | Denetim B: `post_translations` (sütunlar `posts` kurallarında) ve `menu_item_translations(menu_item_id, lang, label)` karar; tablo bölümü yazılmalı, 00-genel 0018 listesine eklenmeli. Varyant/seçenek/özellik ilk yarının işi |
 | Elle koleksiyon üyeliği | 02 bölüm 1 | belgede yok |
 | Sipariş numarası sayaç tablosu | 07 bölüm 6 ("sayaç satırı") | belgede yok |

@@ -41,6 +41,7 @@ async function harness(over: { channels?: Pick<ChannelRegistry, "get"> } = {}): 
     // HTTPS kapalı: testte HTTP; HSTS yazılmamalı.
     https: false,
     requestId: () => "req_test",
+    authSecret: "test-auth-secret-0123456789abcdef0123",
   })
 
   return {

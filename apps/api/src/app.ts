@@ -7,6 +7,7 @@ import {
 } from "@openmers/core"
 import type { Context } from "hono"
 import { Hono } from "hono"
+import { createAdminAuth } from "./auth/adminAuth"
 import type { AppEnv } from "./http/env"
 import { apiError } from "./http/errors"
 import { isHttps, type SecureOptions, secureResponse } from "./http/secure"
@@ -21,6 +22,8 @@ export type AppOptions = SecureOptions & {
   channels: Pick<ChannelRegistry, "get">
   now?: () => number
   requestId?: () => string
+  /** Yönetici oturum çerezi imzası (Better Auth `secret`), en az 32 karakter. */
+  authSecret: string
   /** Hız sınırlayıcı hatası logu (fail-open); varsayılan `console.error`. */
   log?: (message: string, error: unknown) => void
 }
@@ -58,6 +61,7 @@ function resolveOrNull(input: {
 export function createApp(opts: AppOptions): Hono<AppEnv> {
   const app = new Hono<AppEnv>()
   const secure = (c: Context<AppEnv>, res: Response) => secureResponse(c, res, opts)
+  const adminAuth = createAdminAuth({ db: opts.platform.db, secret: opts.authSecret })
 
   // 1) En dış ara katman: istek kimliği + güvenlik başlıkları (hata/404 dahil).
   app.use("*", async (c, next) => {
@@ -88,6 +92,9 @@ export function createApp(opts: AppOptions): Hono<AppEnv> {
       channelHeader,
       now,
       requestId: c.get("requestId"),
+      adminAuth,
+      reqHeaders: c.req.raw.headers,
+      https: isHttps(c, opts.https),
     }
     c.set("apiContext", context)
     c.set("channel", resolved.channel.code)

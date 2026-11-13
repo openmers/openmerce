@@ -1,3 +1,4 @@
+export { type AdminAccess, adminProcedure, getAdminAccess } from "./adminProcedure"
 export { BULK_MAX_RECORDS, bulkInput, bulkResult, bulkResults } from "./bulk"
 export {
   type ErrorCode,

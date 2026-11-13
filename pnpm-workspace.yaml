@@ -8,3 +8,6 @@ packages:
 # pnpm 10 kurulum betiklerini varsayılan engeller; better-sqlite3 yerel ikilisini derler/indirir.
 onlyBuiltDependencies:
   - better-sqlite3
+
+# drizzle-orm tek örnekte çözülsün (better-auth + db aynı tipleri görsün).
+dedupePeerDependents: true

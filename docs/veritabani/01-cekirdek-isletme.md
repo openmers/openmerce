@@ -97,7 +97,7 @@ Yönetici tabloları Better Auth'un ikinci örneğidir: `user` → `admin_users`
 |---|---|---|---|
 | id | integer | hayır | |
 | admin_user_id | integer FK → `admin_users` | hayır | Better Auth `session.userId` |
-| token | text | hayır | (karar: Better Auth `session.token`; çerez `om_a`. (Better Auth 1.7.23 doğrulandı: özetleme seçeneği yok, düz saklanır; özet gerekiyorsa adaptörde, açık 3) |
+| token | text | hayır | (karar: Better Auth `session.token`; çerez `om_a`. (Better Auth 1.7.23 doğrulandı: özetleme seçeneği yok; 2026-11-13: adaptör sarmalayıcısıyla yalnız SHA-256 özeti saklanır, `apps/api/src/auth/hashedSessions.ts`) |
 | expires_at | integer | hayır | kısa ve kayan (karar: hareketsizlik = kayan kısa süre, Better Auth `expiresIn` + `updateAge`; ayrı `last_seen_at` yok) |
 | ip_address | text | evet | (karar: Better Auth alanı; kişisel veri, oturumla silinir) |
 | user_agent | text | evet | (karar: Better Auth alanı) |

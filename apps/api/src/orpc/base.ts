@@ -8,6 +8,9 @@ import {
   type Platform,
 } from "@openmers/core"
 import { implement, ORPCError } from "@orpc/server"
+import type { ResponseHeadersHandlerPluginContext } from "@orpc/server/plugins"
+import type { AdminAuth } from "../auth/adminAuth"
+import { type AdminGuardResult, requirePermission } from "./requirePermission"
 
 /**
  * oRPC kökü (`02-api-ve-istek-baglami` §6). `Ctx` kuran ara katman **yalnız burada** eklenir
@@ -23,9 +26,19 @@ export type ApiInitialContext = {
   channelHeader: string | null
   now: number
   requestId: string
-}
+  /** Better Auth yönetici örneği (uygulama başına bir kez kurulur). */
+  adminAuth: AdminAuth
+  reqHeaders: Headers
+  /** İstek HTTPS mi; oturum çerezine `Secure` buna göre eklenir. */
+  https: boolean
+} & ResponseHeadersHandlerPluginContext
 
-export type ApiContext = ApiInitialContext & { ctx: Ctx; ctxLoaded: true }
+export type ApiContext = ApiInitialContext & {
+  ctx: Ctx
+  ctxLoaded: true
+  /** Yalnız oturumlu Admin prosedürlerinde dolu. */
+  admin?: AdminGuardResult["admin"]
+}
 
 /** Beklenen hata kodu → HTTP durumu; hem işleyicilere hem OpenAPI üreticisine verilir. */
 export const errorStatusMap: Record<string, number> = {
@@ -35,6 +48,8 @@ export const errorStatusMap: Record<string, number> = {
   NOT_FOUND: 404,
   CHANNEL_UNKNOWN: 404,
   CONFLICT: 409,
+  SETUP_REQUIRED: 403,
+  SETUP_DONE: 409,
   IDEMPOTENCY_MISMATCH: 409,
   INSUFFICIENT_STOCK: 409,
   RATE_LIMITED: 429,
@@ -70,7 +85,19 @@ function buildRequestCtx(context: ApiInitialContext): Ctx {
 
 export const base = implement(contract)
   .$context<ApiInitialContext>()
-  .use(async ({ context, next }) => {
+  .use(async ({ context, next, path, procedure }) => {
     // Ctx yalnız kökte kurulur; `ctxLoaded` bu işin yapıldığını işaretler (ara katman bir kez çalışır).
-    return next({ context: { ctx: buildRequestCtx(context), ctxLoaded: true as const } })
+    // Admin yüzeyinde kurulum kapısı + oturum + izin de burada, aynı tek geçişte denetlenir.
+    // Yüzey router yolundan gelir (URL'den değil).
+    const isAdmin = path[0] === "admin"
+    const ctx = buildRequestCtx({ ...context, api: isAdmin ? "admin" : "shop" })
+    if (!isAdmin) return next({ context: { ctx, ctxLoaded: true as const, admin: undefined } })
+    const guard = await requirePermission({ context, ctx, path, procedure })
+    return next({
+      context: {
+        ctx: { ...ctx, actor: guard.actor },
+        ctxLoaded: true as const,
+        admin: guard.admin,
+      },
+    })
   })

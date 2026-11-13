@@ -36,8 +36,12 @@ const channels = createChannelRegistry({
 
 const server = workerOnly
   ? undefined
-  : serve({ fetch: createApp({ platform, channels }).fetch, port: env.PORT }, (info) =>
-      console.log(`openmers api http://localhost:${info.port}`),
+  : serve(
+      {
+        fetch: createApp({ platform, channels, authSecret: env.OPENMERS_AUTH_SECRET }).fetch,
+        port: env.PORT,
+      },
+      (info) => console.log(`openmers api http://localhost:${info.port}`),
     )
 
 if (workerOnly) console.log("openmers iş tüketicisi (--worker)")

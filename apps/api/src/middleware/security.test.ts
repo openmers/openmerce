@@ -43,6 +43,7 @@ async function harness(limit?: RateLimit, log?: (m: string, e: unknown) => void)
     now: () => NOW,
     https: false,
     requestId: () => "req_test",
+    authSecret: "test-auth-secret-0123456789abcdef0123",
     log,
   })
 }

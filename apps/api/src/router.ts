@@ -1,3 +1,4 @@
+import { adminRouter } from "./admin"
 import { getHealth } from "./shop/health/get"
 
 /**
@@ -7,7 +8,7 @@ import { getHealth } from "./shop/health/get"
  */
 export const router = {
   shop: { health: getHealth },
-  admin: {},
+  admin: adminRouter,
 }
 
 export type ApiRouter = typeof router

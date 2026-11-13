@@ -14,6 +14,9 @@ export const errorCodes = [
   "CHANNEL_UNKNOWN",
   "INSUFFICIENT_STOCK",
   "IDEMPOTENCY_MISMATCH",
+  // Kurulum kapısı (`setupGate`): kurulum bitmeden admin kapalı / bitince kurulum kilitli.
+  "SETUP_REQUIRED",
+  "SETUP_DONE",
   "INTERNAL",
 ] as const
 

@@ -47,7 +47,8 @@ export const adminSessions = sqliteTable(
   {
     id: integer("id").primaryKey(),
     adminUserId: adminUserId(),
-    // Better Auth 1.7.23'te session.token için özet seçeneği yok: düz saklanır (karar 13)
+    // Better Auth 1.7.23'te session.token için özet seçeneği yok; adaptör sarmalayıcısı yalnız
+    // SHA-256 özetini yazar (apps/api/src/auth/hashedSessions.ts, karar 13)
     token: text("token").notNull(),
     expiresAt: ts("expires_at").notNull(),
     ipAddress: text("ip_address"),

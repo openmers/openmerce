@@ -2,6 +2,7 @@ import { SmartCoercionHandlerPlugin } from "@orpc/json-schema"
 import { OpenAPIGenerator } from "@orpc/openapi"
 import { OpenAPIHandler } from "@orpc/openapi/fetch"
 import { RPCHandler } from "@orpc/server/fetch"
+import { ResponseHeadersHandlerPlugin } from "@orpc/server/plugins"
 import { ZodToJsonSchemaConverter } from "@orpc/zod"
 import { router } from "../router"
 import { errorStatusMap } from "./base"
@@ -9,12 +10,16 @@ import { errorStatusMap } from "./base"
 const converters = [new ZodToJsonSchemaConverter()]
 
 /** RPC: yalnız yazma/kişiye özel çağrılar; GET varsayılan olarak reddedilir (CSRF). */
-export const rpcHandler = new RPCHandler(router, { errorStatusMap })
+export const rpcHandler = new RPCHandler(router, {
+  errorStatusMap,
+  // Oturum çerezi (`Set-Cookie`) `context.resHeaders` üzerinden yazılır.
+  plugins: [new ResponseHeadersHandlerPlugin()],
+})
 
 /** OpenAPI: önbelleklenebilir GET uçları; Smart Coercion yalnız burada açık. */
 export const openApiHandler = new OpenAPIHandler(router, {
   errorStatusMap,
-  plugins: [new SmartCoercionHandlerPlugin({ converters })],
+  plugins: [new SmartCoercionHandlerPlugin({ converters }), new ResponseHeadersHandlerPlugin()],
 })
 
 let document: Promise<unknown> | undefined

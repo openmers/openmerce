@@ -1,0 +1,17 @@
+name: e2e-mobile
+# apps/mobile ve EAS emülatör/apk yapısı gelene kadar yalnız elle. Gelince docs'taki gibi aç:
+# push: { branches: [main] } ve sürüm etiketi.
+on: workflow_dispatch
+jobs:
+  e2e-mobile:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      # TODO: Android emülatörünü başlat (örn. reactivecircus/android-emulator-runner) ve EAS ile derlenen .apk yı kur (bundleId e2e.mobile.config.ts içinde).
+      - run: pnpm test:e2e:mobile
+        env:
+          OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}

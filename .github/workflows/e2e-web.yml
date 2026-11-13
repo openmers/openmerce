@@ -1,0 +1,17 @@
+name: e2e-web
+# Storefront gelene kadar yalnız elle. Gelince docs/08-isletme/02-ci-cd.md'deki gibi aç:
+# pull_request (etiket `e2e`) ve push: { branches: [main] }.
+on: workflow_dispatch
+jobs:
+  e2e-web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec e2e-web install chromium --with-deps
+      - run: pnpm test:e2e
+        env:
+          OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}

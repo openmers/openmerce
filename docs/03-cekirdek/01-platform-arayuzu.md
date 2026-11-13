@@ -27,6 +27,8 @@ Kural: `atomic(stmts)` hazır ifadeler dizisi alır (`db.batch()`); interaktif `
 
 Bu sözleşme D1'in `batch()`'ine göre yazılmıştır; self-host aynı ifadeleri bir transaction içinde çalıştırır. Self-host'ta interaktif transaction mümkün olsa da kullanılmaz, çünkü aynı kod D1'de çalışmak zorundadır.
 
+**Karar (`AtomicStatement` biçimi):** ifade, Drizzle sorgusunun `toSQL()` çıktısıdır: `{ sql: string; params: unknown[] }` (`packages/core/src/platform/atomic.ts`). Gerekçe: Drizzle'ın `better-sqlite3` sürücüsünde `batch` yok; bu düz biçimi better-sqlite3 `prepare(sql).run(...params)` ve D1 `prepare(sql).bind(...params)` dönüştürmeden alır, sürücüye ve çalışma zamanına bağlı değildir. Değerler `toSQL()` sırasında sütun eşlemesinden geçtiği için (JSON, zaman) iki hedefte aynıdır. `batch(queries)` aynı biçimi kullanır ve ham satırları (snake_case sütun adları) döner.
+
 ## 2. Kural
 
 Bir özellik iki hedefte de çalışmıyorsa `core`'a girmez; isteğe bağlı built-in app olur ve binding yoksa sessizce devre dışı kalır (e-posta, görsel optimizasyonu, vektör arama).

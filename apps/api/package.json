@@ -3,5 +3,14 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "@openmers/core": "workspace:*",
+    "@openmers/db": "workspace:*",
+    "better-sqlite3": "13.1.1",
+    "drizzle-orm": "0.45.4"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "9.6.0"
+  }
 }

@@ -171,13 +171,13 @@ Kısaltma: `core` = `packages/core/src`, `api` = `apps/api/src`. Her yeni dosya 
   - `node:*` yalnız `apps/api/src/platform/node.ts` ve Node adaptörlerinde. Kipler: API (Worker `fetch` / `node dist/server.js`), iş tüketicisi (Queue consumer + Cron / aynı süreç, `--worker` ile ayrı).
 - **Bağımlılık:** madde 1 (sürümler, `noNodejsModules`), madde 6.1-6.2 (Drizzle kurulumu ve şema tipi).
 - **Yapılacaklar:**
-  1. `-` `core/platform/types.ts`: `Platform` arayüzü (yalnız tip); `images` isteğe bağlı (`images?:`), `secrets: { kek?: CryptoKey | string }` (yoksa kasa uykuda, madde 11).
-  2. `-` `core/platform/ports/`: `storage.ts` (`put/get/delete/head`), `cache.ts` (`get/set/delete`, TTL), `queue.ts` (`enqueue`), `rateLimit.ts` (`limit(key) → { ok, retryAfter }`), `images.ts`, `purge.ts`; her biri yalnız tip; `ports/index.ts`.
-  3. `-` `core/platform/atomic.ts`: `AtomicStatement` ve `AtomicResult = number[]` tipleri + saf yardımcılar `allAffected(result)`, `affected(result, i)` ("kazandım mı" okuması).
-  4. `-` `core/platform/memory/lru.ts`: saf, çalışma zamanından bağımsız LRU (boyut sınırı + TTL, `now` parametre); self-host `cache` ve istek ömürlü önbellek bunu kullanır.
-  5. `-` `core/platform/memory/fixedWindow.ts`: saf bellek içi hız sınırı sayacı (self-host `rateLimit`).
-  6. `-` `api/platform/node/sqlite.ts`: `better-sqlite3` yazma bağlantısı + salt-okunur ikinci bağlantı; pragmalar `journal_mode=WAL`, `synchronous=NORMAL`, `busy_timeout`, `foreign_keys=ON` (performans §7).
-  7. `-` `api/platform/node/atomic.ts`: ifadeleri tek senkron transaction'da çalıştırır, satır sayılarını döner; `batch` sırayla.
+  1. `+` `core/platform/types.ts`: `Platform` arayüzü (yalnız tip); `images` isteğe bağlı (`images?:`), `secrets: { kek?: CryptoKey | string }` (yoksa kasa uykuda, madde 11).
+  2. `+` `core/platform/ports/`: `storage.ts` (`put/get/delete/head`), `cache.ts` (`get/set/delete`, TTL), `queue.ts` (`enqueue`), `rateLimit.ts` (`limit(key) → { ok, retryAfter }`), `images.ts`, `purge.ts`; her biri yalnız tip; `ports/index.ts`.
+  3. `+` `core/platform/atomic.ts`: `AtomicStatement` ve `AtomicResult = number[]` tipleri + saf yardımcılar `allAffected(result)`, `affected(result, i)` ("kazandım mı" okuması).
+  4. `+` `core/platform/memory/lru.ts`: saf, çalışma zamanından bağımsız LRU (boyut sınırı + TTL, `now` parametre); self-host `cache` ve istek ömürlü önbellek bunu kullanır.
+  5. `+` `core/platform/memory/fixedWindow.ts`: saf bellek içi hız sınırı sayacı (self-host `rateLimit`).
+  6. `+` `api/platform/node/sqlite.ts`: `better-sqlite3` yazma bağlantısı + salt-okunur ikinci bağlantı; pragmalar `journal_mode=WAL`, `synchronous=NORMAL`, `busy_timeout`, `foreign_keys=ON` (performans §7).
+  7. `+` `api/platform/node/atomic.ts`: ifadeleri tek senkron transaction'da çalıştırır, satır sayılarını döner; `batch` sırayla.
   8. `-` `api/platform/node/storage-disk.ts` (yerel disk) ve `api/platform/shared/storage-s3.ts` (S3 uyumlu, Web Crypto ile SigV4 imzalı `fetch`; iki hedefte çalışır).
   9. `-` `api/platform/node.ts`: Node `Platform`'u birleştirir (sqlite, LRU cache, `purge` no-op, `enqueue` poller'ı uyandırır, `rateLimit` bellek, `secrets.kek` ortamdan, `images` `sharp` varsa).
   10. `-` `api/platform/cloudflare/`: `d1.ts` (Drizzle d1; `readDb` D1 Sessions API okuma oturumu), `atomic.ts` (`db.batch()` → `meta.changes` dizisi), `kv-cache.ts` (KV + istek ömürlü `Map`), `purge.ts` (Cache purge API), `queue.ts` (Queues veya `waitUntil`), `rate-limit.ts` (binding); `api/platform/cloudflare.ts` birleştirir.

@@ -80,7 +80,24 @@ importers:
 
   apps/admin: {}
 
-  apps/api: {}
+  apps/api:
+    dependencies:
+      '@openmers/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      '@openmers/db':
+        specifier: workspace:*
+        version: link:../../packages/db
+      better-sqlite3:
+        specifier: 13.1.1
+        version: 13.1.1
+      drizzle-orm:
+        specifier: 0.45.4
+        version: 0.45.4(@types/better-sqlite3@9.6.0)(better-sqlite3@13.1.1)
+    devDependencies:
+      '@types/better-sqlite3':
+        specifier: 9.6.0
+        version: 9.6.0
 
   apps/mobile: {}
 
@@ -88,7 +105,23 @@ importers:
 
   integration-tests/api: {}
 
-  integration-tests/contract: {}
+  integration-tests/contract:
+    dependencies:
+      '@openmers/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      '@openmers/db':
+        specifier: workspace:*
+        version: link:../../packages/db
+      '@openmers/test-utils':
+        specifier: workspace:*
+        version: link:../../packages/test-utils
+      '@types/better-sqlite3':
+        specifier: 9.6.0
+        version: 9.6.0
+      drizzle-orm:
+        specifier: 0.45.4
+        version: 0.45.4(@types/better-sqlite3@9.6.0)(better-sqlite3@13.1.1)
 
   integration-tests/core: {}
 
@@ -100,7 +133,14 @@ importers:
 
   packages/contract: {}
 
-  packages/core: {}
+  packages/core:
+    dependencies:
+      '@openmers/db':
+        specifier: workspace:*
+        version: link:../db
+      drizzle-orm:
+        specifier: 0.45.4
+        version: 0.45.4(@types/better-sqlite3@9.6.0)(better-sqlite3@13.1.1)
 
   packages/create-openmers-app: {}
 

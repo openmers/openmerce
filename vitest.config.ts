@@ -14,6 +14,13 @@ export default defineConfig({
           exclude: ["packages/ui/**", "**/node_modules/**", "**/dist/**"],
         },
       },
+      // Sözleşme testleri gerçek migration'lı SQLite'ta koşar (Node); `unit` yalnız packages/ ve apps/ tarar.
+      {
+        test: {
+          name: "contract",
+          include: ["integration-tests/contract/__tests__/**/*.test.ts"],
+        },
+      },
       {
         plugins: [svelte(), svelteTesting()],
         resolve: { conditions: ["browser"] },

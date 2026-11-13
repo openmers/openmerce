@@ -7,6 +7,10 @@ export type CheckoutErrorCode =
   | "INSUFFICIENT_STOCK"
   /** A limited promotion/coupon ran out (global or per-customer limit). */
   | "COUPON_EXHAUSTED"
+  /** Settlement payment amount or currency differs from the reservation snapshot. */
+  | "PAYMENT_MISMATCH"
+  /** Reservation state moved under a settlement twice in a row; retry later. */
+  | "CONFLICT"
 
 /** Expected checkout errors are typed errors carrying a `code` (same pattern as catalog). */
 export class CheckoutError extends Error {

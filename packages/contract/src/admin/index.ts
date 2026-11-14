@@ -1,4 +1,5 @@
 import { adminAuthLogin, adminAuthLogout, adminMe, adminSetupCreate } from "./auth"
+import { adminMedia } from "./media"
 import { adminOrders, adminPayments } from "./orders"
 import { adminPriceLists, adminPrices } from "./pricing"
 import { adminProducts } from "./products"
@@ -16,6 +17,7 @@ export const admin = {
   stock: adminStock,
   orders: adminOrders,
   payments: adminPayments,
+  media: adminMedia,
 }
 
 export {
@@ -27,6 +29,14 @@ export {
   adminSetupCreate,
 } from "./auth"
 export {
+  adminMedia,
+  adminMediaConfirm,
+  adminMediaCreate,
+  adminMediaDelete,
+  adminMediaItem,
+  adminMediaList,
+} from "./media"
+export {
   adminOrders,
   adminOrdersCancel,
   adminOrdersGet,
@@ -34,6 +44,7 @@ export {
   adminOrdersTransition,
   adminPayments,
   adminPaymentsCapture,
+  adminPaymentsConfirmTransfer,
   adminPaymentsRefund,
 } from "./orders"
 export {

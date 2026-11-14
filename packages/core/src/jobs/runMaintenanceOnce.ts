@@ -1,5 +1,6 @@
 import { reconcileJob, sweepExpired } from "../features/checkout"
 import { purgeExpired } from "../features/idempotency"
+import { sweepCartUploads, sweepPending } from "../features/media"
 import { purgeSent, requeueStuck } from "../features/outbox"
 import { OUTBOX_LIMITS, type OutboxLimits } from "../features/outbox/types"
 import type { PaymentRegistry } from "../features/payments"
@@ -14,6 +15,8 @@ export const MAINTENANCE_TASKS = {
   requeueStuck: "outbox.requeue_stuck",
   purgeSent: "outbox.purge_sent",
   purgeIdempotency: "idempotency.purge_expired",
+  sweepPendingMedia: "media.sweep_pending",
+  sweepCartUploads: "media.sweep_cart_uploads",
 } as const
 
 /** Checkout jobs (05-sepet §4, §6); they run only when a payment registry is given. */
@@ -49,7 +52,7 @@ function describeError(error: unknown): string {
 
 /**
  * Sweep jobs: requeue stuck `sending` rows, delete old `sent` rows, delete expired
- * idempotency keys; with a payment registry also the manual-method checkout sweep and
+ * idempotency keys, stale uploads and abandoned cart images; with a payment registry also the manual-method checkout sweep and
  * reconciliation. Each job runs **once per period** via `claimRun`; even if two
  * consumers trigger at the same time only one takes the row. One job's failure does not stop the others.
  */
@@ -91,10 +94,13 @@ export async function runMaintenanceOnce(
     purgeExpired(platform, input.now),
   )
 
+  const media = { platform, now: input.now }
   const tasks: MaintenanceResult["tasks"] = {
     requeueStuck: requeue,
     purgeSent: sent,
     purgeIdempotency: idempotency,
+    sweepPendingMedia: await run(MAINTENANCE_TASKS.sweepPendingMedia, () => sweepPending(media)),
+    sweepCartUploads: await run(MAINTENANCE_TASKS.sweepCartUploads, () => sweepCartUploads(media)),
   }
   const { payments } = input
   if (payments) {

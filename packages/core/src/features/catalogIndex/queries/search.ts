@@ -44,5 +44,9 @@ export async function search(ctx: CatalogIndexCtx, input: SearchInput): Promise<
   const [rows = []] = await ctx.platform.batch([
     searchQuery({ channelId: ctx.channel.id, lang: ctx.lang, match, offset, limit }),
   ])
-  return toPage(rows, limit, (row) => ["search", offset + limit, Number(row.v)])
+  return toPage(ctx.platform.storage, rows, limit, (row) => [
+    "search",
+    offset + limit,
+    Number(row.v),
+  ])
 }

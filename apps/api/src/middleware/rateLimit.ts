@@ -9,6 +9,7 @@ const GROUPS: readonly [RegExp, string][] = [
   [/\/(auth|login|sign-?in)(\/|$)/i, "login"],
   [/\/checkout(\/|$)/i, "checkout"],
   [/\/search(\/|$)/i, "search"],
+  [/\/uploads(\/|$)/i, "upload"],
 ]
 
 export function routeGroup(path: string): string {

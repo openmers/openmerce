@@ -10,6 +10,7 @@ import {
   getProduct,
   linkLocationToChannel,
   loadChannels,
+  memoryStorage,
   setPrices,
 } from "@openmers/core"
 import { fakePaymentHandler, openTestDb } from "@openmers/test-utils"
@@ -29,7 +30,8 @@ export type Json = Record<string, any>
 export async function commerceHarness(closers: (() => void)[]) {
   const file = openTestDb({ file: true })
   const sqlite = openNodeSqlite(file.path)
-  const platform = createNodePlatform({ sqlite, now: () => NOW, kek: "test-kek" })
+  const storage = memoryStorage()
+  const platform = createNodePlatform({ sqlite, now: () => NOW, kek: "test-kek", storage })
   closers.push(() => {
     platform.close()
     file.close()
@@ -172,7 +174,20 @@ export async function commerceHarness(closers: (() => void)[]) {
       body: req.body,
     })
 
-  return { app, platform, sqlite, run, one, variant, fake, commerce, clock, client, webhook }
+  return {
+    app,
+    platform,
+    storage,
+    sqlite,
+    run,
+    one,
+    variant,
+    fake,
+    commerce,
+    clock,
+    client,
+    webhook,
+  }
 }
 
 export type Harness = Awaited<ReturnType<typeof commerceHarness>>

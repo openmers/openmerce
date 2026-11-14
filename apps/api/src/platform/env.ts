@@ -16,6 +16,17 @@ export const envSchema = z.object({
     .string()
     .min(32, "OPENMERS_KEK en az 32 karakter olmalı (ör. `openssl rand -base64 32`)")
     .optional(), // HKDF is not a password KDF: a weak KEK is open to brute force,
+  // Media storage driver (12-medya): `local` disk (default) or `s3` (AWS S3 and S3-compatible, R2 included).
+  OPENMERS_STORAGE: z.enum(["local", "s3"]).default("local"),
+  OPENMERS_STORAGE_DIR: z.string().min(1).default("data/uploads"),
+  /** Public origin of the API (local links) or the CDN/bucket domain serving `public/` keys (s3). */
+  OPENMERS_MEDIA_URL: z.string().url().optional(),
+  OPENMERS_S3_ENDPOINT: z.string().url().optional(),
+  OPENMERS_S3_REGION: z.string().min(1).default("auto"),
+  OPENMERS_S3_BUCKET: z.string().min(1).optional(),
+  OPENMERS_S3_ACCESS_KEY_ID: z.string().min(1).optional(),
+  OPENMERS_S3_SECRET_ACCESS_KEY: z.string().min(1).optional(),
+  OPENMERS_S3_PATH_STYLE: z.enum(["true", "false"]).default("true"),
 })
 
 export type Env = z.infer<typeof envSchema>

@@ -1,7 +1,8 @@
 import { type SQL, sql } from "drizzle-orm"
 import { type AtomicStatement, affected, sqlStatement } from "../../../platform"
+import { ownedMedia } from "../../media"
 import { effectiveDefinition } from "../personalization/schema"
-import { type MediaInfo, validatePersonalization } from "../personalization/validate"
+import { validatePersonalization } from "../personalization/validate"
 import { type CartCtx, CartError } from "../types"
 
 export const MAX_LINE_QUANTITY = 9999
@@ -57,9 +58,8 @@ export async function loadForWrite(
 }
 
 /**
- * Validates personalization. Image fields need a second read: does the `media` row exist, is it
- * `ready`, is this cart its owner (`owner_kind = 'cart'`). Another cart's image is rejected as
- * missing.
+ * Validates personalization. Image fields need a second read (`ownedMedia`): does the `media`
+ * row exist, is it `ready`, is this cart its owner. Another cart's image is rejected as missing.
  */
 export async function validateFor(ctx: CartCtx, cart: CartState, v: VariantState, input: unknown) {
   const def = effectiveDefinition(v.product, v.variant)
@@ -71,24 +71,7 @@ export async function validateFor(ctx: CartCtx, cart: CartState, v: VariantState
           .filter((x): x is string => typeof x === "string" && x.trim() !== "")
           .map((x) => x.trim())
       : []
-  const media = new Map<string, MediaInfo>()
-  if (ids.length > 0) {
-    const list = sql.join(
-      ids.map((id) => sql`${id}`),
-      sql`, `,
-    )
-    const [rows = []] = await ctx.platform.batch([
-      sqlStatement(sql`SELECT "public_id", "mime", "bytes" FROM "media"
-        WHERE "public_id" IN (${list}) AND "owner_kind" = 'cart' AND "owner_id" = ${cart.id}
-          AND "status" = 'ready'`),
-    ])
-    for (const r of rows) {
-      media.set(String(r.public_id), {
-        mime: r.mime === null ? null : String(r.mime),
-        bytes: r.bytes === null ? null : Number(r.bytes),
-      })
-    }
-  }
+  const media = await ownedMedia(ctx.platform, { kind: "cart", id: cart.id }, ids)
   return validatePersonalization(def, input, (id) => media.get(id))
 }
 

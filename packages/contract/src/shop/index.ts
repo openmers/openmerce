@@ -4,6 +4,7 @@ import { shopCatalog } from "./catalog"
 import { shopCheckout } from "./checkout"
 import { shopHealth } from "./health"
 import { shopOrders } from "./orders"
+import { shopUploads } from "./uploads"
 
 /** Shop API contract; one file per resource (`shop/<resource>.ts`). */
 export const shop = {
@@ -13,6 +14,7 @@ export const shop = {
   cart: shopCart,
   checkout: shopCheckout,
   orders: shopOrders,
+  uploads: shopUploads,
 }
 
 export {
@@ -23,7 +25,7 @@ export {
   shopAddressOutput,
 } from "./account"
 export { shopCart, shopCartView } from "./cart"
-export { shopCatalog, shopCatalogCard, shopCatalogPage } from "./catalog"
+export { shopCatalog, shopCatalogCard, shopCatalogPage, shopImage } from "./catalog"
 export { shopCheckout } from "./checkout"
 export { shopHealth, shopHealthOutput } from "./health"
 export {
@@ -32,3 +34,4 @@ export {
   orderViewSchema,
   shopOrders,
 } from "./orders"
+export { shopUploads, uploadResultSchema, uploadTicketSchema } from "./uploads"

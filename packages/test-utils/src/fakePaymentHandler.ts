@@ -33,6 +33,7 @@ export function fakePaymentHandler(opts: { code?: string } = {}) {
   /** Provider-side truth per payment reference, returned by `fetchStatus`. */
   const truth = new Map<string, Event>()
   const refundCalls: { reference: string | null; amount: number; idempotencyKey: string }[] = []
+  const captureCalls: { reference: string | null; amount: number }[] = []
   let refundMode: FakeRefundMode = "ok"
   const secretOf = (args: Readonly<Record<string, unknown>>) => {
     if (typeof args.secret !== "string" || args.secret === "") throw new Error("secret missing")
@@ -63,6 +64,10 @@ export function fakePaymentHandler(opts: { code?: string } = {}) {
       if (!event) throw new Error(`unknown reference ${reference}`)
       return event as never
     },
+    async capture(_ctx: unknown, payment: { reference: string | null }, amount: number) {
+      captureCalls.push({ reference: payment.reference, amount })
+      return { ok: true as const }
+    },
     async refund(
       _ctx: unknown,
       payment: { reference: string | null },
@@ -80,6 +85,7 @@ export function fakePaymentHandler(opts: { code?: string } = {}) {
   return {
     handler,
     refundCalls,
+    captureCalls,
     setRefundMode(mode: FakeRefundMode) {
       refundMode = mode
     },

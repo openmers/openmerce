@@ -5,6 +5,7 @@ import { catalogRouter } from "./shop/catalog"
 import { checkoutRouter } from "./shop/checkout"
 import { getHealth } from "./shop/health/get"
 import { ordersRouter } from "./shop/orders"
+import { uploadsRouter } from "./shop/uploads"
 
 /**
  * The implemented router: same shape as the contract. `createRouterClient(router, { context })` lets the
@@ -19,6 +20,7 @@ export const router = {
     cart: cartRouter,
     checkout: checkoutRouter,
     orders: ordersRouter,
+    uploads: uploadsRouter,
   },
   admin: adminRouter,
 }

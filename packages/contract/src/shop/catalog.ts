@@ -4,11 +4,12 @@ import { z } from "zod"
 // Storefront catalog (02-katalog §4): reads only the read model (`catalog_index`, `product_view`).
 // Public, no internal id; cursors are opaque strings.
 
-const image = z.object({
-  key: z.string(),
+/** Ready to render: `url` is the original, `srcset` the generated widths (null = single size). */
+export const shopImage = z.object({
+  url: z.string(),
   width: z.number().int().nullable(),
   height: z.number().int().nullable(),
-  sizes: z.array(z.number().int()),
+  srcset: z.string().nullable(),
 })
 
 export const shopCatalogCard = z.object({
@@ -16,7 +17,7 @@ export const shopCatalogCard = z.object({
   slug: z.string(),
   name: z.string(),
   sku: z.string(),
-  thumb: image.nullable(),
+  thumb: shopImage.nullable(),
   priceMin: z.number().int().nullable(),
   priceMax: z.number().int().nullable(),
   currency: z.string(),

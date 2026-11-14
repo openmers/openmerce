@@ -6,8 +6,12 @@ import * as schema from "@openmers/db"
 import type Database from "better-sqlite3"
 import { drizzle } from "drizzle-orm/better-sqlite3"
 import type { AtomicStatement, BatchRows, Platform } from "../../platform"
+import { memoryStorage } from "../media/storage/drivers/memory"
 
-export function sqlitePlatform(conn: Database.Database): Platform & { batchCalls(): number } {
+export function sqlitePlatform(conn: Database.Database): Platform & {
+  batchCalls(): number
+  storage: ReturnType<typeof memoryStorage>
+} {
   let batchCalls = 0
   const db = drizzle(conn, { schema })
   const entries = new Map<string, unknown>()
@@ -23,12 +27,7 @@ export function sqlitePlatform(conn: Database.Database): Platform & { batchCalls
       batchCalls += 1
       return queries.map((q) => conn.prepare(q.sql).all(...q.params) as BatchRows)
     },
-    storage: {
-      put: async () => undefined,
-      get: async () => null,
-      delete: async () => undefined,
-      head: async () => null,
-    },
+    storage: memoryStorage(),
     cache: {
       get: async <T>(key: string) => entries.get(key) as T | undefined,
       set: async <T>(key: string, value: T) => {

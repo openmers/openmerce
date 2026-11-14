@@ -11,6 +11,7 @@ import { createCommerceConfig } from "./commerce/config"
 import { readEnv } from "./platform/env"
 import { createNodePlatform } from "./platform/node"
 import { openNodeSqlite } from "./platform/node/sqlite"
+import { storageFromEnv } from "./platform/node/storage"
 import { createPoller } from "./worker/poller"
 
 // Node entry point (`01-platform-arayuzu` §11): env → Platform → app.
@@ -19,7 +20,8 @@ import { createPoller } from "./worker/poller"
 const env = readEnv()
 const workerOnly = process.argv.includes("--worker")
 const sqlite = openNodeSqlite(env.OPENMERS_DB)
-const platform = createNodePlatform({ sqlite, kek: env.OPENMERS_KEK })
+const { storage, local } = storageFromEnv(env)
+const platform = createNodePlatform({ sqlite, kek: env.OPENMERS_KEK, storage })
 
 // One commerce configuration for API and worker (payment registry for sweep and reconcile).
 const commerce = createCommerceConfig({ platform })
@@ -44,8 +46,13 @@ const server = workerOnly
   ? undefined
   : serve(
       {
-        fetch: createApp({ platform, channels, commerce, authSecret: env.OPENMERS_AUTH_SECRET })
-          .fetch,
+        fetch: createApp({
+          platform,
+          channels,
+          commerce,
+          authSecret: env.OPENMERS_AUTH_SECRET,
+          localStorage: local,
+        }).fetch,
         port: env.PORT,
       },
       (info) => console.log(`openmers api http://localhost:${info.port}`),

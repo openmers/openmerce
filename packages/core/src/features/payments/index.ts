@@ -3,6 +3,7 @@ export {
   capturePayment,
   refundPayment,
 } from "./admin/adminPayments"
+export { confirmBankTransfer } from "./admin/confirmTransfer"
 export { bankTransfer, bankTransferArgs } from "./handlers/bankTransfer"
 export { cashOnDelivery, cashOnDeliveryArgs } from "./handlers/cashOnDelivery"
 export type {

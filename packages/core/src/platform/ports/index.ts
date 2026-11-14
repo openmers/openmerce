@@ -3,4 +3,10 @@ export type { ImageFormat, Images } from "./images"
 export type { Purge } from "./purge"
 export type { Enqueue, Job } from "./queue"
 export type { RateLimit, RateLimitResult } from "./rateLimit"
-export type { Storage, StorageBody, StorageMeta, StorageObject } from "./storage"
+export type {
+  SignedUrlOptions,
+  Storage,
+  StorageBody,
+  StorageMeta,
+  StorageObject,
+} from "./storage"

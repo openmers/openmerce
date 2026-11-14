@@ -109,7 +109,7 @@ function buildRequestCtx(context: ApiInitialContext, customer?: CustomerActor | 
 }
 
 /** Shop resources that are per-person (cookie/session bound): never cached. */
-const PRIVATE_SHOP = new Set(["account", "cart", "checkout", "orders"])
+const PRIVATE_SHOP = new Set(["account", "cart", "checkout", "orders", "uploads"])
 
 export const base = implement(contract)
   .$context<ApiInitialContext>()

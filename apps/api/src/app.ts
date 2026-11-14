@@ -16,10 +16,12 @@ import { paymentWebhook } from "./hooks/payments/[method]"
 import type { AppEnv } from "./http/env"
 import { apiError } from "./http/errors"
 import { isHttps, type SecureOptions, secureResponse } from "./http/secure"
+import { mountLocalStorage } from "./http/storageRoute"
 import { csrfOrigin } from "./middleware/csrfOrigin"
 import { rateLimit } from "./middleware/rateLimit"
 import type { ApiInitialContext } from "./orpc/base"
 import { openApiDocument, openApiHandler, rpcHandler } from "./orpc/handlers"
+import type { LocalStorage } from "./platform/node/localStorage"
 
 export type AppOptions = SecureOptions & {
   platform: Platform
@@ -35,6 +37,8 @@ export type AppOptions = SecureOptions & {
   paymentHandlers?: Readonly<Record<string, PaymentHandler>>
   /** Shared commerce configuration (the worker uses the same one); built from the platform if omitted. */
   commerce?: CommerceConfigSource
+  /** Local disk driver: its signed `/storage/*` links are served here (S3/R2 serve their own). */
+  localStorage?: LocalStorage
 }
 
 /** `Host`: a header on a real server, taken from the URL in `app.request` tests. */
@@ -90,6 +94,11 @@ export function createApp(opts: AppOptions): Hono<AppEnv> {
 
   // 2) CSRF: form-typed, state-changing requests must have a matching `Origin`.
   app.use("*", csrfOrigin())
+
+  // Local disk objects are channel-independent; signed links guard private reads and uploads.
+  if (opts.localStorage) {
+    mountLocalStorage(app, opts.localStorage, () => opts.now?.() ?? Date.now())
+  }
 
   // 3) Channel: `x-openmers-channel` takes precedence over Host; unknown domain/key 404.
   app.use("*", async (c, next) => {

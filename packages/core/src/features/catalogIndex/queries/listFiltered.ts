@@ -102,7 +102,7 @@ export async function listFiltered(
     limit,
   })
   const [rows = []] = await ctx.platform.batch([query])
-  return toPage(rows, limit, (row) => [
+  return toPage(ctx.platform.storage, rows, limit, (row) => [
     sort,
     (row.k as string | number | null) ?? null,
     Number(row.v),

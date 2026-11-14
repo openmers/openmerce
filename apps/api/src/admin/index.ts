@@ -1,6 +1,7 @@
 import { login } from "./auth/login"
 import { logout } from "./auth/logout"
 import { getMe } from "./me/get"
+import { mediaRouter } from "./media"
 import { ordersRouter } from "./orders"
 import { paymentsRouter } from "./payments"
 import { priceListsRouter } from "./price-lists"
@@ -20,4 +21,5 @@ export const adminRouter = {
   stock: stockRouter,
   orders: ordersRouter,
   payments: paymentsRouter,
+  media: mediaRouter,
 }

@@ -47,6 +47,11 @@ export const adminPaymentsRefund = adminProcedure("orders:write")
   )
   .output(z.object({ refund: z.string(), state: z.string() }))
 
+/** Bank transfer received: settles the pending reservation; repeating returns the same order. */
+export const adminPaymentsConfirmTransfer = adminProcedure("orders:write")
+  .input(z.object({ reservation: id }))
+  .output(z.object({ order: z.string(), number: z.string(), created: z.boolean() }))
+
 export const adminOrders = {
   list: adminOrdersList,
   get: adminOrdersGet,
@@ -54,4 +59,8 @@ export const adminOrders = {
   cancel: adminOrdersCancel,
 }
 
-export const adminPayments = { capture: adminPaymentsCapture, refund: adminPaymentsRefund }
+export const adminPayments = {
+  capture: adminPaymentsCapture,
+  refund: adminPaymentsRefund,
+  confirmTransfer: adminPaymentsConfirmTransfer,
+}

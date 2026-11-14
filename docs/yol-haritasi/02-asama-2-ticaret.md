@@ -362,14 +362,14 @@
 - **Bağımlılık:** madde 5 (`storage` portu Platform'da), 6, 11 (imzalı bağlantı, hız sınırı), 9 (süpürme işi).
 - **Yapılacaklar:**
   1. `+` `packages/db/src/schema/media.ts`: `media` (`status`, `bucket`, `key`, `mime`, boyutlar, `owner_kind/owner_id`, `poster_media_id`), kullanım tabloları için ortak FK deseni; migration. (2026-11-13: `0007_media`, `digital_assets` dahil.)
-  2. `-` `features/media/storage/drivers/{r2,s3,local}.ts`: `storage` portunun üç uygulaması (Platform kurulumunda seçilir; `store.config.ts` `storage:` seçeneği).
-  3. `-` `features/media/upload/{createUpload,confirmUpload}.ts`: imzalı URL, bekleyen kayıt; onayda HEAD + `sniffMagic.ts` (saf, ilk baytlardan tür ve boyut).
-  4. `-` `features/media/images/sizeLadder.ts` (saf merdiven + `srcset`) ve `ImageProcessor` portu `images/port.ts`.
-  5. `-` `features/media/delete/deleteMedia.ts`: referans yoksa silen tek koşullu ifade (`DELETE ... WHERE NOT EXISTS (kullanımlar)`).
-  6. `-` `features/media/ownership/assertOwner.ts`: başka sepet/siparişin `media_id`'sini reddetme (sepet madde 21 kullanır).
-  7. `-` `features/media/jobs/{sweepPending,sweepCartUploads}.ts`: 1 saatlik onaysızlar ve satın alınmayan sepet görselleri.
-  8. `-` `features/media/links/signedUrl.ts`: `private` ad alanı için 15 dk bağlantı.
-  9. `-` `apps/api/src/shop/uploads/*.ts`, `apps/api/src/admin/media/*.ts` ince handler'lar.
+  2. `+` `features/media/storage/drivers/{r2,s3,local}.ts`: `storage` portunun üç uygulaması (Platform kurulumunda seçilir; `store.config.ts` `storage:` seçeneği). (2026-11-14: `s3.ts` + `presign.ts` SigV4 with Web Crypto, fixed-vector test; R2 via its S3 API, no Workers binding driver yet; `memory.ts` for tests; `local` in `apps/api/src/platform/node/localStorage.ts` with signed `/storage/*` route; chosen from env `OPENMERS_STORAGE`, not `store.config.ts`; no shared driver contract suite / MinIO run.)
+  3. `+` `features/media/upload/{createUpload,confirmUpload}.ts`: imzalı URL, bekleyen kayıt; onayda HEAD + `sniffMagic.ts` (saf, ilk baytlardan tür ve boyut). (2026-11-14: random file name instead of content digest, client does not send a hash; declared type must equal sniffed type.)
+  4. `+` `features/media/images/sizeLadder.ts` (saf merdiven + `srcset`) ve `ImageProcessor` portu `images/port.ts`. (2026-11-14: `ImageProcessor` = platform `images`; ladder only for `public` admin images; `links/mediaUrl.ts` gives catalog cards and product view `{url,width,height,srcset}`.)
+  5. `+` `features/media/delete/deleteMedia.ts`: referans yoksa silen tek koşullu ifade (`DELETE ... WHERE NOT EXISTS (kullanımlar)`).
+  6. `+` `features/media/ownership/assertOwner.ts`: başka sepet/siparişin `media_id`'sini reddetme (sepet madde 21 kullanır). (2026-11-14: `ownedMedia` used by cart line writes.)
+  7. `+` `features/media/jobs/{sweepPending,sweepCartUploads}.ts`: 1 saatlik onaysızlar ve satın alınmayan sepet görselleri. (2026-11-14: registered in `runMaintenanceOnce`; pending sweep also removes stale `rejected` rows.)
+  8. `+` `features/media/links/signedUrl.ts`: `private` ad alanı için 15 dk bağlantı.
+  9. `+` `apps/api/src/shop/uploads/*.ts`, `apps/api/src/admin/media/*.ts` ince handler'lar. (2026-11-14: `admin/media/{create,confirm,list,delete}`; also `admin.payments.confirmTransfer` for bank transfers.)
 - **Testler:**
   - `sniffMagic.test.ts`: uzantısı/başlığı yanlış dosya reddedilir, SVG reddedilir.
   - `integration-tests/contract/__tests__/storageDriver.suite.ts`: üç sürücü aynı paketi geçer (S3 için MinIO).

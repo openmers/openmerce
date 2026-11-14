@@ -37,10 +37,12 @@ describeOnTargets("runMaintenanceOnce", (getDb) => {
       requeueStuck: { ran: false, affected: 0 },
       purgeSent: { ran: false, affected: 0 },
       purgeIdempotency: { ran: false, affected: 0 },
+      sweepPendingMedia: { ran: false, affected: 0 },
+      sweepCartUploads: { ran: false, affected: 0 },
     })
 
     const runs = await p.db.select().from(scheduledRuns)
-    expect(runs).toHaveLength(3)
+    expect(runs).toHaveLength(5)
     expect(runs.map((row) => row.task).sort()).toEqual(Object.values(MAINTENANCE_TASKS).sort())
     expect(runs.every((row) => row.status === "done" && row.finishedAt !== null)).toBe(true)
   })
@@ -51,7 +53,7 @@ describeOnTargets("runMaintenanceOnce", (getDb) => {
     const next = await runMaintenanceOnce(p, { now: NOW + MAINTENANCE_PERIOD_MS })
     expect(next.period).toBe(NOW + MAINTENANCE_PERIOD_MS)
     expect(next.tasks.purgeSent.ran).toBe(true)
-    expect(await p.db.select().from(scheduledRuns)).toHaveLength(6)
+    expect(await p.db.select().from(scheduledRuns)).toHaveLength(10)
   })
 
   it("requeues a stuck sending row", async () => {

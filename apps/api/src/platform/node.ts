@@ -20,7 +20,7 @@ export type NodePlatformOptions = {
   now?: () => number
   cacheMax?: number
   rateLimit?: { limit: number; windowMs: number }
-  /** Not provided until the local disk / S3 adapter arrives (item 5.8). */
+  /** Selected at startup (`storageFromEnv`: local disk or S3-compatible); tests pass the memory driver. */
   storage?: Storage
 }
 
@@ -28,12 +28,20 @@ export type NodePlatform = Platform & { close(): void }
 
 const CACHE_TTL_SECONDS = 60
 
-/** `storage` placeholder: an explicit error instead of silently swallowing while there is no adapter (item 5.8). */
+/** No storage configured: an explicit error instead of silently swallowing writes. */
 function missingStorage(): Storage {
-  const fail = async (): Promise<never> => {
-    throw new Error("storage adaptörü yok: yerel disk/S3 madde 5.8'de gelir")
+  const fail = (): never => {
+    throw new Error("no storage driver configured")
   }
-  return { put: fail, get: fail, delete: fail, head: fail }
+  const failAsync = async (): Promise<never> => fail()
+  return {
+    put: failAsync,
+    get: failAsync,
+    delete: failAsync,
+    head: failAsync,
+    url: fail,
+    signedUrl: failAsync,
+  }
 }
 
 /**

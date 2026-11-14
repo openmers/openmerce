@@ -12,7 +12,7 @@ Kaynak: Medusa UI (`docs.medusajs.com/ui`). Okunan sayfalar: genel bakış, bağ
 | Figma "medusa-ui" | Bileşen, ikon, jeton | v1'de yok; jetonlar JSON, bileşen başvurusu Storybook benzeri `apps/ui-docs` (isteğe bağlı) |
 | Admin'de hazır gelir (`admin-sdk`) | Ek kurulum yok | `@openmers/admin-sdk` `@openmers/ui`'yi yeniden dışa aktarır; admin eklentisi ayrıca kurmaz |
 
-Medusa UI "Radix'in stilli, görüş sahibi hâli, shadcn'den esinli"; bizde admin zeminini **Radix primitives + React bileşenleri** oluşturur, vitrin teması ayrıdır. Fark: shadcn bileşenleri **kopyalanır** (kullanıcı düzenler); Medusa'nınki **paket** olarak gelir. Biz ikisini ayırırız:
+Medusa UI "Radix'in stilli, görüş sahibi hâli, shadcn'den esinli"; bizde admin zeminini **shadcn/ui (Radix primitives üzerine React bileşenleri)** oluşturur, vitrin teması ayrıdır. Fark: shadcn bileşenleri **kopyalanır** (kullanıcı düzenler); Medusa'nınki **paket** olarak gelir. Biz ikisini ayırırız:
 
 - **`@openmers/ui` paketi (yeni, bu belge):** admin ve admin eklentileri için **sürümlü, düzenlenmeyen** ortak bileşen kümesi. Eklenti yazarı aynı görünümü paketten alır; admin yükseltilince eklentiler birlikte güncellenir.
 - **Vitrin teması `ui/` klasörü** ([04-tema-sistemi.md](04-tema-sistemi.md)): shadcn-svelte bileşenleri temaya **kopyalanır**, tema serbestçe düzenler. Bu pakete bağlı değildir. Admin görünümü ve vitrin görünümü karıştırılmaz.

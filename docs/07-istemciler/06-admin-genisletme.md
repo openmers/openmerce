@@ -1,6 +1,6 @@
 # Admin genişletme (React)
 
-Kaynak: Vendure'un yeni React Admin Dashboard belgeleri (29 sayfanın 29'u okundu; sayfaların bağlandığı `reference/dashboard/...` sayfaları ve `how-to` sayfaları okunmadı). Vendure bu panelde React 19 + Vite + Tailwind 4 + shadcn/ui + TanStack kullanıyor. Biz **Vite + React 19 (SPA) + Radix tabanlı `@openmers/ui` + TanStack Router/Query/Table + Tailwind 4 + nanostores** kullanıyoruz (admin Astro değil, Vite SPA; vitrin Astro kalır) ([02-admin.md](02-admin.md)); Vendure'dan **modeli** alıyoruz, kodunu değil. Mevcut genişletme tablosu ([02-admin.md](02-admin.md) bölüm 3) bu belgeyle genişler.
+Kaynak: Vendure'un yeni React Admin Dashboard belgeleri (29 sayfanın 29'u okundu; sayfaların bağlandığı `reference/dashboard/...` sayfaları ve `how-to` sayfaları okunmadı). Vendure bu panelde React 19 + Vite + Tailwind 4 + shadcn/ui + TanStack kullanıyor. Biz **Vite + React 19 (SPA) + shadcn/ui (Radix) tabanlı `@openmers/ui` + TanStack Router/Query/Table + Tailwind 4 + nanostores** kullanıyoruz (admin Astro değil, Vite SPA; vitrin Astro kalır) ([02-admin.md](02-admin.md)); Vendure'dan **modeli** alıyoruz, kodunu değil. Mevcut genişletme tablosu ([02-admin.md](02-admin.md) bölüm 3) bu belgeyle genişler.
 
 ## 1. Vendure'un yaptığı, bizim kararımız
 

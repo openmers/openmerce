@@ -273,7 +273,7 @@ apps/admin/src/features/builder/
   Chat.tsx · Workspace.tsx · Preview.tsx · CodeView.tsx · Artifacts.tsx · Missions.tsx
 ```
 
-Builder bileşenleri Radix tabanlı `@openmers/ui` ve mevcut admin çekirdeğini kullanır; ajanın ürettiği ekranlar React bileşenleridir ve yalnızca `@openmers/ui` içe aktarır. Kod düzenleyici salt okunur görüntüleyici + fark ile başlar (tam IDE değil).
+Builder bileşenleri shadcn/ui (Radix) tabanlı `@openmers/ui` ve mevcut admin çekirdeğini kullanır; ajanın ürettiği ekranlar React bileşenleridir ve yalnızca `@openmers/ui` içe aktarır. Kod düzenleyici salt okunur görüntüleyici + fark ile başlar (tam IDE değil).
 
 ## 12. Performans ve maliyet
 

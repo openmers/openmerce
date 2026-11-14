@@ -49,7 +49,7 @@ Ortak: **Tailwind CSS 4 + nanostores**; tip denetimi `tsc`, lint/format Biome. V
 | Uygulama | Yapı | Not |
 |---|---|---|
 | `apps/storefront` | Astro SSR + Svelte adaları | SEO için sunucu render; sepet/ödeme etkileşimli adalar |
-| `apps/admin` | Vite + React 19, SPA (statik derleme, tek HTML kabuğu; SSR yok) | Yönetim paneli, SEO gerekmez, sunucu kodu yok (yalnızca Admin API); dosya tabanlı rotalar TanStack Router, sunucu durumu TanStack Query, tablolar TanStack Table, bileşenler Radix tabanlı `@openmers/ui`; iki kip: builder (varsayılan, sohbet + önizleme) ve klasik pano |
+| `apps/admin` | Vite + React 19, SPA (statik derleme, tek HTML kabuğu; SSR yok) | Yönetim paneli, SEO gerekmez, sunucu kodu yok (yalnızca Admin API); dosya tabanlı rotalar TanStack Router, sunucu durumu TanStack Query, tablolar TanStack Table, bileşenler shadcn/ui (Radix) tabanlı `@openmers/ui`; iki kip: builder (varsayılan, sohbet + önizleme) ve klasik pano |
 
 - **Durum:** nanostores (admin ve mobilde `@nanostores/react`; vitrinde `@nanostores/persistent` ile sepet)
 - **API istemcisi:** oRPC client (tipler `packages/contract`'tan); sunucu durumu admin'de TanStack Query üzerinden

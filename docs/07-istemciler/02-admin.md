@@ -1,6 +1,6 @@
 # Admin paneli
 
-**React 19 + Vite** (SPA, statik çıktı), TanStack Router (dosya tabanlı rotalar), TanStack Query (sunucu durumu), TanStack Table (denetimli tablo modeli), Radix tabanlı `@openmers/ui`, Tailwind CSS 4, nanostores (`@nanostores/react`). SEO gerekmez; tek sayfa uygulaması gibi davranır ve yalnızca Admin API ile konuşur. Vitrin Astro'dur ([01-storefront.md](01-storefront.md)); admin Astro kullanmaz.
+**React 19 + Vite** (SPA, statik çıktı), TanStack Router (dosya tabanlı rotalar), TanStack Query (sunucu durumu), TanStack Table (denetimli tablo modeli), shadcn/ui (Radix) tabanlı `@openmers/ui`, Tailwind CSS 4, nanostores (`@nanostores/react`). SEO gerekmez; tek sayfa uygulaması gibi davranır ve yalnızca Admin API ile konuşur. Vitrin Astro'dur ([01-storefront.md](01-storefront.md)); admin Astro kullanmaz.
 
 **SPA kipi:** statik derleme tek HTML kabuğu üretir; sunucu tarafı kod yoktur (SSR, sunucu `load`, form action, API rotası yok). Rotalar TanStack Router'ın dosya tabanlı ağacından çıkar; her rota dosyası incedir, veri istemcide TanStack Query ile oRPC istemcisi üzerinden yüklenir. Neden Vite + React: dosya tabanlı yönlendirme, iç içe düzenler, tipli arama parametreleri ve istemci veri yükleme; Astro adası bunların hiçbirini vermiyordu ve tek sayfa uygulamasında ada mantığı gereksizdi. Neden sunucu yok: ikinci bir sunucu yüzeyi (çerez, CORS, gizli anahtar) eklememek; tüm yetki ve veri Admin API'dedir.
 

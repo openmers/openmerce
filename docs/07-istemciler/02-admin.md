@@ -43,6 +43,14 @@ apps/admin/src/
 - **Yedek durumu** (self-host).
 - **Denetim kaydı.**
 
-## 5. Performans
+## 5. Çalıştırma
+
+- Geliştirme: önce API (`pnpm --filter @openmers/api-app dev`, varsayılan `http://localhost:3000`), sonra `pnpm --filter @openmers/admin-app dev`. Vite `/rpc` isteklerini API'ye vekiller; çerez aynı kökende kalır. Farklı API adresi için `OPENMERS_API_ORIGIN=http://localhost:4000` (yalnız dev vekili).
+- Ortam değişkenleri (`apps/admin/.env.local`): `VITE_API_BASE` RPC yolu (varsayılan `/rpc`, köken değil yol); `VITE_OPENMERS_CHANNEL` istekte `x-openmers-channel` olarak gönderilen kanal kodu (boşsa API kanalı Host'tan çözer).
+- Derleme: `pnpm --filter @openmers/admin-app build` → `apps/admin/dist` (tek HTML kabuğu + statik varlıklar); `preview` ile yerelde sunulur. Üretimde admin API ile aynı kökenden sunulmalı (`/rpc` aynı alan adında).
+- `src/routeTree.gen.ts` TanStack Router eklentisinin ürettiği dosyadır; elle düzenlenmez, `dev`/`build` sırasında yenilenir ve depoya girer (tip denetimi Vite olmadan koşar).
+- Kurulum yapılmamışsa API `SETUP_REQUIRED` döner ve admin `/setup` ekranına (ilk yönetici) yönlendirir.
+
+## 6. Performans
 
 Admin normalize tablolardan okur ve önbelleklenmez; doğruluk hızdan önce gelir. Yine de: her liste sorgusu indeksli ve imleçli, pano sayıları günlük özet tablosundan, ağır dışa aktarmalar işle.

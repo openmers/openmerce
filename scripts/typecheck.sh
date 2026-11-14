@@ -1,9 +1,9 @@
 #!/bin/sh
 # Type check: every workspace package that has a tsconfig.json.
-# shortcut: Astro/Expo apps (admin, storefront, mobile) are skipped until they have sources to check.
+# shortcut: Astro/Expo apps (storefront, mobile) are skipped until they have sources to check.
 set -e
 fail=0
-for cfg in packages/*/tsconfig.json packages/modules/*/tsconfig.json apps/api/tsconfig.json integration-tests/*/tsconfig.json; do
+for cfg in packages/*/tsconfig.json packages/modules/*/tsconfig.json apps/api/tsconfig.json apps/admin/tsconfig.json integration-tests/*/tsconfig.json; do
   [ -f "$cfg" ] || continue
   dir=$(dirname "$cfg")
   # Empty skeleton package: tsc reports a "no inputs" error.

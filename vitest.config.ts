@@ -10,7 +10,7 @@ export default defineConfig({
         test: {
           name: "unit",
           include: ["packages/**/*.test.ts", "apps/**/*.test.ts"],
-          exclude: ["packages/ui/**", "**/node_modules/**", "**/dist/**"],
+          exclude: ["packages/ui/**", "apps/admin/**", "**/node_modules/**", "**/dist/**"],
         },
       },
       // Sözleşme testleri gerçek migration'lı SQLite'ta koşar (Node); `unit` yalnız packages/ ve apps/ tarar.
@@ -34,6 +34,17 @@ export default defineConfig({
           environment: "jsdom",
           include: ["packages/ui/**/*.test.{ts,tsx}"],
           setupFiles: ["packages/ui/src/test/setup.ts"],
+        },
+      },
+      // Admin SPA: jsdom, fetch mocked at the HTTP boundary (no API, no DB).
+      {
+        plugins: [react()],
+        test: {
+          name: "admin",
+          environment: "jsdom",
+          include: ["apps/admin/**/*.test.{ts,tsx}"],
+          exclude: ["**/node_modules/**", "**/dist/**"],
+          setupFiles: ["apps/admin/src/test/setup.ts"],
         },
       },
     ],

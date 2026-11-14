@@ -3,5 +3,30 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "license": "MIT"
+  "license": "MIT",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@nanostores/react": "^2.0.1",
+    "@openmers/contract": "workspace:*",
+    "@openmers/ui": "workspace:*",
+    "@orpc/client": "2.0.0-beta.50",
+    "@orpc/contract": "2.0.0-beta.50",
+    "@orpc/tanstack-query": "2.0.0-beta.50",
+    "@tanstack/react-query": "^5.107.1",
+    "@tanstack/react-router": "^1.170.46",
+    "nanostores": "^1.5.5",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.3.5",
+    "@tanstack/router-plugin": "^1.169.0",
+    "@vitejs/plugin-react": "^6.3.0",
+    "tailwindcss": "^4.3.5",
+    "vite": "^8.3.8"
+  }
 }

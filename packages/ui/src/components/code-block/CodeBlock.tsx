@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react"
 import { type ComponentProps, useLayoutEffect, useRef, useState } from "react"
 import { cn } from "../../utils/cn"
 import { Copy } from "../copy"
@@ -76,8 +77,13 @@ export function CodeBlock({ snippets, hideLabels = false, className, children, .
         <div className="w-full px-0.5">
           <div className="relative h-px w-full bg-contrast-border-top">
             <div
-              className="absolute bottom-0 transition-all duration-150 ease-linear motion-reduce:transition-none"
-              style={indicator}
+              className="absolute bottom-0 left-(--indicator-left) w-(--indicator-width) transition-all duration-150 ease-linear motion-reduce:transition-none"
+              style={
+                {
+                  "--indicator-left": indicator.left,
+                  "--indicator-width": indicator.width,
+                } as CSSProperties
+              }
             >
               <div className="h-px rounded-full bg-primary-foreground" />
             </div>

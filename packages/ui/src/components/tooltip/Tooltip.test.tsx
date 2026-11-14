@@ -26,7 +26,7 @@ describe("Tooltip", () => {
     expect(content).toHaveTextContent("Kaydet")
     expect(content).toHaveClass("bg-card", "text-muted-foreground", "rounded-lg")
     expect(content).toHaveClass("shadow-elevation-tooltip", "txt-compact-xsmall")
-    expect(content).toHaveStyle("max-width: 220px")
+    expect(content).toHaveStyle("--tooltip-max-width: 220px")
   })
 
   it("opens on focus and closes on Escape", async () => {
@@ -91,6 +91,6 @@ describe("Tooltip", () => {
     expect(content).toHaveClass("rounded-full", "px-4")
     expect(content).not.toHaveClass("rounded-lg")
     expect(content).toHaveAttribute("data-side", "top")
-    expect(content).toHaveStyle("max-width: 300px")
+    expect(content).toHaveStyle("--tooltip-max-width: 300px")
   })
 })

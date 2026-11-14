@@ -12,6 +12,7 @@ import {
   DataTableTruncatedCell,
 } from "./DataTableCells"
 import { getCellContent, getHeaderContent } from "./render-content"
+import { sizeStyle } from "./sizeStyle"
 import type {
   DataTableColumnMeta,
   DataTableEmptyStateProps,
@@ -100,12 +101,6 @@ export function DataTableTable({ emptyState }: { emptyState?: DataTableEmptyStat
   )
 }
 
-/** Column sizes are optional kit extras; table-core types them only with the sizing feature. */
-function sizeStyle(def: object) {
-  const { size, maxSize, minSize } = def as { size?: number; maxSize?: number; minSize?: number }
-  return { width: size, maxWidth: maxSize, minWidth: minSize }
-}
-
 type CellLayout = { index: number; hasSelect: boolean; showStickyBorder: boolean }
 
 function stickyClasses(id: string, { index, hasSelect, showStickyBorder }: CellLayout) {
@@ -145,9 +140,13 @@ export function DataTableHeaderCell({
 
   return (
     <TableHeaderCell
-      className={cn("whitespace-nowrap", stickyClasses(header.id, layout), {
-        "bg-background": isFirstColumn || header.id === "select",
-      })}
+      className={cn(
+        "w-(--col-w) max-w-(--col-max) min-w-(--col-min) whitespace-nowrap",
+        stickyClasses(header.id, layout),
+        {
+          "bg-background": isFirstColumn || header.id === "select",
+        },
+      )}
       style={isSpecial ? undefined : sizeStyle(column.columnDef)}
     >
       <Tag
@@ -216,7 +215,7 @@ export function DataTableBodyRow({
             // Menus and checkboxes portal their events through the row; keep them from clicking it.
             onClick={isSelect || isAction ? (event) => event.stopPropagation() : undefined}
             className={cn(
-              "items-stretch whitespace-nowrap",
+              "w-(--col-w) max-w-(--col-max) min-w-(--col-min) items-stretch whitespace-nowrap",
               stickyClasses(id, { index, hasSelect, showStickyBorder }),
               { "bg-card transition-fg group-hover/row:bg-accent": isFirstColumn || isSelect },
             )}

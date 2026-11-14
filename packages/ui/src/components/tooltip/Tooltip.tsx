@@ -1,5 +1,5 @@
 import { Tooltip as TooltipPrimitive } from "radix-ui"
-import type { MouseEventHandler, ReactNode } from "react"
+import type { CSSProperties, MouseEventHandler, ReactNode } from "react"
 import { cn } from "../../utils/cn"
 import { tooltipContentVariants } from "./variants"
 
@@ -55,8 +55,8 @@ export function Tooltip({
             side={side}
             sideOffset={sideOffset}
             align="center"
-            className={cn(tooltipContentVariants(), className)}
-            style={{ maxWidth }}
+            className={cn(tooltipContentVariants(), "max-w-(--tooltip-max-width)", className)}
+            style={{ "--tooltip-max-width": `${maxWidth}px` } as CSSProperties}
           >
             {content}
           </TooltipPrimitive.Content>

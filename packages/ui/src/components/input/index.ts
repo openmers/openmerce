@@ -1,2 +1,2 @@
-export { default as Input } from "./Input.svelte"
+export { Input } from "./Input"
 export { type InputVariants, inputBaseStyles, inputVariants } from "./variants"

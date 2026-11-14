@@ -1,2 +1,2 @@
-export type { CodeSnippet } from "./CodeBlock.svelte"
-export { default as CodeBlock } from "./CodeBlock.svelte"
+export type { CodeSnippet } from "./CodeBlock"
+export { CodeBlock } from "./CodeBlock"

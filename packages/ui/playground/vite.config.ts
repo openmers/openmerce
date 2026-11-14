@@ -1,5 +1,5 @@
-import { svelte } from "@sveltejs/vite-plugin-svelte"
 import tailwindcss from "@tailwindcss/vite"
+import react from "@vitejs/plugin-react"
 import { defineConfig } from "vite"
 
-export default defineConfig({ root: import.meta.dirname, plugins: [tailwindcss(), svelte()] })
+export default defineConfig({ root: import.meta.dirname, plugins: [tailwindcss(), react()] })

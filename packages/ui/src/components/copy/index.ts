@@ -1,1 +1,1 @@
-export { default as Copy } from "./Copy.svelte"
+export { Copy } from "./Copy"

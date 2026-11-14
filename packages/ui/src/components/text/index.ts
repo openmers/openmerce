@@ -1,2 +1,2 @@
-export { default as Text } from "./Text.svelte"
+export { Text } from "./Text"
 export { type TextVariants, textVariants } from "./variants"

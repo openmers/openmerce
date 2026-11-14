@@ -1,4 +1,4 @@
-export { default as DatePicker } from "./DatePicker.svelte"
+export { DatePicker } from "./DatePicker"
 export {
   datePickerButtonVariants,
   datePickerClearButtonVariants,

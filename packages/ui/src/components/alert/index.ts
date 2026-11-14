@@ -1,2 +1,2 @@
-export { default as Alert } from "./Alert.svelte"
+export { Alert } from "./Alert"
 export { type AlertIconVariants, alertIconVariants } from "./variants"

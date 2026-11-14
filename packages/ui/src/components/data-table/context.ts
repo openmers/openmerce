@@ -1,21 +1,15 @@
-import { getContext, setContext } from "svelte"
+import { createContext, useContext } from "react"
 import type { DataTableInstance } from "./table-types"
 import type { DataTableRowData } from "./types"
 
-const DATA_TABLE = Symbol("data-table")
+export const DataTableContext = createContext<DataTableInstance<DataTableRowData> | null>(null)
 
-export function setDataTableContext<TData extends DataTableRowData>(
-  instance: DataTableInstance<TData>,
-) {
-  setContext(DATA_TABLE, instance)
-}
-
-export function getDataTableContext<
+export function useDataTableContext<
   TData extends DataTableRowData = DataTableRowData,
 >(): DataTableInstance<TData> {
-  const instance = getContext<DataTableInstance<DataTableRowData> | undefined>(DATA_TABLE)
+  const instance = useContext(DataTableContext)
   if (!instance) {
-    throw new Error("DataTable bileşenleri bir DataTable kökü içinde kullanılmalıdır")
+    throw new Error("DataTable parts must be rendered inside a DataTable root")
   }
-  return instance as DataTableInstance<TData>
+  return instance as unknown as DataTableInstance<TData>
 }

@@ -1,2 +1,2 @@
-export { default as Checkbox } from "./Checkbox.svelte"
+export { Checkbox } from "./Checkbox"
 export { checkboxIndicatorVariants, checkboxVariants } from "./variants"

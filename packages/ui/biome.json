@@ -1,15 +1,5 @@
 {
   "root": false,
   "extends": "//",
-  "files": { "includes": ["**", "!src/theme.css", "!playground/style.css"] },
-  "overrides": [
-    {
-      "includes": ["**/*.svelte"],
-      "linter": {
-        "rules": {
-          "correctness": { "noUnusedVariables": "off", "noUnusedImports": "off" }
-        }
-      }
-    }
-  ]
+  "files": { "includes": ["**", "!src/theme.css", "!playground/style.css"] }
 }

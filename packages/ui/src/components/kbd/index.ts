@@ -1,1 +1,1 @@
-export { default as Kbd } from "./Kbd.svelte"
+export { Kbd } from "./Kbd"

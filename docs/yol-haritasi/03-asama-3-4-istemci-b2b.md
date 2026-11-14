@@ -6,7 +6,7 @@
 - `apps/admin`, `apps/storefront`, `apps/mobile`: yalnız `package.json` (script yok, bağımlılık yok) ve `tsconfig.json`; `src/` boş. `apps/mobile/e2e/.gitkeep` var. `apps/api/src/{shop,admin,hooks,platform,worker}` boş klasör.
 - `packages/core/src/features/{companies,quotes,channels,pricing,cart,checkout,orders,...}/index.ts`: hepsi `export {}`.
 - `packages/theme-kit`, `apps/storefront/src/themes/default`, `packages/create-openmers-theme`, `packages/app-sdk`, `packages/app-bridge`: `src/index.ts` = `export {}`.
-- `packages/ui`: 44 bileşen + `data-table` + `toast` (`Toaster.svelte`, `svelte-sonner` bağımlılığı) gerçekten var ve testli. Svelte uygulaması yerinde; React portu madde 4'te (port tamamlanana kadar bu satır geçerli). `packages/tokens`: `tokens.json` + tipli `tokens` dışa aktarımı var; mobil (NativeWind) çıktısı yok.
+- `packages/ui`: 44 bileşen + `data-table` + `toast` (`Toaster.tsx`, `sonner` bağımlılığı) gerçekten var ve testli; React'e port tamamlandı (madde 4). `packages/tokens`: `tokens.json` + tipli `tokens` dışa aktarımı var; mobil (NativeWind) çıktısı yok.
 - `e2e/smoke.e2e.ts` + `e2e.config.ts` var; config `pnpm --filter @openmers/storefront-app dev` çağırıyor ama storefront'ta `dev` script'i yok, test koşmuyor.
 - `packages/admin-sdk` **yok** (belge 06 bu paketi varsayıyor; `02-genel-mimari/04-monorepo-klasor-yapisi.md`'de de anılmıyor).
 - `integration-tests/{core,api,race,contract}`: yalnız `package.json`/`tsconfig.json`, `__tests__` yok; `integration-tests/helpers/index.ts` var.

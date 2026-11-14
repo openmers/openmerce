@@ -1,4 +1,4 @@
-export { default as Avatar } from "./Avatar.svelte"
+export { Avatar } from "./Avatar"
 export {
   type AvatarInnerVariants,
   type AvatarVariants,

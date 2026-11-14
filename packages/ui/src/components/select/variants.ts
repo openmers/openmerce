@@ -27,14 +27,14 @@ export const selectTriggerVariants = cva(
 )
 
 export const selectContentVariants = cva([
-  "relative max-h-[200px] min-w-[var(--bits-floating-anchor-width)] overflow-hidden rounded-lg bg-popover text-foreground shadow-elevation-flyout",
+  "relative max-h-[200px] min-w-[var(--radix-select-trigger-width)] overflow-hidden rounded-lg bg-popover text-foreground shadow-elevation-flyout",
   "data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95",
   "data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95",
   "data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2",
 ])
 
 export const selectViewportVariants = cva(
-  "p-1 h-[var(--bits-floating-anchor-height)] w-full min-w-[var(--bits-floating-anchor-width)]",
+  "p-1 h-[var(--radix-select-trigger-height)] w-full min-w-[var(--radix-select-trigger-width)]",
 )
 
 export const selectLabelVariants = cva("txt-compact-xsmall-plus px-2 py-1.5 text-muted-foreground")
@@ -43,9 +43,8 @@ export const selectItemVariants = cva([
   "txt-compact-small grid cursor-pointer grid-cols-[15px_1fr] items-center gap-x-2 rounded-[4px] bg-popover px-2 py-1.5 outline-hidden transition-colors",
   "focus-visible:bg-bg-component-hover",
   "active:bg-bg-component-pressed",
-  // bits-ui emits `data-selected` instead of Radix `data-state=checked`.
-  "data-selected:txt-compact-small-plus",
-  "disabled:text-fg-disabled",
+  "data-[state=checked]:txt-compact-small-plus",
+  "data-disabled:text-fg-disabled",
 ])
 
 // the kit's `bg-ui-border-component` token is absent from mapping.md; the separator only carries the menu edge colors.

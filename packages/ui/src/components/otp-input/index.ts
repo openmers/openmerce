@@ -1,4 +1,4 @@
-export { default as OtpInput } from "./OtpInput.svelte"
+export { OtpInput } from "./OtpInput"
 export {
   otpCellVariants,
   otpGroupVariants,

@@ -1,2 +1,2 @@
-export { default as InlineTip } from "./InlineTip.svelte"
+export { InlineTip } from "./InlineTip"
 export { type InlineTipBarVariants, inlineTipBarVariants } from "./variants"

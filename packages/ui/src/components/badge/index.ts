@@ -1,4 +1,4 @@
-export { default as Badge } from "./Badge.svelte"
+export { Badge } from "./Badge"
 export {
   type BadgeColorVariants,
   type BadgeSizeVariants,

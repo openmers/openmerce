@@ -1,6 +1,6 @@
-import type { ToasterProps } from "svelte-sonner"
-import { toast as sonnerToast } from "svelte-sonner"
-import Toast from "./Toast.svelte"
+import { createElement } from "react"
+import { toast as sonnerToast, type ToasterProps } from "sonner"
+import { Toast } from "./Toast"
 import type { ToastActionProps, ToastVariant } from "./types"
 
 export type ToastOptions = {
@@ -28,23 +28,26 @@ function createUniqueId() {
   return Math.random().toString(36).slice(2, 8)
 }
 
-/** The kit's `utils/toast.tsx` counterpart: the `Toast` view is shown through svelte-sonner. */
+/** The kit's `utils/toast.tsx` counterpart: the `Toast` view is shown through sonner. */
 function create(variant: ToastVariant, title: string, options: ToastOptions = {}) {
   const id = options.id ?? createUniqueId()
-  sonnerToast.custom(Toast, {
-    id,
-    position: options.position,
-    duration: options.duration,
-    dismissible: options.dismissable,
-    componentProps: {
+  sonnerToast.custom(
+    () =>
+      createElement(Toast, {
+        id,
+        variant,
+        title,
+        description: options.description,
+        action: options.action,
+        dismissable: options.dismissable,
+      }),
+    {
       id,
-      variant,
-      title,
-      description: options.description,
-      action: options.action,
-      dismissable: options.dismissable,
+      position: options.position,
+      duration: options.duration,
+      dismissible: options.dismissable,
     },
-  })
+  )
   return id
 }
 

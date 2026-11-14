@@ -1,5 +1,5 @@
-export { default as Toast } from "./Toast.svelte"
-export { default as Toaster } from "./Toaster.svelte"
+export { Toast } from "./Toast"
+export { Toaster } from "./Toaster"
 export { type PromiseToastProps, type ToastOptions, toast } from "./toast"
 export type { ToastActionProps, ToastVariant } from "./types"
 export {

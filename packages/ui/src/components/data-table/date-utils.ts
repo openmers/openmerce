@@ -1,5 +1,5 @@
 import type { DateValue } from "@internationalized/date"
-import { toCalendarDate, toCalendarDateTime } from "@internationalized/date"
+import { fromDate, toCalendarDate, toCalendarDateTime } from "@internationalized/date"
 
 export type DateGranularity = "day" | "minute"
 
@@ -10,7 +10,8 @@ export function toDateValue(
   if (!iso) return undefined
   const date = new Date(iso)
   if (Number.isNaN(date.getTime())) return undefined
-  return granularity === "minute" ? toCalendarDateTime(date) : toCalendarDate(date)
+  const zoned = fromDate(date, "UTC")
+  return granularity === "minute" ? toCalendarDateTime(zoned) : toCalendarDate(zoned)
 }
 
 export function fromDateValue(value: DateValue | undefined): string | undefined {

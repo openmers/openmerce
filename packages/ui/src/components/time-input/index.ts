@@ -1,2 +1,2 @@
-export { default as TimeInput } from "./TimeInput.svelte"
+export { TimeInput } from "./TimeInput"
 export { timeInputVariants } from "./variants"

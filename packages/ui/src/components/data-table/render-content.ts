@@ -1,4 +1,4 @@
-import type { Snippet } from "svelte"
+import { isValidElement } from "react"
 import type {
   DataTableCellContext,
   DataTableColumn,
@@ -12,7 +12,7 @@ function normalize(value: unknown): DataTableRenderedContent {
   if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
     return value
   }
-  if (typeof value === "function") return value as Snippet
+  if (isValidElement(value)) return value
   if (value instanceof Date) return value.toLocaleDateString()
   if (Array.isArray(value)) return value.join(", ")
   return String(value)

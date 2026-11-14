@@ -1,1 +1,1 @@
-export { default as Divider } from "./Divider.svelte"
+export { Divider } from "./Divider"

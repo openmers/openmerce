@@ -1,2 +1,2 @@
-export { default as Command } from "./Command.svelte"
+export { Command } from "./Command"
 export { commandVariants } from "./variants"

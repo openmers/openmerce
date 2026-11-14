@@ -1,2 +1,2 @@
-export { default as IconBadge } from "./IconBadge.svelte"
+export { IconBadge } from "./IconBadge"
 export { type IconBadgeVariants, iconBadgeVariants } from "./variants"

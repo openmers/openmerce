@@ -1,6 +1,4 @@
-export { default as RadioGroup } from "./RadioGroup.svelte"
-export { default as RadioGroupChoiceBox } from "./RadioGroupChoiceBox.svelte"
-export { default as RadioGroupItem } from "./RadioGroupItem.svelte"
+export { RadioGroup, RadioGroupChoiceBox, RadioGroupItem } from "./RadioGroup"
 export {
   radioGroupChoiceBoxVariants,
   radioGroupDotVariants,

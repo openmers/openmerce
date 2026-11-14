@@ -1,8 +1,10 @@
-export { default as ProgressTabs } from "./ProgressTabs.svelte"
-export { default as ProgressTabsContent } from "./ProgressTabsContent.svelte"
-export { default as ProgressTabsIndicator } from "./ProgressTabsIndicator.svelte"
-export { default as ProgressTabsList } from "./ProgressTabsList.svelte"
-export { default as ProgressTabsTrigger } from "./ProgressTabsTrigger.svelte"
+export {
+  ProgressTabs,
+  ProgressTabsContent,
+  ProgressTabsIndicator,
+  ProgressTabsList,
+  ProgressTabsTrigger,
+} from "./ProgressTabs"
 export {
   type ProgressStatus,
   progressTabsContentVariants,

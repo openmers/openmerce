@@ -1,2 +1,2 @@
-export { default as CurrencyInput } from "./CurrencyInput.svelte"
+export { CurrencyInput } from "./CurrencyInput"
 export { type CurrencyInputVariants, currencyInputVariants } from "./variants"

@@ -1,2 +1,2 @@
-export { default as IconButton } from "./IconButton.svelte"
+export { IconButton } from "./IconButton"
 export { type IconButtonVariants, iconButtonVariants } from "./variants"

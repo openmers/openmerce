@@ -1,2 +1,2 @@
-export { default as Heading } from "./Heading.svelte"
+export { Heading } from "./Heading"
 export { type HeadingVariants, headingVariants } from "./variants"

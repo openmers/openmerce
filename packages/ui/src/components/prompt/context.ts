@@ -1,14 +1,9 @@
-import { getContext, setContext } from "svelte"
+import { createContext, useContext } from "react"
 
 export type PromptVariant = "danger" | "confirmation"
 
-const PROMPT_VARIANT = Symbol("PromptVariant")
+export const PromptVariantContext = createContext<PromptVariant>("danger")
 
-export function setPromptVariant(variant: () => PromptVariant) {
-  setContext(PROMPT_VARIANT, variant)
-}
-
-export function getPromptVariant(): () => PromptVariant {
-  return (getContext<() => PromptVariant>(PROMPT_VARIANT) ??
-    (() => "danger")) as () => PromptVariant
+export function usePromptVariant(): PromptVariant {
+  return useContext(PromptVariantContext)
 }

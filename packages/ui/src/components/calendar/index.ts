@@ -1,9 +1,5 @@
-export { default as Calendar } from "./Calendar.svelte"
-export { default as CalendarDay } from "./CalendarDay.svelte"
-export { default as CalendarGrid } from "./CalendarGrid.svelte"
-export { default as CalendarHeader } from "./CalendarHeader.svelte"
-export { default as CalendarNextButton } from "./CalendarNextButton.svelte"
-export { default as CalendarPrevButton } from "./CalendarPrevButton.svelte"
+export { Calendar, CalendarDay, CalendarGrid } from "./Calendar"
+export { CalendarHeader, CalendarNextButton, CalendarPrevButton } from "./CalendarHeader"
 export {
   calendarButtonVariants,
   calendarCellVariants,

@@ -31,18 +31,22 @@ export function createDataTableColumnHelper<
         ...rest
       } = column as typeof column & DataTableSortableColumnDef & DataTableAlignableColumnDef
 
-      return helper.accessor(accessor, {
-        ...rest,
-        enableSorting: enableSorting ?? false,
-        meta: {
-          ___sortMetaData: { sortLabel, sortAscLabel, sortDescLabel },
-          ___alignMetaData: { headerAlign, align },
-          ___truncateTooltip: truncateTooltip,
-          ...(meta ?? {}),
-        },
-      }) as DataTableColumnDef<TData>
+      // The kit column shape is looser than the table-core generics; the casts keep it assignable.
+      return helper.accessor(
+        accessor as never,
+        {
+          ...rest,
+          enableSorting: enableSorting ?? false,
+          meta: {
+            ___sortMetaData: { sortLabel, sortAscLabel, sortDescLabel },
+            ___alignMetaData: { headerAlign, align },
+            ___truncateTooltip: truncateTooltip,
+            ...(meta ?? {}),
+          },
+        } as never,
+      ) as DataTableColumnDef<TData>
     },
-    display: (column) => helper.display(column) as DataTableColumnDef<TData>,
+    display: (column) => helper.display(column as never) as DataTableColumnDef<TData>,
     action: ({ actions, ...props }) =>
       helper.display({
         id: "action",
@@ -55,7 +59,7 @@ export function createDataTableColumnHelper<
         id: "select",
         ...props,
         meta: {
-          ...(props?.meta ?? {}),
+          ...((props as { meta?: object } | undefined)?.meta ?? {}),
           ___customSelectHeader: props?.header !== undefined,
           ___customSelectCell: props?.cell !== undefined,
         },

@@ -1,7 +1,7 @@
 import { cva } from "class-variance-authority"
 
-// Ported from an MIT-licensed UI kit; see NOTICE. The cells apply the same classes onto bits-ui `PinInput.Cell`;
-// instead of the real `<input>` in Radix, the `data-active` state carries the focus look.
+// Ported from an MIT-licensed UI kit; see NOTICE. The cells are painted divs over one hidden input,
+// so the `data-active` state carries the focus look instead of a real per-cell `<input>`.
 export const otpInputVariants = cva("flex items-center justify-center gap-x-3")
 
 export const otpGroupVariants = cva("flex")

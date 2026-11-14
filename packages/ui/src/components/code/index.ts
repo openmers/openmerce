@@ -1,1 +1,1 @@
-export { default as Code } from "./Code.svelte"
+export { Code } from "./Code"

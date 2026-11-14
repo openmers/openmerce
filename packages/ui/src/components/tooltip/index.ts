@@ -1,2 +1,2 @@
-export { default as Tooltip } from "./Tooltip.svelte"
+export { Tooltip } from "./Tooltip"
 export { tooltipContentVariants } from "./variants"

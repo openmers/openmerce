@@ -14,7 +14,7 @@ import type {
   RowSelectionState,
   SortDirection,
 } from "@tanstack/table-core"
-import type { Snippet } from "svelte"
+import type { ReactNode } from "react"
 import type { DataTableFeatureSet } from "./features"
 
 export type DataTableRowData = RowData
@@ -57,8 +57,8 @@ export type DataTableRowModel<TData extends DataTableRowData = DataTableRowData>
   TData
 >
 
-/** Cell/header content: plain text, or a snippet rendered when called. */
-export type DataTableRenderedContent = string | number | boolean | Snippet | null | undefined
+/** Cell/header content: plain text or any React node. */
+export type DataTableRenderedContent = ReactNode
 
 export type DataTableCellRenderer<TData extends DataTableRowData, TValue = unknown> = (
   ctx: DataTableCellContext<TData, TValue>,
@@ -71,7 +71,7 @@ export type DataTableHeaderRenderer<TData extends DataTableRowData, TValue = unk
 export type DataTableAction<TData extends DataTableRowData = DataTableRowData> = {
   label: string
   onClick: (ctx: DataTableCellContext<TData>) => void
-  icon?: Snippet
+  icon?: ReactNode
 }
 
 export type DataTableActions<TData extends DataTableRowData = DataTableRowData> =
@@ -160,7 +160,7 @@ export interface DataTableCommand {
 export type DataTableEmptyStateContent = {
   heading?: string
   description?: string
-  custom?: Snippet
+  custom?: ReactNode
 }
 
 export type DataTableEmptyStateProps = {

@@ -2,7 +2,7 @@
 
 **Grubun amacı.** Aşama 0 (madde 1-4) her değişikliği denetleyen araç zincirini ve admin'in tek tasarım sistemini (`@openmers/ui`) bitirir. Aşama 1 (madde 5-13) her ticaret özelliğinin üstüne kurulacağı omurgayı yazar: `Platform` + `atomic()`, `packages/db`, yapılandırma, `Ctx` + `packages/contract`, outbox, önbellek, yetki/denetim/kasa, kimlik doğrulama. Aşama 2'deki hiçbir madde (14-30) bunlar olmadan gerçek veri okuyamaz.
 
-**Durum (2026-11-13, kod görülerek doğrulandı).** Kökte pnpm workspace, Biome, Vitest (`unit` + `ui` projeleri), Changesets (`fixed: [["@openmers/*"]]`), `.nvmrc`, `scripts/check-file-size.sh` (250 satır), `e2e.config.ts`, `e2e.mobile.config.ts`, `e2e/smoke.e2e.ts`, `.mcp.json` var. `packages/tokens` (tokens.json + `build-theme.mjs` + testler) ve `packages/ui` (45 bileşen klasörü, 49 test dosyası, playground) dolu. `packages/core/src` içinde yalnızca `index.ts` ve 25 `features/*/index.ts` yer tutucusu (`export {}`) var; `platform/`, `ctx/`, `config/`, `extend/`, `events/`, `jobs/` klasörleri yok. `packages/db`, `packages/contract`, `packages/test-utils`, `integration-tests/helpers` yalnızca `export {}`. `apps/*/src` boş (`apps/api/src` altındaki `admin/ hooks/ platform/ shop/ worker/` klasörleri boş ve git'te izlenmiyor). Kökte `typescript`, `svelte-check`, `drizzle-orm`, `hono`, `@orpc/*`, `zod`, `better-auth`, `@cloudflare/vitest-pool-workers`, `better-sqlite3` kurulu değil.
+**Durum (2026-11-13, kod görülerek doğrulandı).** Kökte pnpm workspace, Biome, Vitest (`unit` + `ui` projeleri), Changesets (`fixed: [["@openmers/*"]]`), `.nvmrc`, `scripts/check-file-size.sh` (250 satır), `e2e.config.ts`, `e2e.mobile.config.ts`, `e2e/smoke.e2e.ts`, `.mcp.json` var. `packages/tokens` (tokens.json + `build-theme.mjs` + testler) ve `packages/ui` (45 bileşen klasörü, 49 test dosyası, playground) dolu. `packages/core/src` içinde yalnızca `index.ts` ve 25 `features/*/index.ts` yer tutucusu (`export {}`) var; `platform/`, `ctx/`, `config/`, `extend/`, `events/`, `jobs/` klasörleri yok. `packages/db`, `packages/contract`, `packages/test-utils`, `integration-tests/helpers` yalnızca `export {}`. `apps/*/src` boş (`apps/api/src` altındaki `admin/ hooks/ platform/ shop/ worker/` klasörleri boş ve git'te izlenmiyor). Kökte `typescript`, `svelte-check` (port tamamlanana kadar `packages/ui` ve vitrin için), `drizzle-orm`, `hono`, `@orpc/*`, `zod`, `better-auth`, `@cloudflare/vitest-pool-workers`, `better-sqlite3` kurulu değil.
 
 **Bağımlılık özeti.**
 
@@ -26,7 +26,7 @@ Kısaltma: `core` = `packages/core/src`, `api` = `apps/api/src`. Her yeni dosya 
   - İki çalışma hedefi, tek kod: Node/Bun + SQLite + yerel disk ve Cloudflare Workers + D1 + R2.
   - Backend kodunda `node:*` yok; yalnızca Fetch, Web Crypto, Streams.
   - Backend: Hono, oRPC v2 (`oc` + `implement`; `/rpc` RPCHandler, `/api` OpenAPIHandler), Drizzle ORM 0.45.x `sqlite-core`, drizzle-kit, Zod, Better Auth.
-  - Araçlar: Biome + `svelte-check`, Vitest + `@cloudflare/vitest-pool-workers` (D1/R2 gerçek ortam), `e2e` (web + mobil), GitHub Actions, Changesets, pnpm workspaces (Turborepo yalnızca ihtiyaç olunca).
+  - Araçlar: Biome; tip denetimi `tsc` (admin/ui) ve `svelte-check` (vitrin), Vitest + `@cloudflare/vitest-pool-workers` (D1/R2 gerçek ortam), `e2e` (web + mobil), GitHub Actions, Changesets, pnpm workspaces (Turborepo yalnızca ihtiyaç olunca).
   - Bilinen kısıtlar: D1'de interaktif transaction yok (yalnız `batch()`, koşullu `UPDATE ... WHERE stock >= ?`); D1 başına 10 GB; Workers CPU/paket sınırı; para tamsayı küçük birim + para birimi kodu.
   - Lisans MIT (çekirdek, built-in app, SDK/UI/contract).
 - **Bağımlılık:** yok (temel madde).
@@ -36,7 +36,7 @@ Kısaltma: `core` = `packages/core/src`, `api` = `apps/api/src`. Her yeni dosya 
   3. `+` Vitest kök yapılandırması `vitest.config.ts` (`unit` Node, `ui` jsdom); Changesets (`.changeset/config.json`).
   4. `+` `e2e` araçları: `e2e.config.ts` (web, storefront `dev` komutuna bağlı), `e2e.mobile.config.ts` (Android), `.mcp.json`.
   5. `±` Tip denetimi: kök `devDependencies`'e `typescript`; her pakete `"typecheck": "tsc -p tsconfig.json"`; kökte `"typecheck": "pnpm -r --if-present typecheck"` ve `verify` sırası `lint → check:size → typecheck → test`. (`tsconfig.base.json` hazır: `strict`, `noUncheckedIndexedAccess`, `noEmit`.)
-  6. `-` `svelte-check`: `packages/ui/package.json`'a `"check": "svelte-check --tsconfig ./tsconfig.json"`; `apps/admin` ve `apps/storefront` gelince aynısı; kök `typecheck` bunları da çağırır.
+  6. `-` Tip denetimi: `packages/ui` ve `apps/admin`'de `"typecheck": "tsc -p tsconfig.json"`; `apps/storefront` Svelte dosyaları için `"check": "svelte-check --tsconfig ./tsconfig.json"`; kök `typecheck` bunları da çağırır.
   7. `-` `node:*` yasağı: `biome.json` `overrides` ile `packages/core/**`, `packages/db/src/**` (migration çalıştırıcı hariç), `packages/contract/**`, `apps/api/src/**` için `correctness/noNodejsModules` hata; istisna `apps/api/src/platform/node.ts` ve `apps/api/src/platform/node/**` (belge 01-platform §2).
   8. `-` Çekirdek bağımlılıklarını npm'den teyit edip **tam sürümle** sabitleme: `hono`, `@orpc/contract|server|client|openapi` (v2 beta, tam sürüm), `drizzle-orm@0.45.x`, `drizzle-kit`, `zod@4`, `better-auth` → ilgili paketlerin `package.json`'ına (core/db/contract/api); `better-sqlite3` yalnız `apps/api` ve `packages/test-utils`; `wrangler`, `@cloudflare/vitest-pool-workers` kök dev.
      - Kısmen yapıldı (2026-11-13, `npm view` ile teyitli): `packages/db` → `drizzle-orm` 0.45.4, dev `drizzle-kit` 0.31.11; `better-sqlite3` 13.1.1 + `@types/better-sqlite3` 9.6.0 geçici olarak `packages/db` dev (şema testi; `test-utils` gelince taşınır). Kalan: `hono`, oRPC, `zod`, `better-auth`, `wrangler`, pool-workers.
@@ -44,7 +44,7 @@ Kısaltma: `core` = `packages/core/src`, `api` = `apps/api/src`. Her yeni dosya 
   10. `-` `scripts/bundle-size.sh` çıktısını Workers paket sınırına karşı eşikli hale getirme (`apps/api/dist` için üst sınır, aşılırsa çıkış kodu 1); eşik değeri ölçümden sonra.
 - **Testler:** `pnpm verify` yeşil. `noNodejsModules` için bir kerelik doğrulama: `packages/core` içine `import "node:fs"` yazılınca `pnpm lint` kırılmalı (CI'da değil, kural eklenirken elle). Tip denetimi için bilinçli bir tip hatası `pnpm typecheck`'i kırmalı.
 - **Bitti sayılır:**
-  - `pnpm verify` lint, boyut, tip (tsc + svelte-check), birim ve derlemeyi çalıştırır.
+  - `pnpm verify` lint, boyut, tip (`tsc`; vitrin için `svelte-check`), birim ve derlemeyi çalıştırır.
   - `packages/core` veya `apps/api/src` (platform/node hariç) içinde `node:` importu lint hatasıdır.
   - Hono, oRPC, Drizzle, Zod, Better Auth sürümleri `package.json`'da tam sabittir ve lockfile'dadır.
 - **Açık sorular / riskler:**
@@ -52,12 +52,12 @@ Kısaltma: `core` = `packages/core/src`, `api` = `apps/api/src`. Her yeni dosya 
   - Better Auth eklentilerinin (2FA, passkey, organization, bearer) adları ve D1 uyumu doğrulanmadı (08-kimlik).
   - Varsayılan dil EN olarak kapatıldı (`01-tech-stack.md` güncellendi).
   - "Resmî built-in app'ler" listesi Türkiye ağırlıklı (iyzico, PayTR, Yurtiçi, Paraşüt); global varsayılan Stripe + e-posta olmalı, Türkiye ek modül. Çekirdekte yalnız port + pazardan bağımsız varsayılan kalır.
-  - Biome'un `.svelte` dosyalarındaki betik desteği kısmi; Svelte tarafı için `svelte-check` şart.
+  - Biome TS/TSX'i tam denetler; vitrinin `.svelte` dosyaları için `svelte-check` şart (admin/ui `tsc`).
 
 ### 2. `docs/08-isletme/02-ci-cd.md` — GitHub Actions iş akışları
 
 - **Kaynak kararlar:**
-  - `verify`: her PR ve `main`; lint (Biome, svelte-check), tip, birim + entegrasyon (D1 **ve** SQLite), derleme.
+  - `verify`: her PR ve `main`; lint (Biome), tip (`tsc`; vitrin için `svelte-check`), birim + entegrasyon (D1 **ve** SQLite), derleme.
   - `e2e-web`: PR (etiketli) ve `main`; `e2e-mobile`: `main` ve sürüm etiketi, Android emülatör + EAS apk.
   - `deploy-cloudflare`: `main` → hazırlık, etiket → üretim; önce `wrangler d1 migrations apply`, sonra Worker deploy.
   - `release-docker` (Node + Litestream, GHCR, imaj açılışta migration uygular), `release-mobile` (EAS Build/Submit, JS-only'de EAS Update), `release-packages` (Changesets).
@@ -91,7 +91,7 @@ Kısaltma: `core` = `packages/core/src`, `api` = `apps/api/src`. Her yeni dosya 
   - Katmanlar: birim (saf `core`, `db` ve sırlar parametre), entegrasyon (gerçek D1 Miniflare **ve** gerçek SQLite, aynı test iki hedefte), yarış (tam bir kazanan), sözleşme (sızıntı kapısı, tema, önbellek politikası), e2e web + mobil.
   - Klasör: `integration-tests/{api,core,race,contract,helpers}`, koşucu `packages/test-utils` (taze D1/SQLite, tohum veri).
   - Ek kapılar: sorgu planı (`EXPLAIN QUERY PLAN`, tam tarama yok), tur bütçesi (istek başına sayaç), sözleşme testleri (her strateji/operasyon/port), segment sızıntısı, sahiplik, yük (k6, 10.000 ve 100.000 ürün).
-  - Bileşen testleri: Vitest + `@testing-library/svelte` + jsdom; rol ve erişilebilir ada göre sorgu, `userEvent`.
+  - Bileşen testleri: Vitest + `@testing-library/react` + jsdom (`packages/ui`, admin); storefront adaları için `@testing-library/svelte`; rol ve erişilebilir ada göre sorgu, `userEvent`.
   - Veritabanı mock'lanmaz; zaman ve rastgelelik `Ctx`'ten gelir.
 - **Bağımlılık:** madde 6 (migration'lar), madde 5 (Platform; sayaç onu sarar). Yardımcıların saf kısımları önce yazılabilir.
 - **Yapılacaklar:**
@@ -116,7 +116,7 @@ Kısaltma: `core` = `packages/core/src`, `api` = `apps/api/src`. Her yeni dosya 
 - **Açık sorular / riskler:**
   - `@cloudflare/vitest-pool-workers`'ın kurulu Vitest 5.1.0 ile uyumu doğrulanmadı; uyumsuzsa D1 yalnız Miniflare API'siyle Node havuzunda koşar.
   - Miniflare D1 `batch()` atomikliğinin gerçek D1'i temsil edip etmediği doğrulanmadı (`ATLANANLAR.md`: "D1 batch atomikliği · Doğrulanmadı").
-  - Belge `@testing-library/*` + jsdom seçimini "doğrulanmadı" diyor; pratikte 49 bileşen testi bununla koşuyor, belge güncellenebilir. Görsel (açık/koyu) anlık görüntü jsdom'da yapılamaz (madde 4.11).
+  - Belge `@testing-library/*` + jsdom seçimini "doğrulanmadı" diyor; pratikte 49 bileşen testi bununla koşuyor, belge güncellenebilir. Görsel (açık/koyu) anlık görüntü jsdom'da yapılamaz (madde 4.14).
   - `@openmers/testing` (built-in app geliştiricileri için) önerildi, yazılmadı (`ATLANANLAR.md` satır 59); `test-utils` ile ilişkisi kararsız.
 
 ### 4. `docs/07-istemciler/07-ui-kutuphanesi.md` — `@openmers/ui`
@@ -128,31 +128,32 @@ Kısaltma: `core` = `packages/core/src`, `api` = `apps/api/src`. Her yeni dosya 
   - `usePrompt` → tek `<PromptHost />` + `prompt({ title, description, verificationText? })`; `useToggleState` yazılmaz.
   - Jetonlar: `packages/tokens/src/tokens.json` tek kaynak; Medusa `ui-preset` 2.22.6 değerleri (90 renk, 23 gölge, 35 tipografi), shadcn adları; `theme.css` ve bileşenler birlikte sürümlenir.
   - Test: bileşen başına görsel regresyon (açık/koyu), klavye ve rol, `...rest` geçişi; ağaç sallama bütçesi.
-- **Bağımlılık:** madde 1 (svelte-check, lint altyapısı). Admin (31) ve builder (36) bu maddeye bağlı.
+- **Bağımlılık:** madde 1 (`tsc`, lint altyapısı). Admin (31) ve builder (36) bu maddeye bağlı.
 - **Yapılacaklar:**
-  1. `+` Jetonlar: `packages/tokens/src/tokens.json`, `mapping.md`, `build-theme.mjs` → `packages/ui/src/theme.css`; kök `NOTICE`; testler `build-theme.test.ts`, `index.test.ts`, `packages/ui/src/theme.test.ts`.
-  2. `+` Bileşenler: `packages/ui/src/components/` altında 45 klasör (Alert … Tooltip, CommandBar, CurrencyInput, StatusBadge, ProgressTabs/Accordion, Copy, CodeBlock, InlineTip, IconBadge, Prompt + `PromptHost`, Toast); `cn` (`src/utils/cn.ts`).
-  3. `+` DataTable: `create-data-table.svelte.ts`, `create-column-helper.ts`, `create-filter-helper.ts`, `create-command-helper.ts`; süzgeç türleri `radio/select/date/multiselect/number-range/boolean`; `rowCount` yoksa yalnız önceki/sonraki (`DataTable.test.ts` doğruluyor).
-  4. `±` Galeri (`pnpm --filter @openmers/ui playground`) açık; görsel kontrol elle yapıldı. Belge 5.1'deki "her bileşenin yanında örnek dosyası + paket `README.md`": `fixtures/` var, `packages/ui/README.md` yok.
-  5. `-` `packages/ui/src/icons.ts`: Lucide yeniden dışa aktarımı, 20 px varsayılan; `package.json` `exports["./icons"]`. Kod `@lucide/svelte` kullanıyor, belge `lucide-svelte` diyor; belge düzeltilir.
-  6. `-` Tarih bileşenlerinde sabit `locale = "tr"` kaldırılır (`date-picker/DatePicker.svelte:50`, `time-input/TimeInput.svelte:22`, fixture'lar): varsayılan üst bağlamdan (`src/utils/locale.ts` + kök sağlayıcı) gelir, yoksa `navigator.language`; global varsayılan.
-  7. `-` `src/utils/format/`: `formatMoney.ts` (küçük birim tamsayı + para birimi kodu → `Intl.NumberFormat`, ondalık basamak para biriminden), `formatDate.ts`, `formatQuantity.ts`; her biri ayrı saf dosya + test.
-  8. `-` Eksik yönetici bileşenleri: `components/money/Money.svelte` (7'yi kullanır), `components/form-field/FormField.svelte` (Superforms bağlayıcı, hata `aria-invalid`'e bağlanır).
-  9. `-` Görsel fark kararı: Medusa'dan çıkarılan sınıflar (`select/variants.ts:51` `bg-ui-border-component`, `switch/variants.ts:3` `after:bg-switch-off-hover-gradient`, `button/variants.ts:4` gradient `after:*` + `shadow-buttons-colored`) için ya jeton `tokens.json`'a eklenir ya da fark belgelenir; karar `mapping.md`'ye yazılır.
-  10. `-` DataTable URL durumu: `components/data-table/url-state.ts` saf `serializeTableState` / `parseTableState` (süzgeç, sıralama, arama, imleç); bağlama admin'de yapılır (bileşen veri ve URL'ye dokunmaz).
-  11. `-` DataTable sütun sürükle-bırak (YOL-HARITASI maddesi; belgede yok): `components/data-table/column-order.ts` saf yeniden sıralama + bileşen; kütüphane kararı (`@dnd-kit/dom` çerçeveden bağımsız mı, yoksa yerel HTML5 DnD + klavye) önce.
-  12. `-` Bölüm 1.1 lint kuralı: `scripts/check-admin-ui.sh` (veya Biome GritQL eklentisi) `apps/admin/src/**` ve builder çıktı klasöründe: `@openmers/ui` / `@openmers/admin-sdk/ui` dışı UI içe aktarımı (`bits-ui`, `@lucide/svelte` doğrudan, başka kütüphaneler), ham renk (`#hex`, `rgb(`, `hsl(`, `oklch(`), keyfi Tailwind değeri (`bg-[...]`, `text-[#...]`), `<style>` bloğu reddedilir; `pnpm verify`'a eklenir.
-  13. `-` Görsel regresyon (açık/koyu): araç kararı (Vitest browser modu + Playwright ya da `e2e` galerisi); ilk 5 bileşen için anlık görüntü.
-  14. `-` Ağaç sallama bütçesi: `packages/ui/scripts/size-check.mjs` tek bileşen (`Button`) içe aktaran giriş noktasını Vite ile derler, çıktı boyutu eşiği; `pnpm verify`'a.
-  15. `-` Paket dağıtımı: `peerDependencies: { svelte }`, `dist/` derlemesi (`@sveltejs/package`) ve `exports` (`.`, `./theme.css`, `./icons`); iframe app'ler `@source ".../@openmers/ui/dist"` kullanır (bölüm 3).
+  1. `-` **Port:** mevcut Svelte `@openmers/ui` (45 bileşen) React'e port edilir. Kabul: aynı bileşen listesi, aynı jetonlar (`theme.css` değişmez), testler geçer, özel CSS yok (yalnızca Tailwind 4 sınıfları ve `theme.css`). Port bitene kadar Svelte uygulaması yerinde kalır.
+  2. `+` Jetonlar: `packages/tokens/src/tokens.json`, `mapping.md`, `build-theme.mjs` → `packages/ui/src/theme.css`; kök `NOTICE`; testler `build-theme.test.ts`, `index.test.ts`, `packages/ui/src/theme.test.ts`.
+  3. `+` Bileşenler: `packages/ui/src/components/` altında 45 klasör (Alert … Tooltip, CommandBar, CurrencyInput, StatusBadge, ProgressTabs/Accordion, Copy, CodeBlock, InlineTip, IconBadge, Prompt + `PromptHost`, Toast); `cn` (`src/utils/cn.ts`).
+  4. `+` DataTable: `use-data-table.ts`, `create-column-helper.ts`, `create-filter-helper.ts`, `create-command-helper.ts`; süzgeç türleri `radio/select/date/multiselect/number-range/boolean`; `rowCount` yoksa yalnız önceki/sonraki (`DataTable.test.ts` doğruluyor).
+  5. `±` Galeri (`pnpm --filter @openmers/ui playground`) açık; görsel kontrol elle yapıldı. Belge 5.1'deki "her bileşenin yanında örnek dosyası + paket `README.md`": `fixtures/` var, `packages/ui/README.md` yok.
+  6. `-` `packages/ui/src/icons.ts`: Lucide (`lucide-react`) yeniden dışa aktarımı, 20 px varsayılan; `package.json` `exports["./icons"]`.
+  7. `-` Tarih bileşenlerinde sabit `locale = "tr"` kaldırılır (`date-picker/DatePicker.tsx:50`, `time-input/TimeInput.tsx:22`, fixture'lar): varsayılan üst bağlamdan (`src/utils/locale.ts` + kök sağlayıcı) gelir, yoksa `navigator.language`; global varsayılan.
+  8. `-` `src/utils/format/`: `formatMoney.ts` (küçük birim tamsayı + para birimi kodu → `Intl.NumberFormat`, ondalık basamak para biriminden), `formatDate.ts`, `formatQuantity.ts`; her biri ayrı saf dosya + test.
+  9. `-` Eksik yönetici bileşenleri: `components/money/Money.tsx` (8'i kullanır), `components/form-field/FormField.tsx` (form katmanı bağlayıcı, hata `aria-invalid`'e bağlanır).
+  10. `-` Görsel fark kararı: Medusa'dan çıkarılan sınıflar (`select/variants.ts:51` `bg-ui-border-component`, `switch/variants.ts:3` `after:bg-switch-off-hover-gradient`, `button/variants.ts:4` gradient `after:*` + `shadow-buttons-colored`) için ya jeton `tokens.json`'a eklenir ya da fark belgelenir; karar `mapping.md`'ye yazılır.
+  11. `-` DataTable URL durumu: `components/data-table/url-state.ts` saf `serializeTableState` / `parseTableState` (süzgeç, sıralama, arama, imleç); bağlama admin'de yapılır (bileşen veri ve URL'ye dokunmaz).
+  12. `-` DataTable sütun sürükle-bırak (YOL-HARITASI maddesi; belgede yok): `components/data-table/column-order.ts` saf yeniden sıralama + bileşen; kütüphane kararı (`@dnd-kit/dom` çerçeveden bağımsız mı, yoksa yerel HTML5 DnD + klavye) önce.
+  13. `-` Bölüm 1.1 lint kuralı: `scripts/check-admin-ui.sh` (veya Biome GritQL eklentisi) `apps/admin/src/**` ve builder çıktı klasöründe: `@openmers/ui` / `@openmers/admin-sdk/ui` dışı UI içe aktarımı (doğrudan `@radix-ui/*`, `lucide-react`, başka kütüphaneler), ham renk (`#hex`, `rgb(`, `hsl(`, `oklch(`), keyfi Tailwind değeri (`bg-[...]`, `text-[#...]`), `<style>` bloğu reddedilir; `pnpm verify`'a eklenir.
+  14. `-` Görsel regresyon (açık/koyu): araç kararı (Vitest browser modu + Playwright ya da `e2e` galerisi); ilk 5 bileşen için anlık görüntü.
+  15. `-` Ağaç sallama bütçesi: `packages/ui/scripts/size-check.mjs` tek bileşen (`Button`) içe aktaran giriş noktasını Vite ile derler, çıktı boyutu eşiği; `pnpm verify`'a.
+  16. `-` Paket dağıtımı: `peerDependencies: { react }`, `dist/` derlemesi (Vite library mode) ve `exports` (`.`, `./theme.css`, `./icons`); iframe app'ler `@source ".../@openmers/ui/dist"` kullanır (bölüm 3).
 - **Testler:** var olan 49 test korunur; yeni: `utils/format/*.test.ts`, `Money.test.ts`, `FormField.test.ts` (`aria-invalid`), `url-state.test.ts` (gidiş-dönüş), tarih bileşenlerinde yerel değişimi; lint betiği için `scripts/check-admin-ui.test.sh` benzeri örnek ihlal dosyasıyla kırılma; açık/koyu anlık görüntü.
 - **Bitti sayılır:**
-  - `apps/admin` içine ham renk veya `bits-ui` importu konulunca `pnpm verify` kırılır.
+  - `apps/admin` içine ham renk veya doğrudan `@radix-ui/*` importu konulunca `pnpm verify` kırılır.
   - Hiçbir bileşen kaynağında sabit `"tr"` yerel değeri yok (`grep -rn 'locale = "tr"' packages/ui/src` boş).
-  - `Button` tek başına içe aktarıldığında paket bütçesi içinde; `svelte-check` sıfır hata.
+  - `Button` tek başına içe aktarıldığında paket bütçesi içinde; `tsc` sıfır hata.
   - Belgedeki yönetici bileşenlerinin hepsi (Money, FormField dahil) pakette ve testli.
 - **Açık sorular / riskler:**
-  - `FormField` Superforms'a bağlanırsa `@openmers/ui` SvelteKit/Superforms bağımlılığı kazanır; iframe app'ler için ağır olabilir. Alternatif: bağlayıcı `admin-sdk`'da.
+  - `FormField` React form katmanına bağlanırsa `@openmers/ui` form kütüphanesi bağımlılığı kazanır; iframe app'ler için ağır olabilir. Alternatif: bağlayıcı `admin-sdk`'da.
   - `formatMoney` hem `@openmers/ui`'de hem `core`'daki `formatPrice()`'ta (madde 6) olursa iki yuvarlama/biçim kaynağı oluşur; tek kaynak kararı gerekli.
   - Medusa API tabloları boş geldi: varyant/prop adları, `StatusBadge` renk listesi okunamadı; Tailwind 4 ile gerçek derleme yalnız galeride denendi.
   - `@openmers/admin-sdk` paketi belgede var, `packages/` altında yok (madde 13.8).
@@ -227,7 +228,7 @@ Kısaltma: `core` = `packages/core/src`, `api` = `apps/api/src`. Her yeni dosya 
 - **Açık sorular / riskler:**
   - Yuvarlama yöntemi (yarım yukarı mı, bankacı mı) belgede yok.
   - `ATLANANLAR.md` satır 84: `03-veri-kurallari.md` migration listesi kod yazılana kadar yok; `variant_channels`, `digital_*`, `lead_time_days` diğer belgelerde.
-  - `formatPrice` (core) ile `@openmers/ui` `formatMoney` (madde 4.7) çakışması.
+  - `formatPrice` (core) ile `@openmers/ui` `formatMoney` (madde 4.8) çakışması.
   - KVKK anonimleştirmenin hangi sütunlara dokunduğu (müşteri belgesi, madde 24) burada tanımlı değil.
   - `ids/` önek tablosu ile makine kimlik öneklerinin (`omk_/oma_/omp_`) hangi türe karşılık geldiği belgede açık değil (madde 12).
 

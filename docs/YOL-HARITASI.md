@@ -21,7 +21,7 @@ Veritabanı kataloğu (173 tablo, migration sırası): [veritabani/00-genel.md](
 1. `01-tech-stack/01-tech-stack.md`
    + pnpm workspace, Biome, Vitest, Changesets, `pnpm verify`
    + e2e aracı (web + Android), `.mcp.json`
-   - Tip denetimi (`tsc`/`svelte-check`) `verify`'a eklenmedi
+   - Tip denetimi (`tsc`; vitrin için `svelte-check`) `verify`'a eklenmedi
 2. `08-isletme/02-ci-cd.md`
    + `verify` ve `release-docker` iş akışları, `e2e-web`/`e2e-mobile` (yalnız elle tetik)
    - e2e-mobile'da emülatör ve apk adımı, gerçek `bundleId`
@@ -31,6 +31,7 @@ Veritabanı kataloğu (173 tablo, migration sırası): [veritabani/00-genel.md](
    - Storefront `dev` script'i yok, duman e2e koşmuyor
    - Sorgu planı testi, tur bütçesi testi, yarış testi (`integration-tests/*` boş)
 4. `07-istemciler/07-ui-kutuphanesi.md`
+   - Mevcut Svelte `@openmers/ui` (45 bileşen) React'e port: aynı bileşen listesi, aynı jetonlar, testler geçer, özel CSS yok
    + 90 jeton, `theme.css`, `NOTICE`, 44 bileşen + DataTable, galeri (`pnpm --filter @openmers/ui playground`)
    ± Görsel kontrol (galeri açık); ikon boyutları, checkbox düzeltildi
    - Çıkarılan sınıflar (`bg-ui-border-component`, switch gradient) için görsel fark kararı

@@ -25,7 +25,7 @@
 | Özel veri | **Custom fields** (tipli, şemaya girer) | **metadata / private_metadata** | metadata + link | **İkisi**: built-in app için tipli özel alan, uygulama için metadata | Tipli alan indekslenir; metadata şema değişikliği istemez |
 | API | GraphQL (Shop + Admin ayrı) | GraphQL | REST | **oRPC** (Shop + Admin ayrı), OpenAPI çıktısı | Alan çözücü ve N+1 yok; her uç tek, elle yazılmış sorgu |
 | Yetki | Rol + CRUD izinleri, kanal başına | İzin grupları | Basit | **Vendure modeli** | Kanal başına rol B2B/çok mağaza için gerekli |
-| Özel alanlar için admin | React uzantıları | Dashboard uygulamaları (iframe) | Widget / UI route | Built-in app: Svelte bileşeni; uygulama: iframe | |
+| Özel alanlar için admin | React uzantıları | Dashboard uygulamaları (iframe) | Widget / UI route | Built-in app: React bileşeni; uygulama: iframe | |
 | Altyapı | Node + PostgreSQL (+Redis) | Python + PostgreSQL + Redis + Celery | Node + PostgreSQL + Redis | **Tek süreç + SQLite** veya **Worker + D1** | Ürünün temel farkı |
 
 ## 2. Vendure neden hızlı görünüyor (çıkarım)
@@ -60,7 +60,7 @@ OpenMers dördünü de alır ve iki şey ekler: kenar önbelleği (segment anaht
 | Dönüş sayfası ile webhook'un aynı sepeti aynı anda tamamlaması | Settlement token; kilit yok |
 | Sağlayıcıda başarılı, backend'de zaman aşımı; belirsiz iadeler | Uzlaştırma işi |
 | Evrensel dead-letter yok | Outbox `dead` durumu + admin'den yeniden deneme |
-| Admin çekirdek formları değiştirilemiyor | Admin monorepoda sıradan Svelte; built-in app bileşen ekler, uygulama iframe ekler |
+| Admin çekirdek formları değiştirilemiyor | Admin monorepoda sıradan React; built-in app bileşen ekler, uygulama iframe ekler |
 | Eklenti sürüm uyumsuzlukları | Resmî built-in app'ler çekirdekle aynı sürümde; her port için sözleşme testi |
 | ERP tarifinde canlı fiyat/stok çağrısı | Senkron; istek yolunda dış çağrı yok ([../10-tak-calistir-apps/02-erp.md](../10-tak-calistir-apps/02-erp.md)) |
 

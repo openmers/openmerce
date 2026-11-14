@@ -9,7 +9,7 @@ Tema dosyaları (`apps/storefront/src/themes/<tema>/`) veritabanı satırı **g�
 
 Böylece tema düzenlemesi çekirdeği bozamaz ve iç kimlikler şablona sızmaz. Tema başına `tokens.css` renk, yazı tipi ve köşe yarıçapını tanımlar; `packages/tokens` bunun kaynağıdır.
 
-Vitrin sunucuda render edilir ve JavaScript'siz çalışır; Svelte adaları yalnızca kazandırdığı yerde kullanılır (sepet çekmecesi, ürün galerisi, ödeme durumu yoklaması).
+Vitrin sunucuda render edilir ve JavaScript'siz çalışır; Svelte adaları yalnızca kazandırdığı yerde kullanılır (sepet çekmecesi, ürün galerisi, ödeme durumu yoklaması). Gerekirse ileride React adaları eklenebilir; bu şu an planlanmıyor.
 
 **Sepet etkileşimi:**
 

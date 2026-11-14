@@ -6,10 +6,11 @@ React Native + Expo, Expo Router, NativeWind + React Native Reusables, FlashList
 
 | Paylaşılır | Paylaşılmaz |
 |---|---|
-| `packages/contract` (tipli oRPC istemcisi, Zod şemaları) | Ekranlar (web Svelte, mobil React) |
-| Sepet ve oturum store'ları (nanostores) | Gezinme |
-| `packages/tokens` (tema) | Bileşen kütüphanesi |
+| `packages/contract` (tipli oRPC istemcisi, Zod şemaları) | Ekranlar ve bileşenler (admin React DOM, mobil React Native) |
+| Sepet ve oturum store'ları (nanostores, `@nanostores/react`) | Gezinme (admin TanStack Router, mobil Expo Router) |
+| `packages/tokens` (tema) | Görsel katman (admin Tailwind 4, mobil NativeWind) |
 | Biçimlendirme yardımcıları (para, tarih) | |
+| Görsel olmayan veri hook'ları (tipli istemci üzerinden) | |
 
 API değişince tip hatası mobilde de derleme anında çıkar.
 

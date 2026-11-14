@@ -18,7 +18,7 @@
 - Alan `public: true` ise okuma modeline (indeksleme anında) kopyalanır; vitrin bunu ek sorgu olmadan alır.
 - Çevrilebilir özel alan `translations` tablosundaki JSON sütununda durur.
 - Yazma anında Zod ile doğrulanır; tanımı kaldırılan alanın verisi durur ama API'de görünmez.
-- Admin formu şemadan üretilir; built-in app isterse kendi Svelte bileşenini verir.
+- Admin formu şemadan üretilir; built-in app isterse kendi React bileşenini verir.
 - İlişki tipi (başka varlığa referans) `public_id` olarak saklanır ve API'de çözülmez; isteyen ayrı çağırır. (Çözmek N+1 kapısıdır.)
 
 ## 2. Metadata

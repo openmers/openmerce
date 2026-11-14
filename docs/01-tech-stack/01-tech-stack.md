@@ -44,19 +44,19 @@ Tek monorepo: API + admin + storefront + iOS/Android uygulaması.
 
 ## Frontend
 
-Ortak: **Svelte 5 + Tailwind CSS 4 + shadcn-svelte + nanostores**. Vitrin **Astro**, admin **SvelteKit** (SPA kipi).
+Ortak: **Tailwind CSS 4 + nanostores**; tip denetimi `tsc`, lint/format Biome. Vitrin **Astro** (Svelte adaları), admin **React 19 + Vite** (SPA).
 
 | Uygulama | Yapı | Not |
 |---|---|---|
 | `apps/storefront` | Astro SSR + Svelte adaları | SEO için sunucu render; sepet/ödeme etkileşimli adalar |
-| `apps/admin` | SvelteKit, SPA kipi (`ssr = false`, `adapter-static`, `fallback`) | Yönetim paneli, SEO gerekmez, sunucu kodu yok (`+server.ts` ve form action kullanılmaz; yalnızca Admin API); iki kip: builder (varsayılan, sohbet + önizleme) ve klasik pano |
+| `apps/admin` | Vite + React 19, SPA (statik derleme, tek HTML kabuğu; SSR yok) | Yönetim paneli, SEO gerekmez, sunucu kodu yok (yalnızca Admin API); dosya tabanlı rotalar TanStack Router, sunucu durumu TanStack Query, tablolar TanStack Table, bileşenler Radix tabanlı `@openmers/ui`; iki kip: builder (varsayılan, sohbet + önizleme) ve klasik pano |
 
-- **Durum:** nanostores (`@nanostores/persistent` ile sepet)
-- **API istemcisi:** oRPC client (tipler `packages/contract`'tan)
-- **Formlar:** Zod şemaları backend ile ortak; admin'de **Superforms** (SPA kipi, Zod v4 adaptörü)
+- **Durum:** nanostores (admin ve mobilde `@nanostores/react`; vitrinde `@nanostores/persistent` ile sepet)
+- **API istemcisi:** oRPC client (tipler `packages/contract`'tan); sunucu durumu admin'de TanStack Query üzerinden
+- **Formlar:** Zod şemaları backend ile ortak; admin'de form doğrulaması aynı şemadan (React form katmanı; kütüphane seçimi açık)
 - **Adaptör:** vitrin `@astrojs/cloudflare` veya `@astrojs/node` (hedefe göre); admin statik çıktıdır, adaptör hedefe göre değişmez (aşağıdaki Admin notu)
-- **i18n:** vitrin: Astro i18n yönlendirme + Paraglide JS; admin: Lingui; varsayılan EN, TR desteklenir
-- **Tablolar (admin):** shadcn-svelte Data Table
+- **i18n:** vitrin: Astro i18n yönlendirme + Paraglide JS; admin: Lingui (React); varsayılan EN, TR desteklenir
+- **Tablolar (admin):** `@openmers/ui` DataTable, TanStack Table denetimli model (sunucu taraflı imleçli sayfalama)
 
 ## Mobil (`apps/mobile`) — iOS + Android
 
@@ -74,7 +74,7 @@ Ortak: **Svelte 5 + Tailwind CSS 4 + shadcn-svelte + nanostores**. Vitrin **Astr
 | Bildirim | expo-notifications (FCM + APNs) |
 | Derleme / dağıtım | EAS Build + EAS Submit; JS güncellemeleri için EAS Update (OTA) |
 
-**"Otomatik" kısmı:** Mobil uygulama API tiplerini, Zod şemalarını, iş mantığını (`packages/core`) ve nanostores store'larını web ile aynı paketlerden alır; API değişince tip hatası mobilde de anında çıkar. Mağaza teması (renk, logo, isim) `packages/tokens` içindeki tek JSON'dan hem web'in hem mobilin Tailwind temasına aktarılır. Ekranlar paylaşılmaz: web Svelte, mobil React olduğu için mobil ekranlar ayrıca yazılır.
+**"Otomatik" kısmı:** Mobil uygulama API tiplerini, Zod şemalarını, iş mantığını (`packages/core`) ve nanostores store'larını admin ile aynı paketlerden alır; API değişince tip hatası mobilde de anında çıkar. Mağaza teması (renk, logo, isim) `packages/tokens` içindeki tek JSON'dan hem web'in hem mobilin Tailwind temasına aktarılır. Admin ve mobil aynı React olduğu için `packages/contract`, nanostores store'ları, biçimlendirme yardımcıları, `packages/tokens` ve görsel olmayan veri hook'ları (tipli istemci üzerinden) paylaşılır; ekranlar, bileşenler ve gezinme paylaşılmaz (DOM ve React Native render katmanları ayrıdır, vitrin ayrıca Svelte adaları kullanır).
 
 ## Monorepo
 
@@ -88,7 +88,7 @@ Klasör yapısı: [../02-genel-mimari/04-monorepo-klasor-yapisi.md](../02-genel-
 
 | İş | Seçim |
 |---|---|
-| Lint + format | Biome (TS/TSX), `svelte-check` |
+| Lint + format | Biome (TS/TSX); tip: `tsc` (admin/ui), vitrin Svelte dosyaları için `svelte-check` |
 | Birim/entegrasyon testi | Vitest + `@cloudflare/vitest-pool-workers` (D1/R2 gerçek ortam testi) |
 | E2E (web) | `e2e` (agentic runner, `@e2e-dev/web`) |
 | Mobil test | `e2e` (`@e2e-dev/mobile`; iOS simülatör + Android emülatör, CI'da EAS Workflows) |
@@ -107,7 +107,7 @@ Klasör yapısı: [../02-genel-mimari/04-monorepo-klasor-yapisi.md](../02-genel-
 2. **D1 veritabanı başına 10 GB sınırı.** Çok kiracılı (SaaS) kurulumda mağaza başına ayrı D1 gerekir.
 3. **Workers CPU süresi ve paket boyutu sınırı.** Ağır işler (toplu içe aktarma, rapor) Queues'a gider.
 4. **Para:** Tutarlar tamsayı kuruş + para birimi kodu olarak saklanır; float yok.
-5. **Mobil ve web arayüzü ayrı yazılır.** Svelte bileşenleri React Native'de çalışmaz; paylaşılan kısım sözleşme, iş mantığı, store'lar ve tema belirteçleridir.
+5. **Mobil ve web arayüzü ayrı yazılır.** Admin ve mobil aynı React olsa da DOM bileşenleri React Native'de çalışmaz; paylaşılan kısım sözleşme, iş mantığı, store'lar, biçimlendirme yardımcıları, tema belirteçleri ve görsel olmayan veri hook'larıdır.
 6. **KVKK / GDPR:** Çerez onayı, veri silme/dışa aktarma, açık rıza kayıtları çekirdekte olmalı.
 
 ## İlk sürüm kapsamı dışında

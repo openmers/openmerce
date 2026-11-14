@@ -7,7 +7,7 @@ Dosyalar repoda `deploy/` altındadır: `docker/` (Dockerfile, `entrypoint.sh`, 
 
 ## 1. Çalışma biçimi
 
-- **Tek süreç:** Hono API, Astro storefront (Astro Node adaptörü) ve admin (SvelteKit statik çıktısı, Hono statik dosya sunumuyla `/admin`) aynı Node sürecinden sunulur. Kuyruk tüketicisi ve zamanlayıcı da aynı süreçtedir.
+- **Tek süreç:** Hono API, Astro storefront (Astro Node adaptörü) ve admin (Vite/React statik çıktısı, Hono statik dosya sunumuyla `/admin`) aynı Node sürecinden sunulur. Kuyruk tüketicisi ve zamanlayıcı da aynı süreçtedir.
 - **Bileşenler:** SQLite dosyası (WAL kipinde), yükleme klasörü veya S3 uyumlu depo, bellek içi önbellek. Redis, PostgreSQL, ayrı worker yoktur.
 - **Önde reverse proxy** (Caddy veya nginx) HTTPS ve statik önbellek için; kurulum belgesinde hazır Caddyfile verilir.
 - **Açılışta:** migration'lar otomatik uygulanır, ardından süreç trafiğe açılır. Migration başarısızsa süreç başlamaz.

@@ -63,7 +63,7 @@ Açık kaynak, self-host edilebilir B2C + B2B ticaret altyapısı. Okuma sıras�
 - [02-admin.md](07-istemciler/02-admin.md) — klasik kip
 - [03-mobil.md](07-istemciler/03-mobil.md)
 - [04-tema-sistemi.md](07-istemciler/04-tema-sistemi.md) — tema paketi, GitHub içe aktarma, derleme, yayın
-- [06-admin-genisletme.md](07-istemciler/06-admin-genisletme.md) — admin'e eklenti yazma modeli (Vendure dashboard'dan uyarlandı, Svelte)
+- [06-admin-genisletme.md](07-istemciler/06-admin-genisletme.md) — admin'e eklenti yazma modeli (dashboard modelinden uyarlandı, React)
 - [07-ui-kutuphanesi.md](07-istemciler/07-ui-kutuphanesi.md) — `@openmers/ui` (Medusa UI karşılığı): bileşenler, tema CSS'i, ikonlar, kurulum
 - [08-ajan-ticareti.md](07-istemciler/08-ajan-ticareti.md) — `llms.txt`, ajan ödeme akışı, MCP (varsayılan kapalı)
 - [05-agentic-builder.md](07-istemciler/05-agentic-builder.md) — sohbetle yönetim (Bloom/Vulpy tarzı), klasik kiple geçiş

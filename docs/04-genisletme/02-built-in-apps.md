@@ -26,7 +26,7 @@ export const loyaltyApp = defineBuiltInApp({
   scheduled: [{ name: 'expire', cron: '0 3 * * *', job: 'expirePoints' }],
   guards: { 'order:placed': checkSomething },
   settings: z.object({ pointsPerLira: z.number().default(1) }),
-  admin: { nav: [...], panels: [...] },   // Svelte bileşenleri, admin derlemesine girer
+  admin: { nav: [...], panels: [...] },   // React bileşenleri, admin derlemesine girer
   init(ctx) {}, 
 });
 ```

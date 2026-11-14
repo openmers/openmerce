@@ -22,7 +22,7 @@
 ### 55. `docs/08-isletme/01-self-host.md` — VPS üzerinde Node + Litestream
 
 - **Kaynak kararlar:**
-  - Tek süreç: Hono API, Astro storefront (Node adaptörü), admin (SvelteKit statik, `/admin` altında Hono'dan), kuyruk tüketicisi ve zamanlayıcı aynı Node sürecinde. Redis, PostgreSQL ve ayrı worker yok. Kopya sayısı bir.
+  - Tek süreç: Hono API, Astro storefront (Node adaptörü), admin (Vite/React statik, `/admin` altında Hono'dan), kuyruk tüketicisi ve zamanlayıcı aynı Node sürecinde. Redis, PostgreSQL ve ayrı worker yok. Kopya sayısı bir.
   - Açılışta migration'lar otomatik uygulanır; başarısızsa süreç başlamaz. `PRAGMA journal_mode = WAL` ayarlanır, WAL değilse başlamayı reddeder; uygulama kendi checkpoint'ini zorlamaz.
   - Litestream zorunlu ve varsayılan açık: `litestream replicate -exec "node dist/server.js"`. Yerel DB yoksa ve yedek tanımlıysa önce `litestream restore`. Yedek tanımlı değilse açılışta uyarı ve admin'de kalıcı "Yedekleme yapılandırılmadı" bandı. Bilinçli kapatma `OPENMERS_BACKUP=off`.
   - Saklama 7 gün (`retention: 168h`). Admin'de son başarılı kopya zamanı ve gecikme gösterilir, eşik aşılınca bildirim gider.
@@ -38,7 +38,7 @@
   6. - `packages/core/src/features/settings/backupStatus.ts` (saf): ortamdan gelen `{ backup: 'on'|'off', replicaUrl? }` ile `'configured' | 'missing' | 'disabled'` durumunu döner; `server.ts` `missing` iken uyarı loglar. Admin bandı bu durumu `contract` üzerinden okur.
   7. - `packages/core/src/features/settings/backupLag.ts` (saf): son başarılı kopya zamanı + şimdi → gecikme ve eşik aşımı. Litestream'den okuma `apps/api/src/platform/node/litestreamStatus.ts` (I/O; Litestream'in sunduğu durum/metrik kaynağı doğrulanmadı, bkz. açık sorular). Eşik aşımı bildirim olayı outbox'a yazılır.
   8. - `scripts/backup-verify.ts` + kök `package.json` `"backup:verify"`: geçici boş dizine `litestream restore`, iki veritabanında sipariş sayısını karşılaştırır, farkta sıfırdan farklı çıkış kodu.
-  9. - Admin "Yedekleme yapılandırılmadı" bandı ve yedek durum kartı: `apps/admin/src/lib/system/BackupBanner.svelte`, yalnız `@openmers/ui` bileşenleriyle.
+  9. - Admin "Yedekleme yapılandırılmadı" bandı ve yedek durum kartı: `apps/admin/src/lib/system/BackupBanner.tsx`, yalnız `@openmers/ui` bileşenleriyle.
   10. - Kurulum rehberi (belge işi): Caddyfile kullanımı, `SECRETS_KEK`'in parola yöneticisine kaydı, yüklemeler için S3 önerisi ilk sırada, `restic`/`rclone` alternatifi, `backup:verify`'ın periyodik çalıştırılması, ölü adam anahtarı önerisi (57 ile ortak).
 - **Testler:**
   - `packages/core/src/platform/assertWal.test.ts`, `features/settings/backupStatus.test.ts`, `backupLag.test.ts`: birim.
@@ -115,7 +115,7 @@
   7. - `apps/api/src/system/healthz.ts` ve `readyz.ts` (ince): `readyz` denetimleri `packages/core/src/observability/health/readiness.ts` içinde (DB yazma denemesi, migration sürümü, kasa anahtarı); `openmers doctor` (56) aynı fonksiyonu kullanır.
   8. - `packages/core/src/observability/alerts/rules.ts` (veri: tablo 6'daki kurallar ve varsayılan eşikler) + `evaluateAlerts.ts` (saf: metrik anlık görüntüsü → tetiklenen alarmlar) + `alerts/runAlertJob.ts` (zamanlanmış iş, alarmı outbox'a yazar). Teslimat `features/notify` üzerinden.
   9. - `observability/deadManSwitch.ts`: ayarlanmışsa belirli aralıkla dış adrese ping (zamanlayıcı işi).
-  10. - Admin "Sistem" sayfası `apps/admin/src/routes/system/+page.svelte`: sürüm, migration durumu, outbox özeti, son zamanlanmış görevler, yedek durumu, kurulu built-in app'ler; yalnız `@openmers/ui`. Veri `contract/admin/system`.
+  10. - Admin "Sistem" sayfası `apps/admin/src/routes/system.tsx`: sürüm, migration durumu, outbox özeti, son zamanlanmış görevler, yedek durumu, kurulu built-in app'ler; yalnız `@openmers/ui`. Veri `contract/admin/system`.
   11. - Sentry (isteğe bağlı) adaptörü `apps/api/src/platform/sentry.ts`: `requestId`, rota, kanal, sürüm etiketi, `redactPersonal` sonrası gönderim.
 - **Testler:**
   - Birim: `formatLogLine`, `redactPersonal`, `redactUrlQuery`, `evaluateAlerts` (her eşik için sınırın iki yanı), `prometheusFormat`.
@@ -262,7 +262,7 @@
   7. - `src/platforms/meta/` (sıra 4): `mapEvent.ts` (saf, bölüm 5 tablosu), `capiClient.ts` (I/O), `test.ts` (test olay kodu); `value` = vergi ve kargo hariç ürün toplamı, `content_ids` varsayılan SKU, küçük birim → ondalık dönüşümü yalnız burada. API sürüm numarası tek sabit dosyada.
   8. - `src/collect/collectRoute.ts`: `POST /collect` (uygulamaya ait), kendi kuyruğu, sınırlı yeniden deneme.
   9. - `src/pixel/pixel.ts` (sandbox betiği): `openmers.subscribe`, yalnız açık platform betiklerini yükler, `eventID` = `event_id`.
-  10. - `src/admin/` (Svelte, yalnız `@openmers/ui`, `app-bridge` ile iframe): platform listesi (sunucu anahtarı yazma-yalnız), olay başına aç/kapa, olay günlüğü + yeniden gönder, bağlantıyı sına, sağlık kontrolü (24 saat tarayıcı/sunucu sayıları, sunucu `Purchase` sipariş sayısından düşükse uyarı), canlı konsol `?openmers_pixel_debug=1`.
+  10. - `src/admin/` (React, yalnız `@openmers/ui`, `app-bridge` ile iframe): platform listesi (sunucu anahtarı yazma-yalnız), olay başına aç/kapa, olay günlüğü + yeniden gönder, bağlantıyı sına, sağlık kontrolü (24 saat tarayıcı/sunucu sayıları, sunucu `Purchase` sipariş sayısından düşükse uyarı), canlı konsol `?openmers_pixel_debug=1`.
   11. - Sonraki modüller: `src/platforms/google/` (GA4 MP, `transaction_id`, `refund`), `tiktok/`, `pinterest/`, `bing/` aynı arayüzle.
 - **Testler:**
   - `integration-tests/contract/__tests__/pixel-platform.contract.ts`: sahte platform sunucusuna karşı ortak takım (yük şeması, özetlenen/özetlenmeyen alanlar, `event_id`); her modül içe aktarır.

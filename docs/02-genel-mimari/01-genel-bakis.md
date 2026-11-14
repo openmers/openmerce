@@ -7,7 +7,7 @@ Birincil örnek **Vendure**'dur: kanal, strateji, yapılandırılabilir operasyo
 ## 1. Katmanlar
 
 ```
- storefront (Astro SSR)   admin (SvelteKit SPA)   mobile (Expo)   uygulamalar (dış servis)
+ storefront (Astro SSR)   admin (React SPA)   mobile (Expo)   uygulamalar (dış servis)
           │                        │                     │                  │
           └──────────── oRPC istemcisi (packages/contract) ─────────────────┘
                                    │

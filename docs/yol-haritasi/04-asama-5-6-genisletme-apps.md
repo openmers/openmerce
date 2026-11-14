@@ -64,7 +64,7 @@
   7. `-` `packages/core/src/features/catalogIndex/` indeksleme adımı: `public` alanları okuma modeline kopyalar (ek sorgu yok).
   8. `-` `packages/core/src/features/apps/metadata/validateMetadataWrite.ts` (saf): önek sahipliği (`<appId>:` ya da 05'teki `<appId>.` biçimi, bkz. açık soru), 2 KB / 16 KB sınırı.
   9. `-` `packages/core/src/features/apps/metadata/writeMetadata.ts`: `atomic()` içinde JSON birleştirme yazımı.
-  10. `-` `apps/admin/src/features/custom-fields/`: şemadan form üretimi (`@openmers/ui` alanları); built-in app kendi Svelte bileşenini verirse onu kullanır.
+  10. `-` `apps/admin/src/features/custom-fields/`: şemadan form üretimi (`@openmers/ui` alanları); built-in app kendi React bileşenini verirse onu kullanır.
 - **Testler:**
   - `validateCustomFields.test.ts`, `validateMetadataWrite.test.ts`, `indexMigrations.test.ts` (birim).
   - `integration-tests/core/__tests__/custom-fields.test.ts` (D1 + SQLite): `index: true` alanla filtrelemede `EXPLAIN QUERY PLAN` ifade indeksini kullanır (tam tarama yok).
@@ -175,7 +175,7 @@
   6. `-` `packages/core/src/features/apps/syncHooks/callSyncHook.ts`: üç tür için zaman aşımlı çağrı; 43'teki `withTimeout` ile; `AppShippingCalculator`, `AppPaymentHandler`, `AppTaxProvider` genel adaptörleri.
   7. `-` `apps/api/src/admin/apps/*`: kur, kaldır, özel uygulama oluştur, teslimat geçmişi, `dead` yeniden gönder (dosya başına bir uç, ince).
   8. `-` `packages/core/src/features/apps/session/issueAppSessionJwt.ts` + `apps/api/src/hooks/jwks.ts` (`/.well-known/jwks.json`).
-  9. `-` `apps/admin/src/features/apps/`: kurulum/izin onay ekranı, iframe kabuğu (`AppFrame.svelte`), son teslimatlar tablosu, ajan aracı aç/kapat; yalnız `@openmers/ui`. CSP `frame-src` üretimi.
+  9. `-` `apps/admin/src/features/apps/`: kurulum/izin onay ekranı, iframe kabuğu (`AppFrame.tsx`), son teslimatlar tablosu, ajan aracı aç/kapat; yalnız `@openmers/ui`. CSP `frame-src` üretimi.
   10. `±` `packages/app-bridge/src/index.ts` (iskelet var, boş): `postMessage` istemcisi (`getSessionToken`, bağlam, tema/dil, gezinme, bildirim) + admin tarafı dinleyici; köken denetimi.
   11. `±` `packages/app-sdk/src/index.ts` (iskelet var, boş): oRPC istemcisi, `verifyWebhook(req, secret)`, `TokenStore` arayüzü (KV/SQLite/bellek), `defineAgentTool`.
   12. `-` `packages/core/src/features/apps/agentTools/`: `toolName.ts` (saf ad üretimi/çakışma), `validateToolInput.ts` (JSON Schema), `invokeAppTool.ts` (risk → onay kartı, 20 sn, 32 KB kesme, belirsiz sonuçta yeniden deneme yok), `searchTools.ts`/`callTool.ts` (15 eşiği). Builder (36) bitmeden açılmaz (sıralama 3a).
@@ -242,7 +242,7 @@
   - Çekirdek ek işleri: `documents`, `order_notes`, storage `public/private`, `manual` işleyiciler.
 - **Bağımlılık:** 25 (medya), 30 (belgeler), 23 (sipariş notları), 22 ve 20 (elle ödeme/teslimat), 12 (Better Auth), 45 (built-in app altyapısı, 52-53 için).
 - **Yapılacaklar:** (bu belgenin işleri çoğunlukla başka maddelerde yaşar; burada yalnız iz sürme ve bu belgeye özgü küçük işler)
-  1. `-` `apps/admin/src/features/products/media/UploadToOptionValue.svelte`: "Seçenek değerine yükle" kısayolu (`@openmers/ui`), çekirdek medya ucunu çağırır.
+  1. `-` `apps/admin/src/features/products/media/UploadToOptionValue.tsx`: "Seçenek değerine yükle" kısayolu (`@openmers/ui`), çekirdek medya ucunu çağırır.
   2. `-` `packages/core/src/features/payments/handlers/manual.ts` (havale/EFT, kapıda) ve `packages/core/src/features/fulfillment/handlers/manual.ts`: çekirdek varsayılan işleyiciler (22 ve 20'nin parçası; 43'teki sözleşme paketini geçer).
   3. `-` `packages/core/src/features/documents/`: `DocumentRenderer` portu ve sürümlü sipariş özeti/paketleme listesi (30'un parçası; burada yalnız bağımlılık işareti).
   4. `-` `packages/core/src/features/media/storage/{r2,s3,local}.ts`: `StorageProvider` sürücüleri, `public/private` ad alanı (25'in parçası).

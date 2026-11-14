@@ -6,7 +6,7 @@
 - `apps/admin`, `apps/storefront`, `apps/mobile`: yalnız `package.json` (script yok, bağımlılık yok) ve `tsconfig.json`; `src/` boş. `apps/mobile/e2e/.gitkeep` var. `apps/api/src/{shop,admin,hooks,platform,worker}` boş klasör.
 - `packages/core/src/features/{companies,quotes,channels,pricing,cart,checkout,orders,...}/index.ts`: hepsi `export {}`.
 - `packages/theme-kit`, `apps/storefront/src/themes/default`, `packages/create-openmers-theme`, `packages/app-sdk`, `packages/app-bridge`: `src/index.ts` = `export {}`.
-- `packages/ui`: 44 bileşen + `data-table` + `toast` (`Toaster.svelte`, `svelte-sonner` bağımlılığı) gerçekten var ve testli. `packages/tokens`: `tokens.json` + tipli `tokens` dışa aktarımı var; mobil (NativeWind) çıktısı yok.
+- `packages/ui`: 44 bileşen + `data-table` + `toast` (`Toaster.svelte`, `svelte-sonner` bağımlılığı) gerçekten var ve testli. Svelte uygulaması yerinde; React portu madde 4'te (port tamamlanana kadar bu satır geçerli). `packages/tokens`: `tokens.json` + tipli `tokens` dışa aktarımı var; mobil (NativeWind) çıktısı yok.
 - `e2e/smoke.e2e.ts` + `e2e.config.ts` var; config `pnpm --filter @openmers/storefront-app dev` çağırıyor ama storefront'ta `dev` script'i yok, test koşmuyor.
 - `packages/admin-sdk` **yok** (belge 06 bu paketi varsayıyor; `02-genel-mimari/04-monorepo-klasor-yapisi.md`'de de anılmıyor).
 - `integration-tests/{core,api,race,contract}`: yalnız `package.json`/`tsconfig.json`, `__tests__` yok; `integration-tests/helpers/index.ts` var.
@@ -22,39 +22,39 @@ Yapı kuralları (`.claude/skills/*/openmers-*`): dosya ≤150 satır hedef, 250
 ### 31. `docs/07-istemciler/02-admin.md` — Admin paneli (klasik kip)
 
 - **Kaynak kararlar:**
-  - SvelteKit (Svelte 5) SPA kipi: kök `+layout.ts` içinde `export const ssr = false`, `adapter-static` + `fallback`; `+page.server.ts`, `+server.ts`, form action, sunucu `load` yasak; her `load` istemcide oRPC ile Admin API'yi çağırır.
-  - Yapı: `apps/admin/src/{routes,features,lib,extensions}`; rotalar ince kabuk, genişletme rotaları `[...ext]` yakalayıcısında.
-  - Tablolar: denetimli Data Table, sunucu taraflı imleçli sayfalama/sıralama/filtre; tüm listeyi istemciye çekmek yok. Formlar Superforms (SPA), Zod şeması `packages/contract`'tan.
+  - Vite + React 19 SPA: statik derleme, tek HTML kabuğu; SSR, sunucu `load`, form action ve API rotası yok; veri istemcide TanStack Query + oRPC istemcisiyle Admin API'den gelir. Rotalar TanStack Router'ın dosya tabanlı ağacından; sayfa dosyaları ince.
+  - Yapı: `apps/admin/src/{routes,features,lib,extensions}`; rotalar ince kabuk (TanStack Router), genişletme rotaları `$` yakalayıcısında.
+  - Tablolar: `@openmers/ui` DataTable + TanStack Table (denetimli model), sunucu taraflı imleçli sayfalama/sıralama/filtre; tüm listeyi istemciye çekmek yok. Formlar React form katmanı, Zod şeması `packages/contract`'tan.
   - İzin: menü/düğme `permissions` kümesine göre gizlenir, asıl denetim API'de. Kanal seçici üst çubukta. Kayıt `version` taşır, çakışmada fark gösterilir.
   - Operasyon ekranları (çekirdek): outbox/işler (`dead` dahil, yeniden kuyruğa alma), uygulamalar, stok istisnaları, belirsiz iadeler, uzlaştırma farkları, yedek durumu, denetim kaydı.
   - Performans: admin önbelleklenmez; liste sorguları indeksli ve imleçli, pano sayıları günlük özet tablosundan, ağır dışa aktarma işle.
 - **Bağımlılık:** 8 (`Ctx`, Admin API, `packages/contract` oRPC istemcisi), 11 (izin modeli, denetim kaydı), 12 (yönetici oturumu); `@openmers/ui` (+). İskelet ve sahte veriyle liste sayfası 8'den önce başlayabilir.
 - **Yapılacaklar:**
-  1. `-` `apps/admin/package.json`: `dev`, `build`, `preview`, `check` (`svelte-check`) script'leri; `@sveltejs/kit`, `@sveltejs/adapter-static`, `@openmers/ui`, `@openmers/contract`, `nanostores`, `sveltekit-superforms` bağımlılıkları. `apps/admin/svelte.config.js` (`adapter-static`, `fallback: 'index.html'`), `vite.config.ts`.
-  2. `-` `apps/admin/src/routes/+layout.ts` (`ssr = false`, `prerender = false`) ve `+layout.svelte`: `@openmers/ui/theme.css` içe aktarımı, `<Toaster />` bir kez, üst çubuk + yan menü bileşenlerini birleştirir (iş mantığı yok).
+  1. `-` `apps/admin/package.json`: `dev`, `build`, `preview`, `typecheck` (`tsc`) script'leri; `react`, `react-dom`, `vite`, `@tanstack/react-router`, `@tanstack/react-query`, `@tanstack/react-table`, `@openmers/ui`, `@openmers/contract`, `nanostores`, `@nanostores/react` bağımlılıkları. `apps/admin/vite.config.ts`, `tsconfig.json`.
+  2. `-` `apps/admin/src/main.tsx` + `src/routes/__root.tsx` (TanStack Router kök rotası): `@openmers/ui/theme.css` içe aktarımı, `<Toaster />` bir kez, üst çubuk + yan menü bileşenlerini birleştirir (iş mantığı yok).
   3. `-` `apps/admin/src/lib/api.ts`: oRPC istemcisi; temel adres çalışma zamanında `window.__OPENMERS__`'tan (06 §5), `credentials: 'include'`. Hata dönüşümü ayrı saf dosya: `lib/apiError.ts` (sözleşme hata kodu → `{ field?, message, requestId }`).
   4. `-` `apps/admin/src/lib/session.ts`: `/me` benzeri oturum paketini (yönetici, `permissions`, kanallar, yerleşim) tek istekte yükleyip nanostore'a yazar; `lib/permissions.ts` saf `can(perms, 'orders:write')`.
-  5. `-` `apps/admin/src/lib/channel.ts`: etkin kanal nanostore'u; `features/shell/ChannelSwitcher.svelte` üst çubukta, `@openmers/ui` `Select` ile.
+  5. `-` `apps/admin/src/lib/channel.ts`: etkin kanal nanostore'u; `features/shell/ChannelSwitcher.tsx` üst çubukta, `@openmers/ui` `Select` ile.
   6. `-` `apps/admin/src/lib/table/`: `useCursorTable.ts` (DataTable denetimli durumu ↔ `{ items, nextCursor }` uç noktası; sıralama/filtre değişince imleç sıfırlanır), saf `tableQuery.ts` (durum → sorgu girdisi). DataTable bileşeni `@openmers/ui`'den (+ hazır).
-  7. `-` `apps/admin/src/lib/form/`: `useAdminForm.ts` (Superforms SPA sarmalayıcı: `onUpdate` içinde oRPC çağrısı, `setError`/`setMessage` eşleme, `version` gizli alanı, 409 → fark diyaloğu), saf `mapFieldErrors.ts`.
-  8. `-` İlk özellik dilimi `apps/admin/src/features/products/`: `columns.ts`, `components/ProductsTable.svelte`, `ProductsToolbar.svelte`, `forms/ProductForm.svelte`, `api.ts`, `index.ts`; rota `routes/products/+page.svelte` + `+page.ts` yalnız birleştirir. Aynı kalıp sonra `orders`, `customers`, `settings` için kopyalanmaz, `lib/` parçaları kullanılır.
-  9. `-` Operasyon ekranları `apps/admin/src/features/ops/`: `OutboxTable.svelte` (durum filtresi `pending · failed · dead`, "yeniden kuyruğa al" eylemi), `AuditLogTable.svelte`; her biri kendi `columns.ts`'i ile. Stok istisnası/uzlaştırma/yedek ekranları ilgili çekirdek özellik (17, 22, 55) gelince.
+  7. `-` `apps/admin/src/lib/form/`: `useAdminForm.ts` (React form sarmalayıcı: submit içinde oRPC çağrısı, alan/general hata eşleme, `version` gizli alanı, 409 → fark diyaloğu), saf `mapFieldErrors.ts`.
+  8. `-` İlk özellik dilimi `apps/admin/src/features/products/`: `columns.ts`, `components/ProductsTable.tsx`, `ProductsToolbar.tsx`, `forms/ProductForm.tsx`, `api.ts`, `index.ts`; rota `routes/products.tsx` yalnız birleştirir. Aynı kalıp sonra `orders`, `customers`, `settings` için kopyalanmaz, `lib/` parçaları kullanılır.
+  9. `-` Operasyon ekranları `apps/admin/src/features/ops/`: `OutboxTable.tsx` (durum filtresi `pending · failed · dead`, "yeniden kuyruğa al" eylemi), `AuditLogTable.tsx`; her biri kendi `columns.ts`'i ile. Stok istisnası/uzlaştırma/yedek ekranları ilgili çekirdek özellik (17, 22, 55) gelince.
   10. `-` Pano `apps/admin/src/features/dashboard/`: sayılar günlük özet ucundan (29), ham tabloya gitmez.
-  11. `-` `@openmers/ui` dışı UI'yı reddeden lint kuralı (`07-ui-kutuphanesi.md` 1.1; YOL-HARITASI madde 4'teki açık iş): `apps/admin` içinde `bits-ui`, ham renk sınıfı ve başka UI paketi içe aktarımını yakalayan Biome kuralı veya `scripts/` altında küçük denetim.
-  12. `-` `pnpm verify`'a `svelte-check` (madde 1 ve 2'deki açık tip denetimi işiyle birlikte).
+  11. `-` `@openmers/ui` dışı UI'yı reddeden lint kuralı (`07-ui-kutuphanesi.md` 1.1; YOL-HARITASI madde 4'teki açık iş): `apps/admin` içinde doğrudan `@radix-ui/*`, ham renk sınıfı ve başka UI paketi içe aktarımını yakalayan Biome kuralı veya `scripts/` altında küçük denetim.
+  12. `-` `pnpm verify`'a `tsc` (madde 1 ve 2'deki açık tip denetimi işiyle birlikte).
 - **Testler:**
   - Birim: `lib/permissions.test.ts`, `lib/apiError.test.ts`, `lib/table/tableQuery.test.ts`, `lib/form/mapFieldErrors.test.ts`.
   - Bileşen: `features/products/components/ProductsTable.test.ts` (imleçle sonraki sayfa, sıralama değişince imleç sıfırlanır; `@openmers/contract` tiplerinden sahte veri).
   - API (gerçek DB): `integration-tests/api/__tests__/admin/products.list.test.ts` (imleçli liste, izin yoksa 403), sorgu planı testi (tam tarama yok).
   - E2E: `e2e/admin-product-create.e2e.ts` (ürün oluştur), `e2e/admin-order-fulfil.e2e.ts` (testing skill §7).
 - **Bitti sayılır:**
-  - `pnpm --filter @openmers/admin-app build` tek HTML kabuğu üretir, sunucu dosyası (`+page.server.ts`, `+server.ts`) yok (denetim betiği bunu doğrular).
+  - `pnpm --filter @openmers/admin-app build` tek HTML kabuğu üretir, sunucu kodu (SSR/API rotası) yok (denetim betiği bunu doğrular).
   - Ürün listesi imleçle gezilir, istemciye tüm liste çekilmez (ağ isteği sayfa başına bir).
   - İzinsiz kullanıcıda düğme gizli ve API 403.
   - `version` çakışmasında kayıt ezilmez, fark diyaloğu açılır (bileşen testi + API testi).
 - **Açık sorular / riskler:**
-  - SvelteKit SPA kipi (`ssr=false` + `adapter-static` + `fallback`) ve Workers static assets'te SPA geri dönüşü doğrulanmadı (ATLANANLAR).
-  - Superforms: `zod4Client` adı, Svelte 5 sürüm şartı, çalışma zamanında üretilen Zod şemasıyla operasyon formları doğrulanmadı (ATLANANLAR).
+  - Vite statik çıktısı ve Workers static assets'te SPA geri dönüşü doğrulanmadı (ATLANANLAR).
+  - React form katmanı: kütüphane seçimi ve çalışma zamanında üretilen Zod şemasıyla operasyon formları doğrulanmadı (ATLANANLAR).
   - "Operasyon formları şemadan üretilir" kuralının üretici bileşeni nerede (admin `lib/` mi, `@openmers/ui` mu) belgede yok.
   - Admin rol değişiminin açık oturumlara yansıması (`session_version`) ATLANANLAR'da çözüldü işaretli; uygulamada 12 ile birlikte doğrulanmalı.
 
@@ -63,7 +63,7 @@ Yapı kuralları (`.claude/skills/*/openmers-*`): dosya ≤150 satır hedef, 250
 - **Kaynak kararlar:**
   - Built-in app `admin/index.ts` içinde `defineAdminExtension({...})` çağırır; yol `defineBuiltInApp({ admin: './admin/index.ts' })`. Admin derlemesi `builtInApps` listesinden `virtual:openmers-admin-extensions` sanal modülü üretir; listede olmayan app'in kodu pakete girmez.
   - Hedef kimlikleri (`PageId`, `BlockId`...) `@openmers/admin-sdk`'dan sabit birleşim tipi; yanlış kimlik derleme hatası. Dev Mode kimlikleri rozet olarak gösterir.
-  - Anahtarlar: `routes`, `navSections`, `pageBlocks`, `actionBarItems`, `toolbarItems`, `dataTables` (sorgu genişletme yok), `detailForms`, `customFormComponents`, `alerts`, `insights.*`, `historyEntries`, `login`, `customProviders`. App rotaları `src/routes/[...ext]/+page.svelte` yakalayıcısında çözülür.
+  - Anahtarlar: `routes`, `navSections`, `pageBlocks`, `actionBarItems`, `toolbarItems`, `dataTables` (sorgu genişletme yok), `detailForms`, `customFormComponents`, `alerts`, `insights.*`, `historyEntries`, `login`, `customProviders`. App rotaları `src/routes/$.tsx` yakalayıcısında çözülür.
   - Uyarı yoklayıcısı tek merkezli, en az 30 sn, sekme gizliyken durur, rastgele sapma. Widget veri günlük özet tablosundan; `admin_user_prefs`.
   - Yerleşim düzenleyici: `admin_layouts(scope store·user, admin_user_id?, page_id, config JSON, version)`; çözümleme kişisel → mağaza → kod; kilitli blok gizlenemez; klavyeyle taşıma zorunlu; gizli blok istek yapmaz; mağaza varsayılanı `admin_layout:manage` izni ve `audit_log`.
   - Kod bölme (her anahtar dinamik içe aktarma), `settings.<app>_enabled` ile süzme, her bileşen hata sınırında, iki app aynı bloğu `replace` ederse derleme hatası; dış uygulama yalnız manifest yuvaları (iframe).
@@ -73,14 +73,14 @@ Yapı kuralları (`.claude/skills/*/openmers-*`): dosya ≤150 satır hedef, 250
   2. `-` `packages/admin-sdk/src/ids.ts`: `PageId`, `BlockId`, `NavSectionId` birleşim tipleri; kaynağı çekirdek sayfaların kayıt dosyası (veri), elle iki kez yazılmaz.
   3. `-` `packages/admin-sdk/src/defineAdminExtension.ts`: tip güvenli kimlik fonksiyonu; anahtar başına tip dosyası `types/{routes,pageBlocks,alerts,...}.ts` (her biri küçük).
   4. `-` `apps/admin/vite/extensionsPlugin.ts`: `virtual:openmers-admin-extensions` üretir (yalnız `builtInApps` listesindekiler, dinamik `import()`); saf `mergeExtensions.ts`: sıralama (`order`, sonra app kimliği), iki `replace` → derleme hatası.
-  5. `-` `apps/admin/src/extensions/registry.ts`: çalışma zamanı kayıt defteri; `settings.<app>_enabled` süzgeci saf `filterEnabled.ts`. `routes/[...ext]/+page.svelte` + `+page.ts` yoldan bileşeni çözer, yoksa 404.
-  6. `-` `packages/admin-sdk/src/page/`: `Page`, `PageLayout`, `PageBlock`, `ListPage` (`{ items, nextCursor }`), `DetailPage` + `useDetailPage` (`new` kimliği, `version`, `taintedMessage`); her biri ayrı dosya, `@openmers/ui` üstünde. `PageBlock` her bloğu `<svelte:boundary>` ile sarar, hata kartı + telemetri.
-  7. `-` `packages/admin-sdk/src/form/`: `FormField`, `RelationSelect`, `MoneyInput` (ui `CurrencyInput` üstünde), `customFormComponents` sözleşmesi (`bind:value`, `name`, `errors`, `disabled`).
+  5. `-` `apps/admin/src/extensions/registry.ts`: çalışma zamanı kayıt defteri; `settings.<app>_enabled` süzgeci saf `filterEnabled.ts`. `routes/$.tsx` yoldan bileşeni çözer, yoksa 404.
+  6. `-` `packages/admin-sdk/src/page/`: `Page`, `PageLayout`, `PageBlock`, `ListPage` (`{ items, nextCursor }`), `DetailPage` + `useDetailPage` (`new` kimliği, `version`, `taintedMessage`); her biri ayrı dosya, `@openmers/ui` üstünde. `PageBlock` her bloğu React hata sınırı ile sarar, hata kartı + telemetri.
+  7. `-` `packages/admin-sdk/src/form/`: `FormField`, `RelationSelect`, `MoneyInput` (ui `CurrencyInput` üstünde), `customFormComponents` sözleşmesi (`value`, `onChange`, `name`, `errors`, `disabled`).
   8. `-` `packages/admin-sdk/src/alerts/poller.ts`: tek yoklayıcı; saf `schedule.ts` (≥30 sn, jitter, `visibilitychange` ile duraklama).
   9. `-` `packages/admin-sdk/src/motion/`: `useMotion()` (`prefers-reduced-motion` → anında bitir) ve `animate` sarmalayıcı (`motion/mini` varsayılan, tam `motion` dinamik içe aktarma).
   10. `-` Yerleşim: `packages/db/src/schema/admin-layouts.ts` (`admin_layouts`, `admin_user_prefs`); `packages/core/src/features/settings/layouts/resolveLayout.ts` (saf: kişisel → mağaza → kod, kaldırılmış blok yok sayılır, yeni blok varsayılan konumda, kilitli blok sabit), `queries/getLayouts.ts`, `saveLayout.ts` (`version` koşullu güncelleme, mağaza kapsamında `audit_log`). Admin tarafı `features/layout-composer/` (klavyeyle taşıma zorunlu).
-  11. `-` Dil: Lingui Svelte topluluk paketi denemesi (`apps/admin/src/lib/i18n.ts`); başarısızsa `@lingui/core` + kendi `t()`; kataloglar `admin/i18n/{tr,en}`.
-  12. `-` Dış uygulama yuvaları: `apps/admin/src/extensions/AppFrame.svelte` (iframe + `@openmers/app-bridge`), manifest yuvaları (`nav.page`, `*.panel`) dışında kayıt reddi.
+  11. `-` Dil: Lingui React entegrasyonu (`apps/admin/src/lib/i18n.ts`, `.tsx` çıkarımı); kataloglar `admin/i18n/{tr,en}`.
+  12. `-` Dış uygulama yuvaları: `apps/admin/src/extensions/AppFrame.tsx` (iframe + `@openmers/app-bridge`), manifest yuvaları (`nav.page`, `*.panel`) dışında kayıt reddi.
 - **Testler:**
   - Tip testi: `packages/admin-sdk/src/ids.test-d.ts` (yanlış `pageId` derleme hatası, `expectTypeOf`/`@ts-expect-error`).
   - Birim: `mergeExtensions.test.ts` (aynı bloğa iki `replace` hata, sıra), `filterEnabled.test.ts` (kapalı app hiçbir yuvada yok), `schedule.test.ts` (sekme gizliyken durur, ≥30 sn), `resolveLayout.test.ts`.
@@ -92,8 +92,8 @@ Yapı kuralları (`.claude/skills/*/openmers-*`): dosya ≤150 satır hedef, 250
   - Gizli blok için ağ isteği atılmaz (bileşen testinde istek sayacı 0).
 - **Açık sorular / riskler:**
   - `@openmers/admin-sdk` paketi monorepo belgesinde ve `packages/` altında yok; açılması belge güncellemesi ister.
-  - `<svelte:boundary>` sürümü, svelte-sonner Svelte 5 uyumu ve aria-live, Svelte ≥5.29 attachment (kökte `svelte ^5.57.3` var, büyük olasılıkla uygun), Lingui Svelte paketi doğrulanmadı (ATLANANLAR).
-  - Yerleşim sürükle-bırak kütüphanesi seçilmedi; YOL-HARITASI madde 4'te DataTable için `@dnd-kit` geçiyor, `@dnd-kit` React kütüphanesi; Svelte karşılığı kararı gerek.
+  - React hata sınırı/TanStack Router `errorComponent` davranışı, `sonner` React 19 uyumu ve aria-live, Motion React API'si, Lingui `.tsx` çıkarımı doğrulanmadı (ATLANANLAR).
+  - Yerleşim sürükle-bırak kütüphanesi seçilmedi; YOL-HARITASI madde 4'te DataTable için `@dnd-kit` geçiyor, `@dnd-kit` React kütüphanesi olduğundan React admin ile uyumlu; sürükleme mantığı ayrı karar.
   - Dış uygulama `actionBarItems`/`alerts`/`widgets` yuvaları yalnız öneri (⚙️), `05-tak-calistir-app-gelistirme.md`'de yok.
 
 ### 33. `docs/07-istemciler/01-storefront.md` — Vitrin kabuğu ve tema sözleşmesi
@@ -229,7 +229,7 @@ Yapı kuralları (`.claude/skills/*/openmers-*`): dosya ≤150 satır hedef, 250
   6. `-` Döngü `apps/api/src/features/agent/loop.ts`: adım kalıcılığı, oturum kilidi (`lock_token` koşullu güncelleme), araç çağrısı kimliğiyle idempotent çalıştırma; bütçe sayacı (`agent_usage`).
   7. `-` `approvals.ts` (onay kartı bekletme, kullanıcı izni + 2FA eşiği), `checkpoints.ts` (denetim kaydından ters işlem, başkası değiştirdiyse atla ve raporla).
   8. `-` SSE ucu `apps/api/src/admin/agent/stream.ts` (ince handler).
-  9. `-` Admin arayüzü `apps/admin/src/features/builder/`: `Chat.svelte`, `ToolCard.svelte`, `ApprovalCard.svelte`, `Workspace.svelte`, `Preview.svelte`, `Artifacts.svelte`, `Missions.svelte`, `CodeView.svelte` (salt okunur + fark); rota `routes/builder/[session]/+page.svelte`; kip tercihi `admin_users.ui_mode`.
+  9. `-` Admin arayüzü `apps/admin/src/features/builder/`: `Chat.tsx`, `ToolCard.tsx`, `ApprovalCard.tsx`, `Workspace.tsx`, `Preview.tsx`, `Artifacts.tsx`, `Missions.tsx`, `CodeView.tsx` (salt okunur + fark); rota `routes/builder/$session.tsx`; kip tercihi `admin_users.ui_mode`.
   10. `-` Bileşik araçlar `apps/api/src/features/agent/tools/`: `theme.files.*` (yalnız `openmers/agent/*` dalı; bağlı dal yazımı sunucuda reddedilir), `preview.open/screenshot`, `media.fromUrl` (yalnız https, herkese açık adres, boyut/tür sınırı), `catalog.importCsv`, `vision.inspect`.
   11. `-` Görevler: `packages/core/src/features/agent/missions/missionChecks.ts` (veri tablosu: görev → veriden denetlenen koşul).
   12. `-` Arşiv işi: 90 günden eski `agent_messages` içeriğini R2'ye taşıyan iş (`apps/api/src/worker/jobs/archiveAgentMessages.ts`).
@@ -446,7 +446,7 @@ Yapı kuralları (`.claude/skills/*/openmers-*`): dosya ≤150 satır hedef, 250
 - **Yapılacaklar:**
   1. `-` `packages/core/src/features/apps/scope/`: kurulumda kanal kapsamı (`app_installations` kanal listesi), saf `inScope.ts`; uygulama token'ıyla yapılan her sorguya kanal süzgeci.
   2. `-` `packages/core/src/features/apps/subscriptions/subscriptionTable.ts`: bellekte `(olay, kanal) → uygulamalar`; `shouldWriteOutbox.ts` saf (abonesi yoksa satır yok). Kurulum/kaldırmada tablo yenilenir.
-  3. `-` İzin sözlüğüne B2B izinleri (`features/auth/permissions.ts` veri dosyası); kurulum ekranında "ticari sır" vurgusu (admin `features/apps/InstallConsent.svelte`).
+  3. `-` İzin sözlüğüne B2B izinleri (`features/auth/permissions.ts` veri dosyası); kurulum ekranında "ticari sır" vurgusu (admin `features/apps/InstallConsent.tsx`).
   4. `-` Olay yüklerine `channel` alanı (tüm `events.ts` dosyaları); `order.placed` yüküne şirket `public_id` ve `po_number`.
   5. `-` Senkron kanca bağlamı: kargo/ödeme/vergi kanca isteğine B2B bağlamını ekleyen saf `buildHookContext.ts` (`features/apps/hooks/`).
   6. `-` Toplu uçlar: `prices.setMany` (`price_lists:write`), `credit.set` (`credit:write`); `price_list.updated` olayı.
@@ -470,6 +470,6 @@ Yapı kuralları (`.claude/skills/*/openmers-*`): dosya ≤150 satır hedef, 250
 
 ## Bu gruptan ilk başlanacak 3 alt görev
 
-1. **31/1-2:** `apps/admin` SvelteKit SPA iskeleti (`svelte.config.js` + `adapter-static` + `fallback`, kök `+layout.ts` `ssr = false`, `@openmers/ui` `theme.css` ve tek `<Toaster />`). Aşama 1'i beklemez, `@openmers/ui` hazır, SPA kipinin doğrulanmamış varsayımlarını erkenden sınar.
+1. **31/1-2:** `apps/admin` Vite + React 19 SPA iskeleti (`vite.config.ts`, `index.html`, `src/main.tsx`, TanStack Router kök rotası `__root.tsx`, `@openmers/ui` `theme.css` ve tek `<Toaster />`). Aşama 1'i beklemez, `@openmers/ui` hazır, statik SPA çıktısının doğrulanmamış varsayımlarını erkenden sınar.
 2. **33/1:** `apps/storefront`'a `dev`/`build` script'i ve en küçük Astro SSR sayfası; böylece mevcut `e2e/smoke.e2e.ts` gerçekten koşar (bugün config var, script yok).
 3. **31/6:** `apps/admin/src/lib/table/useCursorTable.ts` + saf `tableQuery.ts` ve testi; `@openmers/ui` DataTable'ını `{ items, nextCursor }` sözleşmesine sahte veriyle bağlar, tüm admin listelerinin ortak çekirdeğidir.

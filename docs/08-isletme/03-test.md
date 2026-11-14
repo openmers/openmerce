@@ -16,7 +16,8 @@ Tek komut (`pnpm verify`) birim testleri, tip kontrolünü, derlemeyi ve entegra
 
 ## Bileşen ve mobil testleri
 
-- **Svelte bileşenleri** (`packages/ui`, admin, storefront adaları): Vitest + `@testing-library/svelte`, jsdom; rol ve erişilebilir ada göre sorgu, `userEvent`. `@openmers/ui` bileşeni başına: klavye, ARIA rolü, `...rest` geçişi, açık/koyu görsel anlık görüntü, ağaç sallama bütçesi.
+- **React bileşenleri** (`packages/ui`, admin): Vitest + `@testing-library/react`, jsdom; rol ve erişilebilir ada göre sorgu, `userEvent`. `@openmers/ui` bileşeni başına: klavye, ARIA rolü, `...rest` geçişi, açık/koyu görsel anlık görüntü, ağaç sallama bütçesi.
+- **Svelte bileşenleri** (storefront adaları): Vitest + `@testing-library/svelte`, jsdom; aynı sorgu ve klavye kuralları.
 - **Expo ekranları:** ortak mantık (`contract` istemcisi, store'lar, biçimlendirme) bir kez Vitest'te test edilir; ekran testi render ve durum içindir, yerel modüller yalnızca sınırda taklit edilir. Kritik yollar `e2e` mobil testleridir.
 - Ajan/geliştirici için kısa rehber: `.claude/skills/tests/openmers-testing/SKILL.md`. Bu araçların (`@testing-library/*`, jsdom) seçimi henüz doğrulanmadı.
 

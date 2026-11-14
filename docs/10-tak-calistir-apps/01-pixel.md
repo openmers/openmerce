@@ -172,7 +172,7 @@ Klasör düzeni:
 packages/plugins/pixel/
   src/core/        olay toplama · tekilleştirme · onay · eşleştirme · günlük · yeniden deneme
   src/platforms/   meta.ts · google.ts · tiktok.ts · pinterest.ts · bing.ts
-  src/admin/       ayar ve günlük ekranları (Svelte)
+  src/admin/       ayar ve günlük ekranları (React)
   src/pixel/       sandbox'ta çalışan tarayıcı betiği
   manifest.json
 ```

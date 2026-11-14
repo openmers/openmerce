@@ -270,10 +270,10 @@ apps/api/src/features/agent/
   providers/gemini-image.ts
   prompt/          sabit sistem istemi parçaları
 apps/admin/src/features/builder/
-  Chat.svelte · Workspace.svelte · Preview.svelte · CodeView.svelte · Artifacts.svelte · Missions.svelte
+  Chat.tsx · Workspace.tsx · Preview.tsx · CodeView.tsx · Artifacts.tsx · Missions.tsx
 ```
 
-Builder bileşenleri shadcn-svelte ve mevcut admin çekirdeğini kullanır; kod düzenleyici salt okunur görüntüleyici + fark ile başlar (tam IDE değil).
+Builder bileşenleri Radix tabanlı `@openmers/ui` ve mevcut admin çekirdeğini kullanır; ajanın ürettiği ekranlar React bileşenleridir ve yalnızca `@openmers/ui` içe aktarır. Kod düzenleyici salt okunur görüntüleyici + fark ile başlar (tam IDE değil).
 
 ## 12. Performans ve maliyet
 

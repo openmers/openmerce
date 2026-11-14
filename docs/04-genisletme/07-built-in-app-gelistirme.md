@@ -8,7 +8,7 @@ Kaynak: Vendure "Developer Guide" belgelerinin 38 sayfası okundu (yalnızca bu 
 
 | Vendure sayfası | Bizde | Durum |
 |---|---|---|
-| Overview | Server + worker + dashboard + storefront → API (Hono/oRPC) + worker girişi + admin (SvelteKit) + vitrin (Astro); strateji deseni ve eklenti birimi aynı fikir | Var ([01-genel-bakis.md](../02-genel-mimari/01-genel-bakis.md)) |
+| Overview | Server + worker + dashboard + storefront → API (Hono/oRPC) + worker girişi + admin (React SPA) + vitrin (Astro); strateji deseni ve eklenti birimi aynı fikir | Var ([01-genel-bakis.md](../02-genel-mimari/01-genel-bakis.md)) |
 | The API Layer | Express/Nest ara katman, guard, interceptor, `@Ctx`, `@Allow`, `@Transaction` → Hono ara katmanı, oRPC prosedürü, `ctx`, izin bildirimi, `atomic()` | Var ([02-api-ve-istek-baglami.md](../03-cekirdek/02-api-ve-istek-baglami.md)); bölüm 3 |
 | The Service Layer | Servis + `TransactionalConnection` → çekirdek fonksiyonları, `db` ve `ctx` parametre | Bölüm 4 |
 | CLI | `vendure add/migrate/schema/doctor/dev` | ⚙️ `openmers` CLI, bölüm 9 |

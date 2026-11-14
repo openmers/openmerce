@@ -11,7 +11,7 @@ openmers/
 │   │       ├── platform/     # cloudflare.ts · node.ts (Platform kurulumu)
 │   │       └── worker/       # iş tüketicisi + zamanlayıcı (aynı kod, ayrı giriş)
 │   ├── storefront/           # vitrin kabuğu: Astro SSR, yönlendirme, veri, önbellek, SEO
-│   ├── admin/                # SvelteKit (SPA kipi, statik çıktı)
+│   ├── admin/                # Vite + React 19 (SPA, statik çıktı)
 │   └── mobile/               # Expo (React Native)
 ├── packages/
 │   ├── contract/             # oRPC sözleşmesi + Zod şemaları (shop/ · admin/)
